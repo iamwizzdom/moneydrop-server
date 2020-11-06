@@ -1,0 +1,95 @@
+{include file='include/head.html'}
+{include file='include/header.html'}
+
+<!-- Secondary Menu
+  ============================================= -->
+<div class="bg-primary">
+    <div class="container d-flex justify-content-center">
+        <ul class="nav secondary-nav">
+            <li class="nav-item"><a class="nav-link active" href="money/send">Send</a></li>
+            <li class="nav-item"><a class="nav-link" href="money/receive">Receive</a></li>
+        </ul>
+    </div>
+</div>
+<!-- Secondary Menu end -->
+
+<!-- Content
+============================================= -->
+<div id="content" class="py-4">
+    <div class="container">
+        <h2 class="font-weight-400 text-center mt-3">Send Money</h2>
+        <p class="text-4 text-center mb-4">Send money to anywhere in the world, at anytime.</p>
+        <div class="row">
+            <div class="col-md-8 col-lg-6 col-xl-5 mx-auto">
+                <div class="bg-light shadow-sm rounded p-3 p-sm-4 mb-4">
+                    <h3 class="text-5 font-weight-400 mb-3">Personal Details</h3>
+                    <!-- Send Money Form
+                    ============================================= -->
+                    <form id="form-send-money" method="post">
+                        <div class="form-group">
+                            <label for="emailID">Recipient</label>
+                            <input type="text" value="" class="form-control" data-bv-field="emailid" id="emailID"
+                                   required placeholder="Enter Email Address">
+                        </div>
+                        <div class="form-group">
+                            <label for="youSend">You Send</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend"><span class="input-group-text currency-symbol">$</span>
+                                </div>
+                                <input type="text" class="form-control" data-bv-field="youSend" id="youSend" value=""
+                                       placeholder="1,000">
+                                <div class="input-group-append"> <span class="input-group-text p-0">
+                    <select id="senderCurrency" data-style="custom-select bg-transparent border-0"
+                            data-container="body" data-live-search="true"
+                            class="selectpicker form-control bg-transparent" required="">
+
+                        {foreach from=$data.countries key="key" item="value"}
+                          <option data-icon="currency-flag currency-flag-{strtolower($value.currencyCode)} mr-1"
+                                  data-subtext="{$value.currencyName}" data-symbol="{$value.currencySymbol}"
+                                  value="{$value.countryID}">
+                              {$value.iso3}
+                          </option>
+                        {/foreach}
+                    </select>
+                    </span></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipientGets">Recipient Gets</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend"><span class="input-group-text currency-symbol">$</span>
+                                </div>
+                                <input type="text" class="form-control" data-bv-field="recipientGets" id="recipientGets"
+                                       value="" placeholder="1,410.06">
+                                <div class="input-group-append"> <span class="input-group-text p-0">
+                    <select id="recipientCurrency" data-style="custom-select bg-transparent border-0"
+                            data-container="body" data-live-search="true"
+                            class="selectpicker form-control bg-transparent" required="">
+                      {foreach from=$data.countries key="key" item="value"}
+                      <option data-icon="currency-flag currency-flag-{strtolower($value.currencyCode)} mr-1"
+                              data-subtext="{$value.currencyName}" data-symbol="{$value.currencySymbol}"
+                              value="{$value.countryID}">
+                          {$value.iso3}
+                      </option>
+                    {/foreach}
+                    </select>
+                    </span></div>
+                            </div>
+                        </div>
+                        <p class="text-muted text-center">The current exchange rate is <span class="font-weight-500">1 USD = 1.42030 AUD</span>
+                        </p>
+                        <hr>
+                        <p class="mb-1">Total fees <span class="text-3 float-right">7.21 USD</span></p>
+                        <p class="font-weight-500">Total To Pay <span class="text-3 float-right">1,000.00 USD</span></p>
+                        <button class="btn btn-primary btn-block">Continue</button>
+                    </form>
+                    <!-- Send Money Form end -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Content end -->
+
+{include file='include/footer.html'}
+{include file='include/script.html'}

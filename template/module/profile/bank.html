@@ -1,0 +1,432 @@
+{include file='include/head.html'}
+{include file='include/header.html'}
+{include file='include/element.html'}
+
+<!-- Secondary Menu
+  ============================================= -->
+<div class="bg-primary">
+    <div class="container d-flex justify-content-center">
+        <ul class="nav secondary-nav">
+            <li class="nav-item"><a class="nav-link" href="{base_url('profile')}">Account</a></li>
+            <li class="nav-item"><a class="nav-link active" href="{base_url('profile/bank')}">Cards & Bank Accounts</a></li>
+            <li class="nav-item"><a class="nav-link" href="{base_url('profile/message')}">Message</a></li>
+            <li class="nav-item"><a class="nav-link" href="{base_url('profile/notification')}">Notification</a></li>
+        </ul>
+    </div>
+</div>
+<!-- Secondary Menu end -->
+
+<!-- Content
+============================================= -->
+<div id="content" class="py-4">
+    <div class="container">
+        <div class="row">
+
+            <!-- Left Panel
+            ============================================= -->
+            <aside class="col-lg-3">
+
+                <!-- Profile Details
+                =============================== -->
+                <div class="bg-light shadow-sm rounded text-center p-3 mb-4">
+                    <form id="avatar-form" method="post" enctype="multipart/form-data">
+                        <div class="profile-thumb mt-3 mb-4">
+                            <div class="profile-thumb rounded-circle overflow-hidden">
+                                <img src="../{$data.user.avatar}"
+                                     alt="{$data.user.firstName} {$data.user.lastName}" width="100">
+                            </div>
+                            <div class="profile-thumb-edit custom-file bg-primary text-white" data-toggle="tooltip"
+                                 title="Change Profile Picture"><i class="fas fa-camera position-absolute"></i>
+                                <input type="file" name="file" class="custom-file-input" id="avatar-file">
+                                <input type="hidden" name="csrf" value="{$form.csrf}"/>
+                            </div>
+                        </div>
+                    </form>
+                    <p class="text-3 font-weight-500 mb-2">Hello,
+                        <span class="firstName">{$data.user.firstName}</span>
+                        <span class="lastName">{$data.user.lastName}</span>
+                    </p>
+                </div>
+
+                <!-- Profile Details End -->
+
+                <!-- Available Balance
+                =============================== -->
+                <div class="bg-light shadow-sm rounded text-center p-3 mb-4">
+                    <div class="text-17 text-light my-3"><i class="fas fa-wallet"></i></div>
+                    <h3 class="text-9 font-weight-400">$2956.00</h3>
+                    <p class="mb-2 text-muted opacity-8">Available Balance</p>
+                    <hr class="mx-n3">
+                    <div class="d-flex"><a href="withdraw-money.html" class="btn-link mr-auto">Withdraw</a> <a
+                            href="deposit-money.html" class="btn-link ml-auto">Deposit</a></div>
+                </div>
+                <!-- Available Balance End -->
+
+                <!-- Need Help?
+                =============================== -->
+                <div class="bg-light shadow-sm rounded text-center p-3 mb-4">
+                    <div class="text-17 text-light my-3"><i class="fas fa-comments"></i></div>
+                    <h3 class="text-3 font-weight-400 my-4">Need Help?</h3>
+                    <p class="text-muted opacity-8 mb-4">Have questions or concerns regrading your account?<br>
+                        Our experts are here to help!.</p>
+                    <a href="#" class="btn btn-primary btn-block">Chat with Us</a></div>
+                <!-- Need Help? End -->
+
+            </aside>
+            <!-- Left Panel End -->
+
+            <!-- Middle Panel
+            ============================================= -->
+            <div class="col-lg-9">
+
+                <!-- BVN
+                ============================================= -->
+                <div class="bg-light shadow-sm rounded p-4 mb-4">
+                    <h3 class="text-5 font-weight-400 mb-3">Bank Verification Number (BVN)
+                        {if empty($data.user.bvn)}
+                        <a href="#add-bvn" data-toggle="modal" class="float-right text-1 text-uppercase text-muted btn-link"><i class="fas fa-edit mr-1"></i>Add</a>
+                        {/if}
+                    </h3>
+                    <span class="bvn">{if empty($data.user.bvn)}Add a BVN{else}{$data.user.bvn}{/if}</span>
+                </div>
+
+                {if empty($data.user.bvn)}
+                <!-- Add BVN Modal
+                ================================== -->
+                <div id="add-bvn" class="modal fade " role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title font-weight-400">Bank Verification Number (BVN)</h5>
+                                <button type="button" class="close font-weight-400" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span> </button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <form id="bvn-form" method="post">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label for="bvn">Bank Verification Number <span class="text-muted font-weight-500">(BVN)</span></label>
+                                                <input type="text" value="{$data.user.bvn}" class="form-control"
+                                                       data-bv-field="bvn" id="bvn" name="bvn" required placeholder="Enter BVN Here">
+                                                <input type="hidden" name="track" value="{$form.track}"/>
+                                                <input type="hidden" name="csrf" value="{$form.csrf}"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary btn-block" type="submit">Save BVN</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/if}
+
+                <!-- Credit or Debit Cards End -->
+
+                <!-- Bank Accounts
+                ============================================= -->
+                <div class="bg-light shadow-sm rounded p-4 mb-4">
+                    <h3 class="text-5 font-weight-400 mb-4">Bank Accounts <span class="text-muted text-4">(for withdrawal)</span>
+                    </h3>
+                    <div class="row bank-accounts-holder">
+                        {if array_size($data.addedBanks) > 0}
+                        {foreach from=$data.addedBanks key="key" item="value"}
+                        <div class="col-12 col-sm-6 mb-2 mt-2 bank-account-{$value.bankID}">
+                            <div class="account-card {if $value.bankID == $value.primaryBankID}account-card-primary{/if} text-white rounded mb-4 mb-lg-0">
+                                <div class="row no-gutters">
+                                    <div class="col-3 d-flex justify-content-center p-3">
+                                        <div class="my-auto text-center text-13"><i class="fa fa-university"></i>
+                                            <p class="primary-bank-pill bg-light text-0 text-body font-weight-500 rounded-pill
+                                            {if $value.bankID == $value.primaryBankID}d-inline-block{else}d-none{/if} px-2 line-height-4 opacity-8 mb-0">
+                                                Primary</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-9 border-left">
+                                        <div class="py-4 my-2 pl-4">
+                                            {$bank = utility\enum\BanksEnum::getBank($value.bankUID)}
+                                            <p class="text-4 font-weight-500 mb-1">{$bank.name}</p>
+                                            <p class="text-4 opacity-9 mb-1">{hide_number($value.accountNumber, 0, strlen($value.accountNumber) - 4)}</p>
+                                            <p class="m-0">{call name=label key=$value.ab_status} <span class="text-3"><i
+                                                    class="{call name=labelIcon key=$value.ab_status}"></i></span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="account-card-overlay rounded">
+                                    <a href="#" data-target="#bank-account-details" data-toggle="modal"
+                                       class="text-light btn-link mx-2" onclick="viewBankAccountDetail(this, {$value.bankID});">
+                                        <span class="mr-1"><i class="fas fa-share"></i></span>
+                                        More Details
+                                    </a>
+                                    <a href="#" class="text-light btn-link mx-2" onclick="deleteBankAccount(this, {$value.bankID})">
+                                        <span class="mr-1"><i class="fas fa-minus-circle"></i></span>
+                                        Delete
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {/foreach}
+                        {/if}
+                        {if array_size($data.addedBanks) < MAX_BANK_ACCOUNT}
+                        <div class="col-12 col-sm-6 mb-2 mt-2 add-new-bank-account-btn">
+                            <a href="#add-new-bank-account" data-toggle="modal"
+                               class="account-card-new d-flex align-items-center rounded h-100 p-3 mb-4 mb-lg-0">
+                                <p class="w-100 text-center line-height-4 m-0">
+                                    <span class="text-3"><i class="fas fa-plus-circle"></i></span>
+                                    <span class="d-block text-body text-3">Add New Bank Account</span>
+                                </p>
+                            </a>
+                        </div>
+                        {/if}
+                    </div>
+                </div>
+
+                {if array_size($data.addedBanks) < MAX_BANK_ACCOUNT}
+                <!-- Add New Bank Account Details Modal
+                ======================================== -->
+                <div id="add-new-bank-account" class="modal fade" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title font-weight-400">Add Bank Account</h5>
+                                <button type="button" class="close font-weight-400" data-dismiss="modal"
+                                        aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <form id="add-bank-account" method="post" action="#">
+                                    <div class="form-group">
+                                        <label for="bank">Bank</label>
+                                        <select id="bank" data-style="custom-select" name="bank"
+                                                data-container="body" data-live-search="true"
+                                                class="selectpicker form-control bg-transparent">
+                                            <option data-subtext="0" value="0">--- Please Select ---</option>
+                                            {foreach from=$data.banks key="key" item="value"}
+                                            <option data-subtext="{$key}" value="{$key}">{$value.name}</option>
+                                            {/foreach}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="accountType">Bank Account Type</label>
+                                        <select id="accountType" data-style="custom-select" name="accountType"
+                                                data-container="body" data-live-search="true"
+                                                class="selectpicker form-control bg-transparent">
+                                            <option data-subtext="0" value="0">--- Please Select ---</option>
+                                            {foreach from=$data.accountTypes key="key" item="value"}
+                                            <option data-subtext="{$key}" value="{$key}">{$value}</option>
+                                            {/foreach}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="bankCountry">Bank Country</label>
+                                        <select id="bankCountry" data-style="custom-select" name="bankCountry"
+                                                data-container="body" data-live-search="true"
+                                                class="selectpicker form-control bg-transparent">
+                                            {foreach $data.countries as $value}
+                                            <option data-subtext="{$value.iso}" value="{$value.countryID}">
+                                                {$value.countryName}
+                                            </option>
+                                            {/foreach}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="accountName">Account Name</label>
+                                        <input type="text" class="form-control" data-bv-field="accountName"
+                                               id="accountName" name="accountName" required value="" placeholder="e.g. John Doe">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="accountNumber">Account Number</label>
+                                        <input type="number" class="form-control" data-bv-field="accountNumber"
+                                               id="accountNumber" name="accountNumber" required value="" placeholder="e.g. 12346678900001">
+                                    </div>
+                                    <div class="form-check custom-control custom-checkbox mb-3">
+                                        <input id="remember-me" name="agreement" value="1" class="custom-control-input"
+                                               type="checkbox">
+                                        <label class="custom-control-label" for="remember-me">I confirm the bank account
+                                            details above</label>
+                                    </div>
+                                    <input type="hidden" name="track" value="{$form.track}"/>
+                                    <input type="hidden" name="csrf" value="{$form.csrf}"/>
+                                    <button class="btn btn-primary btn-block" type="submit">Add Bank Account</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/if}
+                <!-- Edit Bank Account Details Modal
+                ======================================== -->
+                <div id="bank-account-details" class="modal fade" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered transaction-details" role="document">
+                        <div class="modal-content">
+                            <div class="modal-body bank-account-details-modal-body">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Bank Accounts End -->
+
+
+                <!-- Credit or Debit Cards
+                ============================================= -->
+                <div class="bg-light shadow-sm rounded p-4 mb-4">
+                    <h3 class="text-5 font-weight-400 mb-4">Credit or Debit Cards <span class="text-muted text-4">(for payments)</span>
+                    </h3>
+                    <div class="row card-holder">
+                        {if array_size($data.addedCards) > 0}
+                        {foreach from=$data.addedCards key="key" item="value"}
+                        <div class="col-12 col-sm-6 col-lg-4 mb-2 mt-2 card-{$value.cardID}">
+                            <div class="account-card primary-card-pill {if $value.cardID == $value.primaryCardID}account-card-primary{/if} text-white rounded p-3 mb-4 mb-lg-0">
+                                <p class="text-4">{hide_number($value.cardNumber, 0, strlen($value.cardNumber) - 4)}</p>
+                                <p class="d-flex align-items-center">
+                                    <span class="account-card-expire text-uppercase d-inline-block opacity-6 mr-2">Valid<br> thru<br></span>
+                                    <span class="text-4 opacity-9 expiryDate">{get_date('m/y', $value.expiryDate)}</span>
+
+                                    <span class="bg-light text-0 text-body font-weight-500 rounded-pill
+                                     px-2 line-height-4 opacity-8 ml-auto">{call name=label key=$value.ac_status}</span>
+                                </p>
+                                <p class="d-flex align-items-center m-0"><span class="text-uppercase font-weight-500 cardHolderName">{$value.cardHolderName}</span>
+                                    <img class="ml-auto" src="{if $value.cardBrand == utility\enum\CardBandEnum::VISA_CARD}
+                                    {base_url('template/asset/image/payment/visa.png')}
+                                    {elseif $value.cardBrand == utility\enum\CardBandEnum::VERVE_CARD}
+                                    {base_url('template/asset/image/payment/verve.png')}
+                                    {elseif $value.cardBrand == utility\enum\CardBandEnum::MASTER_CARD}
+                                    {base_url('template/asset/image/payment/mastercard.png')}
+                                    {/if}"
+                                         alt="card" title="">
+                                </p>
+                                <div class="account-card-overlay rounded">
+                                    <a href="#" data-target="#edit-card-details" onclick="viewCardDetail(this, {$value.cardID});" data-toggle="modal"
+                                       class="text-light btn-link mx-2">
+                                        <span class="mr-1"><i class="fas fa-edit"></i></span>
+                                        Edit
+                                    </a>
+                                    <a href="#" class="text-light btn-link mx-2" onclick="deleteCard(this, {$value.cardID});">
+                                        <span class="mr-1"><i class="fas fa-minus-circle"></i></span>
+                                        Delete
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {/foreach}
+                        {/if}
+                        {if array_size($data.addedCards) < MAX_CARD_ACCOUNT}
+                        <div class="col-12 col-sm-6 col-lg-4 mb-2 mt-2 add-new-card-btn">
+                            <a href="#add-new-card-details" data-toggle="modal"
+                               class="account-card-new d-flex align-items-center rounded h-100 p-3 mb-4 mb-lg-0">
+                                <p class="w-100 text-center line-height-4 m-0">
+                                    <span class="text-3"><i class="fas fa-plus-circle"></i></span>
+                                    <span class="d-block text-body text-3">Add New Card</span>
+                                </p>
+                            </a>
+                        </div>
+                        {/if}
+                    </div>
+                </div>
+                {if array_size($data.addedCards) < MAX_BANK_ACCOUNT}
+                <!-- Add New Card Details Modal
+                ================================== -->
+                <div id="add-new-card-details" class="modal fade" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title font-weight-400">Add a Card</h5>
+                                <button type="button" class="close font-weight-400" data-dismiss="modal"
+                                        aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <form id="add-new-card" method="post">
+                                    <div class="btn-group d-flex btn-group-toggle mb-3" data-toggle="buttons">
+                                        <label class="btn btn-outline-secondary btn-sm shadow-none w-100 active">
+                                            <input type="radio" name="cardType" value="{utility\enum\CardTypeEnum::CARD_TYPE_CREDIT}" id="option1" checked>
+                                            Credit
+                                        </label>
+                                        <label class="btn btn-outline-secondary btn-sm shadow-none w-100">
+                                            <input type="radio" name="cardType" value="{utility\enum\CardTypeEnum::CARD_TYPE_DEBIT}" id="option2">
+                                            Debit
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="card-bank">Bank</label>
+                                        <select id="card-bank" data-style="custom-select" name="bank"
+                                                data-container="body" data-live-search="true"
+                                                class="selectpicker form-control bg-transparent">
+                                            <option data-subtext="0" value="0">--- Please Select ---</option>
+                                            {foreach from=$data.banks key="key" item="value"}
+                                            <option data-subtext="{$key}" value="{$key}">{$value.name}</option>
+                                            {/foreach}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="cardBrand">Card Brand</label>
+                                        <select id="cardBrand" data-style="custom-select" name="cardBrand"
+                                                data-container="body" data-live-search="true"
+                                                class="selectpicker form-control bg-transparent">
+                                            <option data-subtext="0" value="0">--- Please Select ---</option>
+                                            {foreach from=$data.cards key="key" item="value"}
+                                            <option data-subtext="{$key}" value="{$key}">{$value}</option>
+                                            {/foreach}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="cardNumber">Card Number</label>
+                                        <input type="number" class="form-control" data-bv-field="cardnumber"
+                                               id="cardNumber" name="cardNumber" required value="" placeholder="Card Number">
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-lg-6">
+                                            <div class="form-group">
+                                                <label for="expiryDate">Expiry Date</label>
+                                                <input id="expiryDate" name="expiryDate" type="text" class="form-control"
+                                                       data-bv-field="expiryDate" required value="" placeholder="MM/YY">
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <div class="form-group">
+                                                <label for="cvvNumber">CVV <span class="text-info ml-1"
+                                                                                 data-toggle="tooltip"
+                                                                                 data-original-title="For Visa/Mastercard, the three-digit CVV number is printed on the signature panel on the back of the card immediately after the card's account number. For American Express, the four-digit CVV number is printed on the front of the card above the card account number."><i
+                                                        class="fas fa-question-circle"></i></span></label>
+                                                <input id="cvvNumber" name="cvv" type="password" class="form-control"
+                                                       data-bv-field="cvvnumber" required value="" maxlength="3"
+                                                       placeholder="CVV (3 digits)">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="cardHolderName">Card Holder Name</label>
+                                        <input type="text" name="cardHolderName" class="form-control" data-bv-field="cardholdername"
+                                               id="cardHolderName" required value="" placeholder="Card Holder Name">
+                                    </div>
+                                    <input type="hidden" name="track" value="{$form.track}"/>
+                                    <input type="hidden" name="csrf" value="{$form.csrf}"/>
+                                    <button class="btn btn-primary btn-block" type="submit">Add Card</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/if}
+                <!-- Edit Card Details Modal
+                ================================== -->
+                <div id="edit-card-details" class="modal fade" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title font-weight-400">Update Card</h5>
+                                <button type="button" class="close font-weight-400" data-dismiss="modal"
+                                        aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            </div>
+                            <div class="modal-body p-4 card-modal-body"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- Middle Panel End -->
+        </div>
+    </div>
+</div>
+<!-- Content end -->
+
+{include file='include/footer.html'}
+{include file='include/script.html'}

@@ -1,0 +1,37 @@
+.ps-container {
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+.underline {
+    border-bottom: 1px solid #fff;
+    margin-bottom: 10px;
+}
+
+.attach-holder {
+    color: #d1d1d1;
+}
+
+.attach-holder span {
+    color: #b7b7b7;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    margin-bottom: 10px;
+}
+
+.attach-icon {
+    border: solid #d1d1d1 2px;
+    border-radius: 50%;
+    padding: 6px 10px 6px 10px;
+}
+
+.btn-remove-attachment {
+    position: absolute;
+    right: 10px;
+    top: 5px;
+    cursor: pointer;
+}
+
+.btn-remove-attachment:hover {
+    font-size: 16px;
+}

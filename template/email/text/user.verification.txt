@@ -1,0 +1,8 @@
+Hi, {$data.firstName} {$data.lastName}
+ 
+Visit the following link to verify your account
+
+{$data.link}
+
+=================================================
+{$data.app_name} © {$data.year}. All Rights Reserved.

@@ -1,0 +1,11 @@
+Hi, {$data.firstName} {$data.lastName}
+ 
+Your {$data.app_name} account has been created successfully.
+
+You can login to your account using the following details.
+
+Email: {$data.email}
+Password: {$data.password}
+
+=================================================
+{$data.app_name} © {$data.year}. All Rights Reserved.

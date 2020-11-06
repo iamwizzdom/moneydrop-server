@@ -1,0 +1,62 @@
+{include file='include/head.html'}
+{include file='include/header.html'}
+{include file='include/element.html'}
+
+<!-- Secondary Menu
+  ============================================= -->
+<div class="bg-primary">
+    <div class="container d-flex justify-content-center">
+        <ul class="nav secondary-nav">
+            <li class="nav-item"><a class="nav-link" href="{base_url('loan/post')}">Post</a></li>
+            <li class="nav-item"><a class="nav-link" href="{base_url('loan/request')}">Request</a></li>
+        </ul>
+    </div>
+</div>
+<!-- Secondary Menu end -->
+
+<!-- Content
+============================================= -->
+<div id="content" class="py-4">
+    <div class="container">
+        <div class="row">
+
+            {foreach $data.loans as $loan}
+            <!-- Loan Elem
+            ============================================= -->
+            <div class="col-md-6 mb-5">
+
+                <div class="bg-white shadow-sm rounded p-4 text-center">
+
+                    <div class="featured-box style-4 py-2">
+                        <div class="featured-box-icon text-light border rounded-circle shadow-sm overflow-hidden">
+                            <img src="{base_url($loan.avatar)}" class="img-thumbnail">
+                        </div>
+
+                        {if $loan.loanType == LOAN_TYPE_OFFER}
+                        <label class="mb-10 badge badge-info">Loan Offer</label>
+                        {else}
+                        <label class="mb-10 badge badge-primary">Loan Request</label>
+                        {/if}
+
+                        <h3 class="text-body text-7 mb-3">{$loan.firstName} {$loan.lastName}</h3>
+                        <p class="text-4 line-height-4">{$loan.note}</p>
+                        <div class="text-10 pt-3 pb-4 mb-2">{CURRENCY_NAIRA}{$loan.amount}
+                            <sup class="text-primary" data-toggle="tooltip" title="Interest">{$loan.interest}%<sup><small>int</small></sup></sup></div>
+                        <a href='{base_url("loan/{$loan.loanID}/detail")}' class="btn btn-primary text-4">Learn more<i
+                                class="fas fa-chevron-right text-2 ml-2"></i></a></div>
+                </div>
+            </div>
+            <!-- Loa Elem end -->
+
+            {foreachelse}
+            <h3>No loans available at this time</h3>
+            {/foreach}
+
+        </div>
+        {$pagination->getLinks('loan')}
+    </div>
+</div>
+<!-- Content end -->
+
+{include file='include/footer.html'}
+{include file='include/script.html'}

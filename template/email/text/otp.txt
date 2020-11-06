@@ -1,0 +1,5 @@
+Hello there.
+Please verify your email using the OTP below:
+{$data.otp}
+------------------------------------------
+Note: This OTP will expire at {$data.expire}

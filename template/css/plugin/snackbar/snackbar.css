@@ -1,0 +1,77 @@
+.snackbar-notifier {
+    visibility: hidden !important;
+    min-width: 250px;
+    margin-left: -125px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 2px;
+    padding: 16px;
+    position: fixed;
+    z-index: 99999999999;
+    left: 50%;
+    bottom: 30px;
+    font-size: 17px;
+}
+
+.snackbar-notifier:hover {
+    visibility: visible !important;
+    -webkit-animation: fadein 0.5s;
+    animation: fadein 0.5s;
+}
+
+.snackbar-notifier.show {
+    visibility: visible !important;
+    -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+.snackbar-notifier.mousein {
+    visibility: visible !important;
+}
+
+.snackbar-notifier.mouseout {
+    -webkit-animation: fadeout 0.5s;
+    animation: fadeout 0.5s;
+}
+
+@-webkit-keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+    from {bottom: 30px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+    from {bottom: 30px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+}
+
+.btn-default {
+    color: #111;
+    font-family: sans-serif;
+    font-size: 14px;
+    margin-top: 10px;
+    padding: 5px;
+    background-color: #e4eaec;
+    border-color: #e4eaec;
+    border-radius: 2px;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+
+.btn {
+    cursor: pointer;
+    -webkit-transition: border .2s linear,color .2s linear,width .2s linear,background-color .2s linear;
+    -o-transition: border .2s linear,color .2s linear,width .2s linear,background-color .2s linear;
+    transition: border .2s linear,color .2s linear,width .2s linear,background-color .2s linear;
+    -webkit-font-smoothing: subpixel-antialiased;
+}

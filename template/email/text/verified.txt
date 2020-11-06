@@ -1,0 +1,4 @@
+Hello there.
+Your {$data.type} {$data.data} has been verified successfully.
+------------------------------------------
+Thanks for choosing {$data.app_name}

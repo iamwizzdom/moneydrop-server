@@ -1,0 +1,121 @@
+{include file='include/head.html'}
+{include file='include/header.html'}
+{include file='include/element.html'}
+
+<!-- Secondary Menu
+  ============================================= -->
+<div class="bg-primary">
+    <div class="container d-flex justify-content-center">
+        <ul class="nav secondary-nav">
+            <li class="nav-item"><a class="nav-link" href="{base_url('loan/offer')}">Offer</a></li>
+            <li class="nav-item"><a class="nav-link active" href="{base_url('loan/request')}">Request</a></li>
+        </ul>
+    </div>
+</div>
+<!-- Secondary Menu end -->
+
+<!-- Content
+============================================= -->
+<div id="content" class="py-4">
+    <div class="container">
+
+        <h2 class="font-weight-400 text-center mt-3">Post a Loan Request</h2>
+        <p class="text-4 text-center mb-4">Get instant fund today, request a loan.</p>
+        <div class="row">
+            <div class="col-md-8 col-lg-6 col-xl-5 mx-auto">
+                <div class="bg-light shadow-sm rounded p-3 p-sm-4 mb-4">
+                    <h3 class="text-5 font-weight-400 mb-3">Loan Details</h3>
+
+                    {include file='include/alert.html'}
+
+                    <!-- Loan Offer Form
+                    ============================================= -->
+
+                    <form id="form-send-money" action="#" method="post">
+
+                        <div class="form-group">
+                            <label for="amount">Amount</label>
+                            <div class="position-relative">
+                                <input type="text"
+                                       class="form-control {if isset($form.status.amount)}{call name=class_name key=$form.status.amount}{/if}"
+                                       id="amount" name="amount"
+                                       value="{if isset($form.post.amount)}{$form.post.amount}{else}1000{/if}"
+                                       placeholder="1,000">
+                                {if isset($form.error.amount)}{call name=form_feedback value=$form.error.amount}{/if}
+                                <span class="icon-inside"><i class="fas fa-dollar-sign"></i></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tenor">Max Tenor
+                                <small>(Monthly)</small>
+                            </label>
+                            <div class="position-relative">
+                                <input type="text" min="1" max="12"
+                                       class="form-control {if isset($form.status.tenor)}{call name=class_name key=$form.status.tenor}{/if}"
+                                       id="tenor" name="tenor"
+                                       value="{if isset($form.post.tenor)}{$form.post.tenor}{/if}"
+                                       placeholder="Max Repayment Tenor">
+                                {if isset($form.error.tenor)}{call name=form_feedback value=$form.error.tenor}{/if}
+                                <span class="icon-inside"><i class="fas fa-calendar-check"></i></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="interest">Interest Percentage
+                                <small>(Leave blank if you don't want interest)</small>
+                            </label>
+                            <div class="position-relative">
+                                <input type="text" max="20"
+                                       class="form-control {if isset($form.status.interest)}{call name=class_name key=$form.status.interest}{/if}"
+                                       id="interest" name="interest"
+                                       value="{if isset($form.post.interest)}{$form.post.interest}{/if}"
+                                       placeholder="Interest rate percentage">
+                                {if isset($form.error.interest)}{call name=form_feedback value=$form.error.interest}{/if}
+                                <span class="icon-inside"><i class="fas fa-percent"></i></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="note">Note</label>
+                            <div class="position-relative">
+                                <textarea
+                                        class="form-control {if isset($form.status.note)}{call name=class_name key=$form.status.note}{/if}"
+                                        id="note" name="note"
+                                        placeholder="Note to investors" maxlength="200">{if isset($form.post.note)}{$form.post.note}{/if}</textarea>
+                                {if isset($form.error.note)}{call name=form_feedback value=$form.error.note}{/if}
+                                <span class="icon-inside"><i class="fas fa-pencil-alt"></i></span>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <p class="mb-1">Monthly Interest <span id="monthlyInterest"
+                                                               class="text-3 float-right">0.0 NGN</span></p>
+                        <p class="mb-3">Monthly Profit <span id="monthlyProfit"
+                                                             class="text-3 float-right">0.0 NGN</span></p>
+                        <hr/>
+                        <p class="mb-1">Total Interest <span id="totalInterest"
+                                                             class="text-3 float-right">0.0 NGN</span></p>
+                        <p class="mb-3">Total Profit <span id="totalProfit" class="text-3 float-right">0.0 NGN</span>
+                        </p>
+                        <hr/>
+                        <p class="mb-1">Monthly Repayment <span id="monthlyRepayment"
+                                                                class="text-3 float-right">0.0 NGN</span></p>
+                        <p class="mb-5">Total Repayment <span id="totalRepayment"
+                                                              class="text-3 float-right">0.0 NGN</span></p>
+
+                        <input type="hidden" name="csrf" value="{$form.csrf}">
+                        <input type="hidden" name="track" value="{$form.track}">
+                        <button class="btn btn-primary btn-block">Post Request</button>
+
+                    </form>
+                    <!-- Send Money Form end -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Content end -->
+
+{include file='include/footer.html'}
+{include file='include/script.html'}

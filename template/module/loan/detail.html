@@ -1,0 +1,284 @@
+{include file='include/head.html'}
+{include file='include/header.html'}
+{include file='include/element.html'}
+
+<!-- Content
+============================================= -->
+<div id="content" class="py-4" data-loan-owner="{$data.loan.userID}">
+    <div class="container">
+        <div class="row">
+
+            <!-- Left Panel
+            ============================================= -->
+            <aside class="col-lg-3">
+
+                <!-- Profile Details
+                =============================== -->
+                <div class="bg-light shadow-sm rounded text-center p-3 mb-4">
+                    <div class="profile-thumb mt-3 mb-4">
+                        <div class="profile-thumb rounded-circle overflow-hidden">
+                            <img src="{base_url($data.loan.avatar)}"
+                                 alt="{$data.loan.firstName} {$data.loan.lastName}" width="100">
+                        </div>
+                    </div>
+                    <h3 class="text-5 font-weight-500 mb-2">
+                        <span class="firstName">{$data.loan.firstName}</span>
+                        <span class="lastName">{$data.loan.lastName}</span>
+                    </h3>
+
+                    <label class="text-3 font-weight-500 badge badge-primary">{$data.loan.loanTypeTxt}</label>
+                </div>
+
+                <!-- Profile Details End -->
+
+                <!-- Available Balance
+                =============================== -->
+                <div class="bg-light shadow-sm rounded text-center p-3 mb-4">
+
+                    <div class="text-17 text-light my-3 position-relative"><i class="fas fa-wallet"></i></div>
+                    <h3 class="text-9 font-weight-400 loan-amount-txt">{CURRENCY_NAIRA}{$data.loan.amountFormatted}</h3>
+                    <p class="mb-2 text-muted opacity-8">Loan Amount</p>
+                    <hr class="mx-n3">
+
+                    <div class="d-flex">
+                        <span class="btn-link mr-auto">Tenor:</span>
+                        <span class="ml-auto loan-tenor-txt">{$data.loan.tenor} month(s)</span>
+                    </div>
+
+                    <div class="d-flex">
+                        <span class="btn-link mr-auto">Interest:</span>
+                        <span class="ml-auto loan-interest-txt">{$data.loan.interest}%</span>
+                    </div>
+
+                    {$repayment = floatval($data.loan.amount)}
+
+                    {$totalInterest = 0}
+
+                    {if $data.loan.interest > 0}
+                    {$totalInterest = (($repayment * floatval($data.loan.interest)) / 100)}
+                    {/if}
+
+                    {if $data.loan.tenor > 0}
+                    {$totalInterest = ($totalInterest * $data.loan.tenor)}
+                    {/if}
+
+                    {$repayment = ($repayment + $totalInterest)}
+
+                    <div class="d-flex">
+                        <span class="btn-link mr-auto">Monthly Repayment:</span>
+                        <span class="ml-auto loan-monthly-repayment-txt">{CURRENCY_NAIRA}{number_format(($repayment / $data.loan.tenor), 2)}</span>
+                    </div>
+
+                    <div class="d-flex">
+                        <span class="btn-link mr-auto">Total Repayment:</span>
+                        <span class="ml-auto loan-total-repayment-txt">{CURRENCY_NAIRA}{number_format($repayment, 2)}</span>
+                    </div>
+
+                    {if $data.loan.userID == user('userID')}
+                    <a href="#edit-loan" data-toggle="modal"
+                       class="btn btn-primary mt-20">
+                        <i class="fas fa-edit mr-1"></i>Edit
+                    </a>
+                    {/if}
+
+                </div>
+                <!-- Available Balance End -->
+
+                <!-- Need Help?
+                =============================== -->
+                <div class="bg-light shadow-sm rounded text-center p-3 mb-4">
+                    <div class="text-17 text-light my-3"><i class="fas fa-comments"></i></div>
+                    <h3 class="text-3 font-weight-400 my-4">Need Help?</h3>
+                    <p class="text-muted opacity-8 mb-4">Have questions or concerns regrading your account?<br>
+                        Our experts are here to help!.</p>
+                    <a href="#" class="btn btn-primary btn-block">Chate with Us</a></div>
+                <!-- Need Help? End -->
+
+            </aside>
+            <!-- Left Panel End -->
+
+            <!-- Middle Panel
+            ============================================= -->
+            <div class="col-lg-9">
+
+                <!-- Loan Note
+                ============================================= -->
+                <div class="bg-light shadow-sm rounded p-4 mb-4">
+                    <h3 class="text-5 font-weight-400 mb-3">Loan Note
+                        {if $data.loan.userID == user('userID')}
+                        <a href="#edit-note" data-toggle="modal"
+                           class="float-right text-1 text-uppercase text-muted btn-link">
+                            <i class="fas fa-edit mr-1"></i>Edit</a>
+                        {/if}
+                    </h3>
+                    <span class="loan-note-txt">{$data.loan.note}</span>
+                </div>
+
+                {if $data.loan.userID == user('userID')}
+                <!-- Loan Note Modal
+                ================================== -->
+                <div id="edit-note" class="modal fade " role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title font-weight-400">Loan Note</h5>
+                                <button type="button" class="close font-weight-400" data-dismiss="modal"
+                                        aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <form id="loan-note-form" method="post">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label for="email">Note</label>
+                                                <textarea type="text" name="note"
+                                                          class="form-control" id="email" required
+                                                          placeholder="Note">{$data.loan.note}</textarea>
+                                                <input type="hidden" name="track" value="{$form.track}"/>
+                                                <input type="hidden" name="csrf" value="{$form.csrf}"/>
+                                                <input type="hidden" name="action" value="note">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary btn-block" type="submit">Update</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Loan Note End -->
+                {/if}
+
+                <!-- Personal Details
+                ============================================= -->
+                <div class="bg-light shadow-sm rounded p-4 mb-4">
+                    <h3 class="text-5 font-weight-400 mb-3">Personal Information</h3>
+                    <div class="row">
+                        <p class="col-sm-3 text-muted text-sm-right mb-0 mb-sm-3">Name</p>
+                        <p class="col-sm-9">
+                            <span class="firstName">{$data.loan.firstName}</span>
+                            <span class="middleName">{$data.loan.middleName}</span>
+                            <span class="lastName">{$data.loan.lastName}</span>
+                        </p>
+                    </div>
+                    <div class="row">
+                        <p class="col-sm-3 text-muted text-sm-right mb-0 mb-sm-3">Email</p>
+                        <p class="col-sm-9 gender">{$data.loan.email}</p>
+                    </div>
+                    <div class="row">
+                        <p class="col-sm-3 text-muted text-sm-right mb-0 mb-sm-3">Phone</p>
+                        <p class="col-sm-9 gender">{$data.loan.phoneNumber}</p>
+                    </div>
+                    {if $data.loan.loanType == LOAN_TYPE_REQUEST}
+                    <div class="row">
+                        <p class="col-sm-3 text-muted text-sm-right mb-0 mb-sm-3">Employment</p>
+                        <p class="col-sm-9 gender">{$data.loan.employmentStatus}</p>
+                    </div>
+                    {/if}
+                    <div class="row">
+                        <p class="col-sm-3 text-muted text-sm-right mb-0 mb-sm-3">Address</p>
+                        <p class="col-sm-9 address">{if empty($data.loan.address)}Unavailable{else}{$data.loan.address}{/if}</p>
+                    </div>
+                    <div class="row">
+                        <p class="col-sm-3 text-muted text-sm-right mb-0 mb-sm-3">Location</p>
+                        <p class="col-sm-9">
+                            <span class="state">{$data.loan.stateName}</span>,
+                            <span class="country">{$data.loan.countryName}</span>
+                        </p>
+                    </div>
+                </div>
+
+
+                <!-- Personal Details
+                    ============================================= -->
+                <div class="bg-light shadow-sm rounded p-4 mb-4">
+                    <h3 class="text-5 font-weight-400 mb-3">Official Information</h3>
+                    <div class="row">
+                        <p class="col-sm-3 text-muted text-sm-right mb-0 mb-sm-3">Company Name</p>
+                        <p class="col-sm-9 c-name">{$data.loan.companyName}</p>
+                    </div>
+                    <div class="row">
+                        <p class="col-sm-3 text-muted text-sm-right mb-0 mb-sm-3">Company Address</p>
+                        <p class="col-sm-9 c-address">{$data.loan.companyAddress}</p>
+                    </div>
+                    <div class="row">
+                        <p class="col-sm-3 text-muted text-sm-right mb-0 mb-sm-3">Company Website</p>
+                        <p class="col-sm-9 c-website">{$data.loan.companyWebsite}</p>
+                    </div>
+                    <div class="row">
+                        <p class="col-sm-3 text-muted text-sm-right mb-0 mb-sm-3">Net Income (Salary)</p>
+                        <p class="col-sm-9 salary">{$data.loan.salary}</p>
+                    </div>
+                </div>
+
+                {if !$data.loan.startedConvo && $data.loan.userID != user('userID')}
+                <div class="btn btn-primary btn-round btn-conversation col-md-12">Start a conversation</div>
+                {/if}
+
+                {if $data.loan.userID == user('userID')}
+                <!-- Edit Details Modal
+                ================================== -->
+                <div id="edit-loan" class="modal fade " role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title font-weight-400">Loan Information</h5>
+                                <button type="button" class="close font-weight-400" data-dismiss="modal"
+                                        aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            </div>
+                            <div class="modal-body p-4">
+
+                                <form id="loan-detail-form" action="#" method="post">
+
+                                    <div class="form-group">
+                                        <label for="amount">Amount</label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text currency-symbol">{CURRENCY_NAIRA}</span>
+                                            </div>
+                                            <input type="text" class="form-control" id="amount" name="amount"
+                                                   value="{$data.loan.amount}" placeholder="1,000">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="tenor">Max Tenor <small>(Monthly)</small></label>
+                                        <input type="number" min="1" max="12" class="form-control" id="tenor" name="tenor"
+                                               value="{$data.loan.tenor}" placeholder="Max Repayment Tenor">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="interest">Interest Percentage <small>(Leave blank if you don't want interest)</small></label>
+                                        <input type="text" max="20" class="form-control" id="interest" name="interest"
+                                               value="{$data.loan.interest}" placeholder="Interest rate percentage">
+                                    </div>
+
+                                    <hr>
+                                    <p class="mb-1">Monthly Interest <span id="monthlyInterest" class="text-3 float-right">0.0 NGN</span></p>
+                                    <p class="mb-3">Monthly Profit <span id="monthlyProfit" class="text-3 float-right">0.0 NGN</span></p><hr/>
+                                    <p class="mb-1">Total Interest <span id="totalInterest" class="text-3 float-right">0.0 NGN</span></p>
+                                    <p class="mb-3">Total Profit <span id="totalProfit" class="text-3 float-right">0.0 NGN</span></p><hr/>
+                                    <p class="mb-1">Monthly Repayment <span id="monthlyRepayment" class="text-3 float-right">0.0 NGN</span></p>
+                                    <p class="mb-5">Total Repayment <span id="totalRepayment" class="text-3 float-right">0.0 NGN</span></p>
+
+                                    <input type="hidden" name="csrf" value="{$form.csrf}">
+                                    <input type="hidden" name="track" value="{$form.track}">
+                                    <input type="hidden" name="action" value="details">
+                                    <button class="btn btn-primary btn-block">Update</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Loan Details End -->
+                {/if}
+
+        </div>
+        <!-- Middle Panel End -->
+    </div>
+</div>
+</div>
+<!-- Content end -->
+
+{include file='include/footer.html'}
+{include file='include/script.html'}

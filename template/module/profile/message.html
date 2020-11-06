@@ -1,0 +1,263 @@
+{include file='include/head.html'}
+{include file='include/header.html'}
+
+<!-- Secondary Menu
+  ============================================= -->
+<div class="bg-primary">
+    <div class="container d-flex justify-content-center">
+        <ul class="nav secondary-nav">
+            <li class="nav-item"><a class="nav-link" href="{base_url('profile')}">Account</a></li>
+            <li class="nav-item"><a class="nav-link" href="{base_url('profile/bank')}">Cards & Bank Accounts</a></li>
+            <li class="nav-item"><a class="nav-link active" href="{base_url('profile/message')}">Message</a></li>
+            <li class="nav-item"><a class="nav-link" href="{base_url('profile/notification')}">Notification</a></li>
+        </ul>
+    </div>
+</div>
+<!-- Secondary Menu end -->
+
+<!-- Content
+============================================= -->
+<div id="content" class="py-4">
+    <div class="container">
+        <div class="row">
+            <!-- Middle Panel
+            ============================================= -->
+            <div class="col-lg-12">
+
+                <div class="inner-list">
+                    <h3 class="user-name">Messages</h3>
+                    <a href="javascript:void(0);" class="btn btn-default toggle-message-btn">
+                        Show messages box <i class="fa fa-angle-down" aria-hidden="true"></i>
+                    </a>
+                    <div class="message-section-wrapper">
+                        <div class="message-inner clearfix">
+
+                            <div class="list-message-wrapper">
+                                <div class="search-message-form">
+                                    <div class="search-wrapper-message">
+                                        <div class="form-group">
+                                            <input type="text" class="form-control" name="search"
+                                                   placeholder="Search Conversations...">
+                                        </div>
+                                        <button class="search-message-btn btn"><i class="ti-search"></i></button>
+                                    </div>
+                                    <ul class="nav nav-pills" role="tablist">
+                                        <li role="presentation">
+                                            <a class="nav-link active" data-toggle="tab" href="#open" role="tab" data-override-click="true">
+                                                <i class="fa fa-book-open"></i> Open</a>
+                                        </li>
+                                        <li role="presentation">
+                                            <a class="nav-link" data-toggle="tab" href="#paused" role="tab" data-override-click="true">
+                                                <i class="fa fa-pause"></i> Paused</a>
+                                        </li>
+                                        <li role="presentation">
+                                            <a class="nav-link" data-toggle="tab" href="#closed" role="tab" data-override-click="true">
+                                                <i class="fa fa-stop"></i> Closed</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="list-message-inner ps-container tab-content">
+
+                                    <div class="tab-pane fade in show active open" id="open" role="tabpanel">
+
+                                        <ul class="list-message">
+                                            {foreach $data.convos.open as $key => $value}
+
+                                            <li class="read">
+                                                <a class="message-item" href="#chat-{$value.conversationID}"
+                                                   data-id="{$value.conversationID}" data-loan-id="{$value.loanID}">
+                                                    <div class="avatar">
+                                                        <img width="150" height="150"
+                                                             src="{base_url($value.thirdParty.avatar)}"
+                                                             class="attachment-thumbnail size-thumbnail"
+                                                             alt="{$value.thirdParty.firstName}"></div>
+                                                    <div class="content">
+                                                        <h4 class="user-name">
+                                                            {$value.thirdParty.firstName} {$value.thirdParty.lastName}
+                                                        </h4>
+                                                        <span class="message-time ml-0">
+                                                            {$value.dateConvoStarted}
+                                                        </span>
+                                                    </div>
+                                                </a>
+                                            </li>
+
+                                            {foreachelse}
+                                            <li class="no-results"><h4>No conversation yet.</h4></li>
+                                            {/foreach}
+                                        </ul>
+                                    </div>
+
+                                    <div class="tab-pane fade paused" id="paused" role="tabpanel">
+
+                                        <ul class="list-message">
+                                            {foreach $data.convos.paused as $key => $value}
+
+                                            <li class="read">
+                                                <a class="message-item" href="#chat-{$value.conversationID}"
+                                                   data-id="{$value.conversationID}" data-loan-id="{$value.loanID}">
+                                                    <div class="avatar">
+                                                        <img width="150" height="150"
+                                                             src="{base_url($value.thirdParty.avatar)}"
+                                                             class="attachment-thumbnail size-thumbnail"
+                                                             alt="{$value.thirdParty.firstName}"></div>
+                                                    <div class="content">
+                                                        <h4 class="user-name">
+                                                            {$value.thirdParty.firstName} {$value.thirdParty.lastName}
+                                                        </h4>
+                                                        <span class="message-time ml-0">
+                                                            {$value.dateConvoStarted}
+                                                        </span>
+                                                    </div>
+                                                </a>
+                                            </li>
+
+                                            {foreachelse}
+                                            <li class="no-results"><h4>No conversation yet.</h4></li>
+                                            {/foreach}
+                                        </ul>
+                                    </div>
+
+                                    <div class="tab-pane fade closed" id="closed" role="tabpanel">
+
+                                        <ul class="list-message">
+                                            {foreach $data.convos.closed as $key => $value}
+
+                                            <li class="read">
+                                                <a class="message-item" href="#chat-{$value.conversationID}"
+                                                   data-id="{$value.conversationID}" data-loan-id="{$value.loanID}">
+                                                    <div class="avatar">
+                                                        <img width="150" height="150"
+                                                             src="{base_url($value.thirdParty.avatar)}"
+                                                             class="attachment-thumbnail size-thumbnail"
+                                                             alt="{$value.thirdParty.firstName}"></div>
+                                                    <div class="content">
+                                                        <h4 class="user-name">
+                                                            {$value.thirdParty.firstName} {$value.thirdParty.lastName}
+                                                        </h4>
+                                                        <span class="message-time ml-0">
+                                                            {$value.dateConvoStarted}
+                                                        </span>
+                                                    </div>
+                                                </a>
+                                            </li>
+
+                                            {foreachelse}
+                                            <li class="no-results"><h4>No conversation yet.</h4></li>
+                                            {/foreach}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="replies-content">
+                                <div class="recipient-info clearfix">
+                                    <div class="message-item pull-left">
+                                        <div class="avatar">
+                                            <img width="150" height="150" src=""
+                                                 class="attachment-thumbnail size-thumbnail" alt="">
+                                        </div>
+                                        <div class="content">
+                                            <h4 class="user-name mt-15"></h4>
+                                        </div>
+                                    </div>
+                                    <div class="row pull-right">
+                                        <div class="col-md-12">
+
+                                            <div class="dropdown">
+                                                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton"
+                                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    Options
+                                                </button>
+                                                <div class="dropdown-menu conversation-status" aria-labelledby="dropdownMenuButton">
+                                                    <button class="dropdown-item" data-status="{STATE_OPEN}" disabled>
+                                                        <i class="fa fa-book-open"></i>
+                                                        Open Conversation
+                                                    </button>
+                                                    <button class="dropdown-item" data-status="{STATE_FREEZE}" disabled>
+                                                        <i class="fa fa-pause"></i>
+                                                        Pause Conversation
+                                                    </button>
+                                                    <button class="dropdown-item" data-status="{STATE_CLOSED}" disabled>
+                                                        <i class="fa fa-stop"></i>
+                                                        Close Conversation
+                                                    </button>
+                                                    <div class="dropdown-divider"></div>
+                                                    <button class="dropdown-item" data-status="{STATE_INACTIVE}" disabled>
+                                                        <i class="fa fa-trash"></i>
+                                                        Delete Conversation
+                                                    </button>
+                                                    <div class="dropdown-divider"></div>
+                                                    <a class="dropdown-item" href="#" disabled>
+                                                        <i class="fa fa-eye"></i>
+                                                        View Loan
+                                                    </a>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="content-box-white">
+                                    <div class="list-replies-inner ps-container">
+                                        <ul class="list-replies">
+                                            <h5 class="width-full text-center mt-40">Select a conversation to and it's messages will appear here.</h5>
+                                        </ul>
+                                    </div>
+                                    <div class="reply-message-form-wrapper">
+                                        <form id="reply-message-form" class="reply-message-form" action="?" method="post">
+
+                                            <div class="input-group">
+
+                                                <div class="col-md-12 border-primary bg-white pt-2 pb-2 mb-2 attach-holder" style="display: none">
+                                                    <i class="fas fa-file-alt fa-2x attach-icon"></i>
+                                                    <span class="ml-2 file-name">my file</span>
+                                                    <div class="btn-remove-attachment">
+                                                        <i class="fas fa-times"></i>
+                                                    </div>
+                                                </div>
+
+                                                <input type="text" class="form-control" name="message"
+                                                       placeholder="Write your message..." spellcheck="true"
+                                                       aria-label="Message to be sent" aria-describedby="button-addon2" disabled>
+                                                <input type="hidden" class="chat-token" name="token" value="{$data.token}"/>
+                                                <input type="hidden" name="attachment"/>
+                                                <input type="file" name="file" class="d-none"/>
+                                                <div class="input-group-append">
+                                                    <!-- Default dropup button -->
+                                                    <div class="btn-group dropup">
+                                                        <button type="button" class="btn btn-dark-normal dropdown-toggle p-0 btn-attachment"
+                                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                            <i class="fa fa-paperclip"></i>
+                                                        </button>
+                                                        <div class="dropdown-menu">
+                                                            <button class="dropdown-item" type="button" data-file="identity-card">Send Identity Card</button>
+                                                            <button class="dropdown-item" type="button" data-file="bank-statement">Send Bank Statement</button>
+                                                            <button class="dropdown-item" type="button" data-file="local">Send File from Computer</button>
+                                                        </div>
+                                                    </div>
+                                                    <button class="btn btn-dark-normal" type="submit" id="button-addon2" disabled>
+                                                        <i class="fa fa-paper-plane"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- Middle Panel End -->
+    </div>
+</div>
+</div>
+<!-- Content end -->
+
+{include file='include/footer.html'}
+{include file='include/script.html'}
