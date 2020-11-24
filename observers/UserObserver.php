@@ -9,10 +9,14 @@
 namespace observers;
 
 
-use que\database\interfaces\drivers\Observer;
-use que\database\interfaces\drivers\ObserverSignal;
+use que\common\exception\QueException;
 use que\database\interfaces\model\Model;
+use que\database\interfaces\observer\Observer;
 use que\database\model\ModelCollection;
+use que\database\observer\ObserverSignal;
+use que\http\HTTP;
+use que\mail\Mail;
+use que\mail\Mailer;
 
 class UserObserver implements Observer
 {
@@ -33,8 +37,6 @@ class UserObserver implements Observer
     public function onCreating(Model $model)
     {
         // TODO: Implement onCreating() method.
-        debug_print([$model,'onCreating']);
-//        $this->getSignal()->setContinueOperation(false);
     }
 
     /**
@@ -43,8 +45,6 @@ class UserObserver implements Observer
     public function onCreated(Model $model)
     {
         // TODO: Implement onCreated() method.
-        debug_print([$model,'onCreated']);
-//        $this->getSignal()->setUndoOperation(true);
     }
 
     /**
@@ -54,7 +54,6 @@ class UserObserver implements Observer
     {
         // TODO: Implement onCreateFailed() method.
         $this->getSignal()->retryOperation(2);
-        debug_print(['onCreateFailed' => $model, $errors, $errorCode]);
     }
 
     /**
@@ -63,8 +62,6 @@ class UserObserver implements Observer
     public function onCreateRetryStarted(Model $model)
     {
         // TODO: Implement onCreateRetryStarted() method.
-        debug_print(['onCreateRetryStarted' => $model]);
-        $model->offsetRename('names', 'name');
     }
 
     /**
@@ -73,7 +70,6 @@ class UserObserver implements Observer
     public function onCreateRetryComplete(Model $model, bool $status, int $attempts)
     {
         // TODO: Implement onCreateRetryComplete() method.
-        debug_print(['onCreateRetryComplete' => $model, $status ? 'true' : 'false', $attempts]);
     }
 
     /**
@@ -82,7 +78,6 @@ class UserObserver implements Observer
     public function onUpdating(ModelCollection $models)
     {
         // TODO: Implement onUpdating() method.
-        debug_print([$models,'onUpdating']);
     }
 
     /**
@@ -91,8 +86,39 @@ class UserObserver implements Observer
     public function onUpdated(ModelCollection $newModels, ModelCollection $previousModels)
     {
         // TODO: Implement onUpdated() method.
-        debug_print([['$newModels' => $newModels], ['$previousModels' => $previousModels], 'onUpdated']);
-//        $this->getSignal()->setUndoOperation(true);
+        $newModels->map(function (Model $model) use ($previousModels) {
+
+            $previousModel = $previousModels->find(function (Model $m) use ($model) {
+                return $model->validate('id')->isEqual($m->getValue('id'));
+            });
+
+            if ($model->validate('password')->isNotEqual($previousModel->getValue('password'))) {
+
+                try {
+
+                    $mailer = Mailer::getInstance();
+
+                    $mail = new Mail('reset');
+                    $mail->addRecipient($model->getValue('email'));
+                    $mail->setSubject("Password Reset");
+                    $mail->setData([
+                        'title' => 'Password Reset',
+                        'name' => "{$model->getValue('firstname')} {$model->getValue('lastname')}",
+                        'app_name' => config('template.app.header.name')
+                    ]);
+                    $mail->setHtmlPath('email/html/reset-password.tpl');
+                    $mail->setBodyPath('email/text/reset-password.txt');
+
+                    $mailer->addMail($mail);
+                    $mailer->prepare('reset');
+                    if (!$mailer->dispatch('reset')) throw new QueException($mailer->getError('reset'));
+
+                } catch (QueException $e) {
+                }
+
+            }
+
+        });
     }
 
     /**
@@ -102,7 +128,6 @@ class UserObserver implements Observer
     {
         // TODO: Implement onUpdateFailed() method.
         $this->getSignal()->retryOperation(1);
-        debug_print(['onUpdateFailed' => $models, $errors, $errorCode]);
     }
 
     /**
@@ -111,7 +136,6 @@ class UserObserver implements Observer
     public function onUpdateRetryStarted(ModelCollection $models)
     {
         // TODO: Implement onUpdateRetryStarted() method.
-        debug_print(['onUpdateRetryStarted' => $models]);
     }
 
     /**
@@ -120,7 +144,6 @@ class UserObserver implements Observer
     public function onUpdateRetryComplete(ModelCollection $models, bool $status, int $attempts)
     {
         // TODO: Implement onUpdateRetryComplete() method.
-        debug_print(['onUpdateRetryComplete' => $models, $status ? 'true' : 'false', $attempts]);
     }
 
     /**
@@ -129,10 +152,6 @@ class UserObserver implements Observer
     public function onDeleting(ModelCollection $models)
     {
         // TODO: Implement onDeleting() method.
-        $models->unsetWhen(function (Model $model) {
-            return $model->get('id')->isEqualToAny([106, 109]);
-        });
-        debug_print([$models,'onDeleting']);
     }
 
     /**
@@ -141,8 +160,6 @@ class UserObserver implements Observer
     public function onDeleted(ModelCollection $models)
     {
         // TODO: Implement onDeleted() method.
-        debug_print([$models,'onDeleted']);
-//        $this->getSignal()->setUndoOperation(true);
     }
 
     /**
@@ -152,7 +169,6 @@ class UserObserver implements Observer
     {
         // TODO: Implement onDeleteFailed() method.
         $this->getSignal()->retryOperation(3);
-        debug_print(['onDeleteFailed' => $models, $errors, $errorCode]);
     }
 
     /**
@@ -161,8 +177,6 @@ class UserObserver implements Observer
     public function onDeleteRetryStarted(ModelCollection $models)
     {
         // TODO: Implement onDeleteRetryStarted() method.
-        debug_print(['changed db obs', db()->changeDb('que') ? 'true' : 'false']);
-        debug_print(['onDeleteRetryStarted' => $models, config('database.connections.mysql.dbname')]);
     }
 
     /**
@@ -171,7 +185,6 @@ class UserObserver implements Observer
     public function onDeleteRetryComplete(ModelCollection $models, bool $status, int $attempts)
     {
         // TODO: Implement onDeleteRetryComplete() method.
-        debug_print(['onDeleteRetryComplete' => $models, $status ? 'true' : 'false', $attempts]);
     }
 
     /**

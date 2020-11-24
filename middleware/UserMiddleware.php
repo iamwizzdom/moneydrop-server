@@ -34,6 +34,7 @@ class UserMiddleware extends Middleware
      */
     public function handle(Input $input): MiddlewareResponse
     {
+        sleep(3);
         // TODO: Implement handle() method.
         $hasAccess = true;
         $message = "";
@@ -75,13 +76,15 @@ class UserMiddleware extends Middleware
             $message = $e->getMessage();
         }
 
+        $this->setAccess($hasAccess);
+
         if (!$hasAccess) {
 
-            $this->setAccess($hasAccess);
+            $this->setTitle("Auth Error");
             $this->setResponse(http()->output()->json([
                 'status' => false,
                 'message' => $message,
-            ], HTTP::UNAUTHORIZED));
+            ], HTTP::EXPIRED_AUTHENTICATION));
 
             return $this;
         }

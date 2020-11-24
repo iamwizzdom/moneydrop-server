@@ -67,7 +67,8 @@ return [
         | Notice: If you set this to null you should remove 'exp' element from 'required_claims' list.
         |
         */
-        'ttl' => TIMEOUT_ONE_HOUR,
+//        'ttl' => TIMEOUT_ONE_HOUR,
+        'ttl' => null,
 
         /*
         |--------------------------------------------------------------------------

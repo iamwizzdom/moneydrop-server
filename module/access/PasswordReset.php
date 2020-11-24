@@ -4,10 +4,12 @@
 namespace module\access;
 
 
+use DateTime;
 use que\common\exception\BaseException;
 use que\common\exception\QueException;
 use que\common\manager\Manager;
 use que\common\structure\Api;
+use que\database\interfaces\Builder;
 use que\http\HTTP;
 use que\http\input\Input;
 
@@ -36,53 +38,42 @@ class PasswordReset extends Manager implements Api
                 ->isConfirmed("Password do not match")->hash('SHA512');
 
             if ($validator->hasError()) throw $this->baseException("The inputted data is invalid",
-                "Password Reset Error", HTTP::UNPROCESSABLE_ENTITY);
+                "Password Reset Failed", HTTP::UNPROCESSABLE_ENTITY);
 
-            $otp = $this->session()->getQueKip()->get($validator->getValue('email'));
+            $user = $this->db()->find('users', $input['email'], 'email')->getFirstWithModel();
 
-            if (empty($otp)) {
-                $validator->addConditionError('otp', 'The OTP has either expired or does not exist');
-                throw $this->baseException("The inputted data is invalid", "Password Reset Error", HTTP::UNPROCESSABLE_ENTITY);
+            $code = $this->db()->find('password_resets', $user->getValue('id'), 'user_id',
+                function (Builder $builder) {
+                    $builder->where('is_active', true);
+                }
+            );
+
+            if (!$code->isSuccessful()) {
+                $validator->addConditionError('otp', 'The OTP has either been invalidated or does not exist');
+                throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::UNPROCESSABLE_ENTITY);
             }
 
-            if ($input->validate('otp')->isNotEqual($otp)) {
+            $code = $code->getFirstWithModel();
+
+            if ($code->validate('expiration')->isDateLessThan(
+                DateTime::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', APP_TIME)))) {
+
+                $code->update(['is_active' => false]);
+
+                $validator->addConditionError('otp', 'That OTP has expired');
+                throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::EXPIRED_AUTHENTICATION);
+            }
+
+            if ($input->validate('otp')->hash()->isNotEqual($code->getValue('code'))) {
                 $validator->addConditionError('otp', 'OTP do not match');
-                throw $this->baseException("The inputted data is invalid", "Password Reset Error", HTTP::UNPROCESSABLE_ENTITY);
+                throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::UNPROCESSABLE_ENTITY);
             }
 
-            $user = $this->db()->find('users', $input->get('email'), 'email');
-
-            $update = ($model = $user->getFirstWithModel())->update([
-                'password' => $validator->getValue('password')
-            ]);
+            $update = $user->update(['password' => $validator->getValue('password')]);
 
             if (!$update) throw $this->baseException(
                 "Sorry, we couldn't reset your password at this time. Please try gain later",
-                "Password Reset Error", HTTP::EXPECTATION_FAILED);
-
-            try {
-
-                $mailer = $this->mailer();
-
-                $mail = $this->mail('reset');
-                $mail->addRecipient($validator->getValue('email'));
-                $mail->setSubject("Password Reset");
-                $mail->setData([
-                    'title' => 'Password Reset',
-                    'name' => "{$model->getValue('firstname')} {$model->getValue('lastname')}",
-                    'app_name' => config('template.app.header.name')
-                ]);
-                $mail->setHtmlPath('email/html/reset-password.tpl');
-                $mail->setBodyPath('email/text/reset-password.txt');
-
-                $mailer->addMail($mail);
-                $mailer->prepare('reset');
-                if (!$mailer->dispatch('reset')) throw new QueException($mailer->getError('reset'));
-
-            } catch (QueException $e) {
-                throw $this->baseException($e->getMessage(),
-                    "Password Reset Error", HTTP::EXPECTATION_FAILED, false);
-            }
+                "Password Reset Failed", HTTP::EXPECTATION_FAILED);
 
             $this->session()->getQueKip()->delete($validator->getValue('email'));
 

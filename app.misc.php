@@ -5,3 +5,14 @@
  * Date: 10/17/2019
  * Time: 1:20 PM
  */
+
+
+const PAYSTACK_INIT_TRANS_URL = 'https://api.paystack.co/transaction/initialize';
+const PAYSTACK_VERIFY_INIT_TRANS_URL = 'https://api.paystack.co/transaction/verify';
+const PAYSTACK_CHARGE_CARD_URL = 'https://api.paystack.co/transaction/charge_authorization';
+const PAYSTACK_RESOLVE_BVN_URL = 'https://api.paystack.co/bank/resolve_bvn';
+const PAYSTACK_MATCH_BVN_URL = 'https://api.paystack.co/bvn/match';
+const PAYSTACK_RESOLVE_ACCOUNT_URL = 'https://api.paystack.co/bank/resolve';
+const PAYSTACK_RESOLVE_CARD_URL = 'https://api.paystack.co/decision/bin';
+
+const PAYSTACK_KEY = 'sk_test_7befecf38cf1c8ca067203622551af4b9054a4fd';

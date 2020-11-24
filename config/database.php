@@ -81,7 +81,7 @@ return [
     |
     */
     'observers' => [
-        'user' => \observers\UserObserver::class
+        'users' => \observers\UserObserver::class
     ],
 
     /*
@@ -244,12 +244,12 @@ return [
             /*
              | country table name
              */
-            'name' => '',
+            'name' => 'countries',
 
             /*
              | country table primary key name
              */
-            'primary_key' => ''
+            'primary_key' => 'countryID'
         ],
 
         /*
@@ -260,12 +260,12 @@ return [
             /*
              | state table name
              */
-            'name' => '',
+            'name' => 'states',
 
             /*
              | state table primary key name
              */
-            'primary_key' => ''
+            'primary_key' => 'stateID'
         ],
 
         /*
