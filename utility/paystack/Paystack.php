@@ -7,10 +7,12 @@ namespace utility\paystack;
 use que\http\curl\CurlRequest;
 use que\http\curl\CurlResponse;
 use que\support\Str;
+use utility\Card;
 use utility\paystack\exception\PaystackException;
 
 trait Paystack
 {
+    use Card;
 
     /**
      * @param string $email
@@ -59,6 +61,7 @@ trait Paystack
                 $trans = [
                     'uuid' => Str::uuidv4(),
                     'user_id' => user('id'),
+                    'transaction_type' => 'c2w',
                     'reference' => $data['reference'],
                     'email' => $email,
                     'amount' => $amount,
@@ -80,7 +83,7 @@ trait Paystack
      * @return CurlResponse
      * @throws PaystackException
      */
-    public function verify_init_transaction(string $reference)
+    public function verify_transaction(string $reference)
     {
         if (empty($reference)) throw new PaystackException("Please set a valid transaction reference.");
 
@@ -111,7 +114,7 @@ trait Paystack
     }
 
     /**
-     * @param string $authCode
+     * @param string $cardUUID
      * @param string $email
      * @param float $amount
      * @param float|null $extraCharge
@@ -119,7 +122,7 @@ trait Paystack
      * @return CurlResponse
      * @throws PaystackException
      */
-    public function charge_card(string $authCode, string $email, float $amount,
+    public function charge_card(string $cardUUID, string $email, float $amount,
                                 ?float $extraCharge = null, string $currency = 'NGN')
     {
 
@@ -133,6 +136,10 @@ trait Paystack
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
+
+        $authCode = $this->getCardAuthCode($cardUUID);
+
+        if (!$authCode) throw new PaystackException("Card authorization not found.");
 
         $post = [
             'email' => $email,
@@ -149,12 +156,6 @@ trait Paystack
 
         if ($response->isSuccessful()) {
 
-            $card = db()->select('id')->whereJsonValue('auth', $authCode, '$.authorization_code')->exec();
-
-            $cardID = null;
-
-            if ($card->isSuccessful()) $cardID = $card->getFirstWithModel()->getValue('id');
-
             $data = $response->getResponseArray()['data'] ?? [];
 
             if (!empty($data)) {
@@ -162,6 +163,8 @@ trait Paystack
                 $trans = [
                     'uuid' => Str::uuidv4(),
                     'user_id' => user('id'),
+                    'card_id' => $cardUUID,
+                    'transaction_type' => 'c2w',
                     'reference' => $data['reference'],
                     'email' => $email,
                     'amount' => $amount,
@@ -169,7 +172,6 @@ trait Paystack
                     'status' => $data['status']
                 ];
 
-                if ($cardID) $trans['card_id'] = $cardID;
                 if ($extraCharge) $trans['fees'] = $extraCharge;
 
                 db()->insert('transactions', $trans);

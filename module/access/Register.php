@@ -35,7 +35,8 @@ class Register extends Manager implements Api
                 ->hasMinLength(3, "Your last name must be at least %s characters long");
 
             $validator->validate('phone')->isPhoneNumber("Please enter a valid phone number")
-                ->hasMinLength(13, "Enter your phone number with your country code, and it must be at least %s characters long")
+                ->hasMinLength(7, "Your phone number must be at least %s digits long.")
+                ->hasMaxLength(15, "Your phone number must not be more than %s digits.")
                 ->isUniqueInDB("users", "phone", "That phone number already exist");
 
             $validator->validate('email')->isEmail("Please enter a valid email address")->toLower()
@@ -70,44 +71,38 @@ class Register extends Manager implements Api
             if ($validator->hasError()) throw $this->baseException(
                 "The inputted data is invalid", "Registration Failed", HTTP::UNPROCESSABLE_ENTITY, false);
 
-            $this->db()->transStart();
-
             $user = $this->db()->insert('users', $validator->getValidated());
 
             if (!$user->isSuccessful()) throw $this->baseException(
                 "Failed to create account at this time, please try again later",
                 "Registration Failed", HTTP::EXPECTATION_FAILED, false);
 
-            try {
+            $user = $user->getFirstWithModel();
+            User::login($user->getObject());
 
-                $mailer = $this->mailer();
+            $emailVerification = $this->db()->find('verifications', $user['email'],
+                'data', function (Builder $builder) {
+                    $builder->where('type', 'email');
+                    $builder->where('is_verified', true);
+                    $builder->where('is_active', true);
+                });
 
-                $mail = $this->mail('register');
-                $mail->addRecipient($validator->getValue('email'),
-                    $name = "{$validator->getValue('lastname')} {$validator->getValue('firstname')}");
-                $mail->setSubject("Successful Registration");
-                $mail->setData([
-                    'title' => 'Successful Registration',
-                    'name' => $name,
-                    'app_name' => config('template.app.header.name')
-                ]);
-                $mail->setHtmlPath('email/html/successful-registration-notice.tpl');
-                $mail->setBodyPath('email/text/successful-registration-notice.txt');
-                $mail->setFrom('account@moneydrop.com', 'MoneyDrop');
+            $phoneVerification = $this->db()->find('verifications', $user['phone'],
+                'data', function (Builder $builder) {
+                    $builder->where('type', 'phone');
+                    $builder->where('is_verified', true);
+                    $builder->where('is_active', true);
+                });
 
-                $mailer->addMail($mail);
-                $mailer->prepare('register');
-                if (!$mailer->dispatch('register')) throw new QueException($mailer->getError('register'));
+            $user->offsetSet('verified', [
+                'email' => $emailVerification->isSuccessful(),
+                'phone' => $phoneVerification->isSuccessful()
+            ]);
 
-            } catch (QueException $e) {
-                $this->db()->transRollBack();
-                throw $this->baseException($e->getMessage(), "Registration Failed", HTTP::EXPECTATION_FAILED, false);
-            }
-
-            $this->db()->transComplete();
-
-            $user = $user->getFirst();
-            User::login($user);
+            $user->offsetSet('country_id', $this->converter()->convertCountry($user['country_id'] ?: 0, 'countryName'));
+            $user->offsetSet('state_id', $this->converter()->convertState($user['state_id'] ?: 0, 'stateName'));
+            $user->offsetRename('country_id', 'country');
+            $user->offsetRename('state_id', 'state');
 
             return $this->http()->output()->json([
                 'status' => true,
@@ -116,8 +111,9 @@ class Register extends Manager implements Api
                 'message' => "You have been signed up successfully.",
                 'response' => [
                     'token' => JWT::fromUser($input->user()),
-                    'user' => $user
-                ]
+                    'user' => $user->getArray()
+                ],
+                'error' => (object) []
             ], HTTP::CREATED);
 
         } catch (BaseException $e) {

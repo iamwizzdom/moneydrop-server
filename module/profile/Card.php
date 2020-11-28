@@ -86,7 +86,7 @@ class Card extends Manager implements Api
                                 "The inputted data is invalid", "Card Failed", HTTP::UNPROCESSABLE_ENTITY);
 
                             try {
-                                $verify = $this->verify_init_transaction($validator->getValue('reference'));
+                                $verify = $this->verify_transaction($validator->getValue('reference'));
                             } catch (PaystackException $e) {
                                 throw $this->baseException($e->getMessage(), "Card Failed", HTTP::UNPROCESSABLE_ENTITY);
                             }

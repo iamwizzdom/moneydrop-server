@@ -45,6 +45,29 @@ class UserObserver implements Observer
     public function onCreated(Model $model)
     {
         // TODO: Implement onCreated() method.
+        try {
+
+            $mailer = Mailer::getInstance();
+
+            $mail = new Mail('reset');
+            $mail->addRecipient($model->getValue('email'),
+                $name = "{$model->getValue('firstname')} {$model->getValue('lastname')}");
+            $mail->setSubject("Successful Registration");
+            $mail->setData([
+                'title' => 'Successful Registration',
+                'name' => $name,
+                'app_name' => config('template.app.header.name')
+            ]);
+            $mail->setHtmlPath('email/html/successful-registration-notice.tpl');
+            $mail->setBodyPath('email/text/successful-registration-notice.txt');
+            $mail->setFrom('account@moneydrop.com', 'MoneyDrop');
+
+            $mailer->addMail($mail);
+            $mailer->prepare('register');
+            $mailer->dispatch('register');
+
+        } catch (QueException $e) {
+        }
     }
 
     /**
@@ -99,11 +122,12 @@ class UserObserver implements Observer
                     $mailer = Mailer::getInstance();
 
                     $mail = new Mail('reset');
-                    $mail->addRecipient($model->getValue('email'));
+                    $mail->addRecipient($model->getValue('email'),
+                        $name = "{$model->getValue('firstname')} {$model->getValue('lastname')}");
                     $mail->setSubject("Password Reset");
                     $mail->setData([
                         'title' => 'Password Reset',
-                        'name' => "{$model->getValue('firstname')} {$model->getValue('lastname')}",
+                        'name' => $name,
                         'app_name' => config('template.app.header.name')
                     ]);
                     $mail->setHtmlPath('email/html/reset-password.tpl');
@@ -111,7 +135,7 @@ class UserObserver implements Observer
 
                     $mailer->addMail($mail);
                     $mailer->prepare('reset');
-                    if (!$mailer->dispatch('reset')) throw new QueException($mailer->getError('reset'));
+                    $mailer->dispatch('reset');
 
                 } catch (QueException $e) {
                 }

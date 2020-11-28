@@ -11,7 +11,7 @@ use que\http\output\response\Html;
 use que\http\output\response\Json;
 use que\http\output\response\Jsonp;
 use que\http\output\response\Plain;
-use utility\wallet\Wallet;
+use utility\Wallet;
 
 class Dashboard extends Manager implements Api
 {

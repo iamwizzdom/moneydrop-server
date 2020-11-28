@@ -9,6 +9,7 @@
 namespace app\middleware;
 
 
+use Exception;
 use que\http\HTTP;
 use que\http\input\Input;
 use que\security\JWT\Exceptions\EmptyTokenException;
@@ -34,44 +35,14 @@ class UserMiddleware extends Middleware
      */
     public function handle(Input $input): MiddlewareResponse
     {
-        sleep(3);
+        sleep(1);
         // TODO: Implement handle() method.
         $hasAccess = true;
         $message = "";
 
         try {
             JWT::toUser(get_bearer_token() ?: '');
-        } catch (EmptyTokenException $e) {
-            $hasAccess = false;
-            $message = $e->getMessage();
-        } catch (InsecureTokenException $e) {
-            $hasAccess = false;
-            $message = $e->getMessage();
-        } catch (IntegrityViolationException $e) {
-            $hasAccess = false;
-            $message = $e->getMessage();
-        } catch (InvalidClaimTypeException $e) {
-            $hasAccess = false;
-            $message = $e->getMessage();
-        } catch (InvalidStructureException $e) {
-            $hasAccess = false;
-            $message = $e->getMessage();
-        } catch (MissingClaimException $e) {
-            $hasAccess = false;
-            $message = $e->getMessage();
-        } catch (TokenExpiredException $e) {
-            $hasAccess = false;
-            $message = $e->getMessage();
-        } catch (TokenInactiveException $e) {
-            $hasAccess = false;
-            $message = $e->getMessage();
-        } catch (UndefinedAlgorithmException $e) {
-            $hasAccess = false;
-            $message = $e->getMessage();
-        } catch (UnsupportedAlgorithmException $e) {
-            $hasAccess = false;
-            $message = $e->getMessage();
-        } catch (UnsupportedTokenTypeException $e) {
+        } catch (Exception $e) {
             $hasAccess = false;
             $message = $e->getMessage();
         }

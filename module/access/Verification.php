@@ -47,7 +47,7 @@ class Verification extends Manager implements Api
                                 });
 
                             if ($validator->hasError()) throw $this->baseException(
-                                "The inputted data already exist", "Verified", HTTP::CONFLICT);
+                                current($validator->getError('email')), "Verified", HTTP::CONFLICT);
 
                             $insert = $this->db()->select('*')->table('verifications')
                                 ->where('data', $validator->getValue('email'))
