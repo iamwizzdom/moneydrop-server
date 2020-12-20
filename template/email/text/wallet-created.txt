@@ -1,0 +1,4 @@
+Hello {$data.name}.
+A wallet has been successfully created for you on our platform.
+------------------------------------------
+Thanks for choosing {$data.app_name}

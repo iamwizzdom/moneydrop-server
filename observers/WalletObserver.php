@@ -1,26 +1,19 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Wisdom Emenike
- * Date: 5/10/2020
- * Time: 11:09 PM
- */
+
 
 namespace observers;
 
 
 use que\common\exception\QueException;
 use que\database\interfaces\model\Model;
-use que\database\interfaces\observer\Observer;
 use que\database\model\ModelCollection;
 use que\database\observer\ObserverSignal;
-use que\http\HTTP;
 use que\mail\Mail;
 use que\mail\Mailer;
+use que\user\XUser;
 
-class UserObserver implements Observer
+class WalletObserver implements \que\database\interfaces\observer\Observer
 {
-
     private ObserverSignal $signal;
 
     /**
@@ -49,22 +42,23 @@ class UserObserver implements Observer
 
             $mailer = Mailer::getInstance();
 
-            $mail = new Mail('register');
-            $mail->addRecipient($model->getValue('email'),
-                $name = "{$model->getValue('firstname')} {$model->getValue('lastname')}");
-            $mail->setSubject("Successful Registration");
+            $mail = new Mail('wallet-created');
+            $user = XUser::getUser($model->getInt('user_id'), 'model');
+            $mail->addRecipient($user->getValue('email'),
+                $name = "{$user->getValue('firstname')} {$user->getValue('lastname')}");
+            $mail->setSubject("Wallet Created");
             $mail->setData([
-                'title' => 'Successful Registration',
+                'title' => 'Wallet Created',
                 'name' => $name,
                 'app_name' => config('template.app.header.name')
             ]);
-            $mail->setHtmlPath('email/html/successful-registration-notice.tpl');
-            $mail->setBodyPath('email/text/successful-registration-notice.txt');
-            $mail->setFrom('account@moneydrop.com', 'MoneyDrop');
+            $mail->setHtmlPath('email/html/wallet-created.tpl');
+            $mail->setBodyPath('email/text/wallet-created.txt');
+            $mail->setFrom('noreply@moneydrop.com', 'MoneyDrop');
 
             $mailer->addMail($mail);
-            $mailer->prepare('register');
-            $mailer->dispatch('register');
+            $mailer->prepare('wallet-created');
+            $mailer->dispatch('wallet-created');
 
         } catch (QueException $e) {
         }
@@ -76,7 +70,6 @@ class UserObserver implements Observer
     public function onCreateFailed(Model $model, array $errors, $errorCode)
     {
         // TODO: Implement onCreateFailed() method.
-        $this->getSignal()->retryOperation(2);
     }
 
     /**
@@ -115,31 +108,42 @@ class UserObserver implements Observer
                 return $model->validate('id')->isEqual($m->getValue('id'));
             });
 
-            if ($model->validate('password')->isNotEqual($oldModel->getValue('password'))) {
+            try {
 
-                try {
+                $isCredit = $model->validate('available_balance')
+                    ->isFloatingNumberGreaterThan($oldModel->getFloat('available_balance'));
 
-                    $mailer = Mailer::getInstance();
-
-                    $mail = new Mail('reset');
-                    $mail->addRecipient($model->getValue('email'),
-                        $name = "{$model->getValue('firstname')} {$model->getValue('lastname')}");
-                    $mail->setSubject("Password Reset");
-                    $mail->setData([
-                        'title' => 'Password Reset',
-                        'name' => $name,
-                        'app_name' => config('template.app.header.name')
-                    ]);
-                    $mail->setHtmlPath('email/html/reset-password.tpl');
-                    $mail->setBodyPath('email/text/reset-password.txt');
-
-                    $mailer->addMail($mail);
-                    $mailer->prepare('reset');
-                    $mailer->dispatch('reset');
-
-                } catch (QueException $e) {
+                if ($isCredit) {
+                    $amount = $model->getFloat('available_balance') - $oldModel->getFloat('available_balance');
+                } else {
+                    $amount = $oldModel->getFloat('available_balance') - $model->getFloat('available_balance');
                 }
 
+                $mailer = Mailer::getInstance();
+
+                $mail = new Mail('wallet-updated');
+                $user = XUser::getUser($model->getInt('user_id'), 'model');
+                $mail->addRecipient($user->getValue('email'),
+                    $name = "{$user->getValue('firstname')} {$user->getValue('lastname')}");
+                $mail->setSubject("Wallet " . ($isCredit ? "Credited" : "Debited"));
+                $mail->setData([
+                    'title' => "Wallet " . ($isCredit ? "Credited" : "Debited"),
+                    'name' => $name,
+                    'action' => ($isCredit ? "credited" : "debited"),
+                    'amount' => number_format($amount),
+                    'balance' => number_format($model->getFloat('available_balance')),
+                    'currency' => 'NGN',
+                    'app_name' => config('template.app.header.name')
+                ]);
+                $mail->setHtmlPath('email/html/wallet-updated.tpl');
+                $mail->setBodyPath('email/text/wallet-updated.txt');
+                $mail->setFrom('noreply@moneydrop.com', 'MoneyDrop');
+
+                $mailer->addMail($mail);
+                $mailer->prepare('wallet-updated');
+                $mailer->dispatch('wallet-updated');
+
+            } catch (QueException $e) {
             }
 
         });
@@ -151,7 +155,6 @@ class UserObserver implements Observer
     public function onUpdateFailed(ModelCollection $models, array $errors, $errorCode)
     {
         // TODO: Implement onUpdateFailed() method.
-        $this->getSignal()->retryOperation(1);
     }
 
     /**
@@ -192,7 +195,6 @@ class UserObserver implements Observer
     public function onDeleteFailed(ModelCollection $models, array $errors, $errorCode)
     {
         // TODO: Implement onDeleteFailed() method.
-        $this->getSignal()->retryOperation(3);
     }
 
     /**

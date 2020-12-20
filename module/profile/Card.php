@@ -28,7 +28,7 @@ use utility\paystack\Paystack;
 
 class Card extends Manager implements Api
 {
-    use Paystack;
+    use Paystack, \utility\Card;
 
     /**
      * @inheritDoc
@@ -47,85 +47,138 @@ class Card extends Manager implements Api
                 case 'add':
 
                     switch (Request::getUriParam('subtype')) {
-                        case 'init':
+//                        case 'init':
+//
+//                            try {
+//                                $charge = $this->init_transaction(50);
+//                            } catch (PaystackException $e) {
+//                                throw $this->baseException($e->getMessage(), "Card Failed", HTTP::UNPROCESSABLE_ENTITY);
+//                            }
+//
+//                            if (!$charge->isSuccessful()) {
+//                                throw $this->baseException(
+//                                    'Something unexpected happened while initiating the add card transaction',
+//                                    "Card Failed", HTTP::EXPECTATION_FAILED
+//                                );
+//                            }
+//
+//                            $response = $charge->getResponseArray();
+//
+//                            if (!($response['status'] ?? false)) {
+//                                throw $this->baseException($response['message'] ??
+//                                    'Something unexpected happened while initiating the add card transaction',
+//                                    "Card Failed", HTTP::EXPECTATION_FAILED);
+//                            }
+//
+//                            return $this->http()->output()->json([
+//                                'status' => true,
+//                                'code' => HTTP::OK,
+//                                'title' => 'Card Successful',
+//                                'message' => "Card add transaction initiated successfully.",
+//                                'response' => $response
+//                            ], HTTP::OK);
+//
+                        case 'reference':
+                            $validator->validate('reference')->isNotEmpty('Please enter a reference');
 
-                            try {
-                                $charge = $this->init_transaction($this->user('email'), 50);
-                            } catch (PaystackException $e) {
-                                throw $this->baseException($e->getMessage(), "Card Failed", HTTP::UNPROCESSABLE_ENTITY);
-                            }
+                            if ($validator->hasError()) throw $this->baseException(
+                                "The inputted data is invalid", "Verification Failed", HTTP::UNPROCESSABLE_ENTITY);
 
-                            if (!$charge->isSuccessful()) {
-                                throw $this->baseException(
-                                    'Something unexpected happened while initiating the add card transaction',
-                                    "Card Failed", HTTP::EXPECTATION_FAILED
-                                );
-                            }
-
-                            $response = $charge->getResponseArray();
-
-                            if (!($response['status'] ?? false)) {
-                                throw $this->baseException($response['message'] ??
-                                    'Something unexpected happened while initiating the add card transaction',
-                                    "Card Failed", HTTP::EXPECTATION_FAILED);
-                            }
+                            $this->db()->insert('trans_ref_logs', [
+                                'reference' => $input['reference'],
+                                'user_id' => $this->user('id')
+                            ]);
 
                             return $this->http()->output()->json([
                                 'status' => true,
                                 'code' => HTTP::OK,
-                                'title' => 'Card Successful',
-                                'message' => "Card add transaction initiated successfully.",
-                                'response' => $response
+                                'title' => 'Log Successful',
+                                'message' => "Transaction reference logged successfully",
+                                'response' => []
                             ], HTTP::OK);
 
                         case 'verify':
 
                             $validator->validate('reference')->isNotEmpty('Please enter a reference');
+                            $validator->validate('card_name', true)->isNotEmpty('Please enter a valid name for this card.');
 
                             if ($validator->hasError()) throw $this->baseException(
-                                "The inputted data is invalid", "Card Failed", HTTP::UNPROCESSABLE_ENTITY);
+                                "The inputted data is invalid", "Verification Failed", HTTP::UNPROCESSABLE_ENTITY);
 
                             try {
                                 $verify = $this->verify_transaction($validator->getValue('reference'));
                             } catch (PaystackException $e) {
-                                throw $this->baseException($e->getMessage(), "Card Failed", HTTP::UNPROCESSABLE_ENTITY);
+                                throw $this->baseException($e->getMessage(), "Verification Failed", HTTP::UNPROCESSABLE_ENTITY);
                             }
 
                             if (!$verify->isSuccessful()) {
                                 throw $this->baseException("Sorry, we couldn't verify that card at this time.",
-                                    "Card Failed", HTTP::EXPECTATION_FAILED);
+                                    "Verification Failed", HTTP::EXPECTATION_FAILED);
                             }
 
                             $response = $verify->getResponseArray();
 
-                            if (!($response['status'] ?? false) || ($response['data']['status'] ?? 'failed') != 'success'
-                                || empty($authorization = ($response['data']['authorization'] ?? []))) {
+                            $data = $response['data'] ?? [];
 
-                                throw $this->baseException("Sorry, we couldn't verify that card at this time.",
-                                    "Card Failed", HTTP::EXPECTATION_FAILED);
+                            if (!($response['status'] ?? false) || ($data['status'] ?? 'failed') != 'success'
+                                || empty($authorization = ($data['authorization'] ?? []))) {
+
+                                throw $this->baseException("Sorry, we couldn't verify that transaction at this time.",
+                                    "Verification Failed", HTTP::EXPECTATION_FAILED);
                             }
+
+                            $trans = [
+                                'uuid' => Str::uuidv4(),
+                                'user_id' => user('id'),
+                                'transaction_state' => TRANSACTION_TOPUP,
+                                'transaction_type' => TRANSACTION_CREDIT,
+                                'gateway_reference' => $data['reference'],
+                                'amount' => $data['amount'] / 100,
+                                'currency' => $data['currency'],
+                                'status' => APPROVAL_SUCCESSFUL
+                            ];
+
+                            db()->insert('transactions', $trans);
+
+                            if (!$authorization['reusable']) return $this->http()->output()->json([
+                                'status' => true,
+                                'code' => HTTP::OK,
+                                'title' => 'Verification Successful',
+                                'message' => "Sorry, this card is not reusable, you may want to try another card instead. " .
+                                    "However, we have topped up your wallet with {$data['amount']} {$data['currency']} which was debited from the card.",
+                                'response' => []
+                            ], HTTP::OK);
 
                             $card = db()->insert('cards', [
                                 'uuid' => Str::uuidv4(),
                                 'auth' => $authorization,
+                                'name' => !empty($input['card_name']) && $input['card_name'] != '0' ? $input['card_name'] : '',
                                 'user_id' => $this->user('id'),
                                 'status' => STATE_ACTIVE,
                                 'is_active' => true
                             ]);
 
                             if (!$card->isSuccessful()) {
-                                throw $this->baseException("Sorry, we couldn't add that card at this time.",
-                                    "Card Failed", HTTP::EXPECTATION_FAILED);
+                                return $this->http()->output()->json([
+                                    'status' => true,
+                                    'code' => HTTP::OK,
+                                    'title' => 'Verification Successful',
+                                    'message' => "Sorry, we couldn't add this card at this time, please let's try this again later. " .
+                                        "However, we have topped up your wallet with {$data['amount']} {$data['currency']} which was debited from the card.",
+                                    'response' => []
+                                ], HTTP::OK);
                             }
 
                             $card = $card->getFirstWithModel();
-                            $cardDetails = Arr::extract_by_keys($card->getValue('auth'), ['card_type', 'last4']);
+                            $cardDetails = Arr::extract_by_keys($card->getValue('auth'),
+                                ['card_type', 'last4', 'brand', 'exp_month', 'exp_year']);
+                            $cardDetails['name'] = $card->getValue('name');
                             $cardDetails['uuid'] = $card->getValue('uuid');
 
                             return $this->http()->output()->json([
                                 'status' => true,
                                 'code' => HTTP::CREATED,
-                                'title' => 'Card Successful',
+                                'title' => 'Verification Successful',
                                 'message' => "Card added successfully.",
                                 'response' => [
                                     'card' => $cardDetails
@@ -143,17 +196,21 @@ class Card extends Manager implements Api
 
                     if ($cardID == 'all') {
 
-                        $cards = $this->db()->findAll('cards', $this->user('id'), 'user_id',
-                            function (Builder $builder) {
-                                $builder->where('is_active', true);
-                            });
+                        $cards = $this->getAllMyCards()?->getArray() ?: [];
+
+                        Arr::callback($cards, function ($card) {
+                            $card = array_merge($card, Arr::extract_by_keys((array) $card['auth'],
+                                ['card_type', 'last4', 'brand', 'exp_month', 'exp_year']));
+                            unset($card['auth']);
+                            return $card;
+                        });
 
                         return $this->http()->output()->json([
                             'status' => true,
                             'code' => HTTP::OK,
                             'title' => 'Card Successful',
                             'message' => "Cards retrieved successfully.",
-                            'response' => (object)$cards->isSuccessful() ? $cards->getAllArray() : []
+                            'response' => $cards
                         ], HTTP::OK);
                     }
 
@@ -163,12 +220,38 @@ class Card extends Manager implements Api
                             $builder->where('is_active', true);
                         });
 
+                    if (!$card->isSuccessful()) return $this->http()->output()->json([
+                        'status' => true,
+                        'code' => HTTP::NOT_FOUND,
+                        'title' => 'Card Not Found ' . $cardID,
+                        'message' => "That card either does not exist or has been deactivated.",
+                        'response' => []
+                    ], HTTP::NOT_FOUND);
+
+                    $card = $card->getFirstWithModel();
+                    $cardDetails = Arr::extract_by_keys($card->getValue('auth'),
+                        ['card_type', 'last4', 'brand', 'exp_month', 'exp_year']);
+                    $cardDetails['name'] = $card->getValue('name');
+                    $cardDetails['uuid'] = $card->getValue('uuid');
+
                     return $this->http()->output()->json([
                         'status' => true,
                         'code' => HTTP::OK,
                         'title' => 'Card Successful',
                         'message' => "Card retrieved successfully.",
-                        'response' => (object)$card->isSuccessful() ? $card->getAllArray() : []
+                        'response' => $cardDetails
+                    ], HTTP::OK);
+
+                case 'remove':
+
+                    $remove = $this->removeCard(Request::getUriParam('subtype'));
+
+                    return $this->http()->output()->json([
+                        'status' => $remove,
+                        'code' => HTTP::OK,
+                        'title' => $remove ? 'Remove Successful' : 'Remove Failed',
+                        'message' => $remove ? "Card removed successfully." : "Card removal failed",
+                        'response' => []
                     ], HTTP::OK);
 
                 default:

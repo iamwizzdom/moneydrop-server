@@ -1,0 +1,5 @@
+Hello {$data.name}.
+Your wallet on our platform was {$data.action} {$data.currency}{$data.amount}
+Your total available balance: {$data.currency}{$data.balance}
+------------------------------------------
+Thanks for choosing {$data.app_name}

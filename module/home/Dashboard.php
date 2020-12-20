@@ -24,7 +24,7 @@ class Dashboard extends Manager implements Api
         $converter = converter();
 
         return [
-            'balance' => 12500.45,
+            'balance' => $this->getAvailableBalance(),
             'loan_requests' => [
                 [
                     'id' => 1,

@@ -1,8 +1,0 @@
-Hi {$data.firstName} {$data.lastName}
-
-{$data.notification}
-
-View via {$data.link}
-
-=================================================
-{$data.app_name} © {$data.year}. All Rights Reserved.

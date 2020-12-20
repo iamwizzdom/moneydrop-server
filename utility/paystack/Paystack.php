@@ -15,7 +15,6 @@ trait Paystack
     use Card;
 
     /**
-     * @param string $email
      * @param float $amount
      * @param float|null $extraCharge
      * @param string $currency
@@ -23,8 +22,8 @@ trait Paystack
      * @return CurlResponse
      * @throws PaystackException
      */
-    public function init_transaction(string $email, float $amount, ?float $extraCharge = null,
-                                     string $currency = 'NGN', string $callbackUrl = null)
+    public function init_transaction(float $amount, ?float $extraCharge = null,
+                                     string $currency = 'NGN', string $callbackUrl = null): CurlResponse
     {
 
         if ($amount <= 0) throw new PaystackException("Please set a valid amount to pay.");
@@ -39,7 +38,7 @@ trait Paystack
         ]);
 
         $post = [
-            'email' => $email,
+            'email' => user('email'),
             'amount' => ($amount * 100),
             'currency' => $currency
         ];
@@ -61,12 +60,12 @@ trait Paystack
                 $trans = [
                     'uuid' => Str::uuidv4(),
                     'user_id' => user('id'),
-                    'transaction_type' => 'c2w',
-                    'reference' => $data['reference'],
-                    'email' => $email,
+                    'transaction_state' => TRANSACTION_TOPUP,
+                    'transaction_type' => TRANSACTION_CREDIT,
+                    'gateway_reference' => $data['reference'],
                     'amount' => $amount,
                     'currency' => $currency,
-                    'status' => $data['status']
+                    'status' => APPROVAL_PENDING
                 ];
 
                 if ($extraCharge) $trans['fees'] = $extraCharge;
@@ -83,7 +82,7 @@ trait Paystack
      * @return CurlResponse
      * @throws PaystackException
      */
-    public function verify_transaction(string $reference)
+    public function verify_transaction(string $reference): CurlResponse
     {
         if (empty($reference)) throw new PaystackException("Please set a valid transaction reference.");
 
@@ -97,33 +96,19 @@ trait Paystack
         ]);
         $curl->setMethod("GET");
 
-        $response = $curl->_exec();
-
-        $trans = db()->find('transactions', $reference, 'reference');
-
-        if ($response->isSuccessful() && $trans->isSuccessful()) {
-            $data = $response->getResponseArray()['data'] ?? [];
-            if (!empty($data)) {
-                $trans->getFirstWithModel()->update([
-                    'status' => $data['status']
-                ]);
-            }
-        }
-
-        return $response;
+        return $curl->_exec();
     }
 
     /**
      * @param string $cardUUID
-     * @param string $email
      * @param float $amount
      * @param float|null $extraCharge
      * @param string $currency
      * @return CurlResponse
      * @throws PaystackException
      */
-    public function charge_card(string $cardUUID, string $email, float $amount,
-                                ?float $extraCharge = null, string $currency = 'NGN')
+    public function charge_card(string $cardUUID, float $amount,
+                                ?float $extraCharge = null, string $currency = 'NGN'): CurlResponse
     {
 
         if ($amount <= 0) throw new PaystackException("Please set a valid amount to pay.");
@@ -142,7 +127,7 @@ trait Paystack
         if (!$authCode) throw new PaystackException("Card authorization not found.");
 
         $post = [
-            'email' => $email,
+            'email' => user('email'),
             'amount' => ($amount * 100),
             'currency' => $currency,
             'authorization_code' => $authCode
@@ -164,12 +149,12 @@ trait Paystack
                     'uuid' => Str::uuidv4(),
                     'user_id' => user('id'),
                     'card_id' => $cardUUID,
-                    'transaction_type' => 'c2w',
-                    'reference' => $data['reference'],
-                    'email' => $email,
+                    'transaction_state' => TRANSACTION_TOPUP,
+                    'transaction_type' => TRANSACTION_CREDIT,
+                    'gateway_reference' => $data['reference'],
                     'amount' => $amount,
                     'currency' => $currency,
-                    'status' => $data['status']
+                    'status' => ($data['status'] ?? '') == 'success' ? APPROVAL_SUCCESSFUL : APPROVAL_FAILED
                 ];
 
                 if ($extraCharge) $trans['fees'] = $extraCharge;
@@ -186,7 +171,7 @@ trait Paystack
      * @return CurlResponse
      * @throws PaystackException
      */
-    public function resolve_bvn(string $bvn)
+    public function resolve_bvn(string $bvn): CurlResponse
     {
         if (empty($bvn)) throw new PaystackException("Please set a valid BVN.");
 
@@ -212,7 +197,7 @@ trait Paystack
      * @throws PaystackException
      */
     public function match_bvn(string $bvn, string $accountNumber, string $bankCode,
-                              $firstName = null, $middleName = null, $lastName = null)
+                              $firstName = null, $middleName = null, $lastName = null): CurlResponse
     {
         if (empty($bvn)) throw new PaystackException("Please set a valid BVN.");
 
@@ -250,7 +235,7 @@ trait Paystack
      * @return CurlResponse
      * @throws PaystackException
      */
-    public function resolve_account(string $accountNumber, string $bankCode)
+    public function resolve_account(string $accountNumber, string $bankCode): CurlResponse
     {
         if (empty($accountNumber)) throw new PaystackException("Please set a valid account number.");
 
@@ -279,7 +264,7 @@ trait Paystack
      * @return CurlResponse
      * @throws PaystackException
      */
-    public function resolve_card(string $cardBin)
+    public function resolve_card(string $cardBin): CurlResponse
     {
 
         if (empty($cardBin)) throw new PaystackException("Please set a valid card bin.");

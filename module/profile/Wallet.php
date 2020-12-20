@@ -71,7 +71,7 @@ class Wallet extends Manager implements Api
                     }
 
                     try {
-                        $charge = $this->charge_card($input['card'], $this->user('email'), $input['amount']);
+                        $charge = $this->charge_card($input['card'], $input['amount']);
                     } catch (PaystackException $e) {
                         throw $this->baseException($e->getMessage(), "Wallet Failed", HTTP::EXPECTATION_FAILED);
                     }
@@ -99,14 +99,9 @@ class Wallet extends Manager implements Api
                         "Wallet Failed", HTTP::EXPECTATION_FAILED);
 
                     try {
-                        $topUp = $this->creditWallet($input['amount']);
+                        $this->refreshWallet();
                     } catch (\Exception $e) {
-                        throw $this->baseException($e->getMessage(), "Wallet Failed", HTTP::EXPECTATION_FAILED);
                     }
-
-                    if (!$topUp) $this->baseException(
-                        "Failed to top up wallet at this time. This is usually resolved within 24 hours",
-                        "Wallet Failed", HTTP::EXPECTATION_FAILED);
 
                     return $this->http()->output()->json([
                         'status' => true,
@@ -114,7 +109,7 @@ class Wallet extends Manager implements Api
                         'title' => 'Wallet Successful',
                         'message' => "Your wallet has been credited successfully",
                         'response' => [
-                            'balance' => $topUp
+                            'balance' => $this->getAvailableBalance()
                         ]
                     ], HTTP::OK);
 

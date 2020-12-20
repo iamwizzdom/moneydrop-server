@@ -65,7 +65,7 @@ Route::register()->groupApi('api/v1', function ($prefix) {
         function (RouteEntry $entry) {
             $entry->allowPostRequest()->allowGetRequest();
             $entry->setMiddleware('user.auth');
-            $entry->setUri('/user/card/{type:alpha}/{subtype:alpha}');
+            $entry->setUri('/user/card/{type:alpha}/{subtype:alpha|uuid}');
             $entry->setModule(Card::class);
         },
         function (RouteEntry $entry) {

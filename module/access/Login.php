@@ -17,10 +17,13 @@ use que\http\output\response\Json;
 use que\http\output\response\Jsonp;
 use que\http\output\response\Plain;
 use que\security\JWT\JWT;
+use que\support\Arr;
 use que\user\User;
+use utility\Card;
 
 class Login extends Manager implements Api
 {
+    use Card;
 
     /**
      * @inheritDoc
@@ -77,6 +80,15 @@ class Login extends Manager implements Api
 
             User::login($user->getObject());
 
+            $cards = $this->getAllMyCards()?->getArray() ?: [];
+
+            Arr::callback($cards, function ($card) {
+                $card = array_merge($card, Arr::extract_by_keys((array) $card['auth'],
+                    ['card_type', 'last4', 'brand', 'exp_month', 'exp_year']));
+                unset($card['auth']);
+                return $card;
+            });
+
             return $this->http()->output()->json([
                 'status' => true,
                 'code' => HTTP::OK,
@@ -84,7 +96,8 @@ class Login extends Manager implements Api
                 'message' => "Hi {$user['firstname']}, welcome.",
                 'response' => [
                     'token' => JWT::fromUser($input->user()),
-                    'user' => $user->getArray()
+                    'user' => $user->getArray(),
+                    'cards' => $cards
                 ]
             ], HTTP::OK);
 

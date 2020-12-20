@@ -14,11 +14,48 @@ use que\database\interfaces\model\Model;
 
 trait Card
 {
+
     /**
      * @param $cardID
      * @return Model|null
      */
-    public function getCard($cardID)
+    public function getMyCard($cardID): ?Model
+    {
+        $card = db()->find('cards', $cardID, 'id',
+            function (Builder $builder) use ($cardID) {
+                $builder->orWhere('uuid', $cardID);
+                $builder->where('user_id', user('id'));
+            });
+        return $card->isSuccessful() ? $card->getFirstWithModel() : null;
+    }
+
+    /**
+     * @return \que\database\model\ModelCollection|null
+     */
+    public function getAllMyCards(): ?\que\database\model\ModelCollection
+    {
+        $card = db()->findAll('cards', user('id'), 'user_id', function ($builder) {
+            $builder->where('is_active', true);
+        });
+        return $card->isSuccessful() ? $card->getAllWithModel() : null;
+    }
+
+    /**
+     * @param string $cardUUID
+     * @return bool
+     */
+    public function removeCard(string $cardUUID): bool
+    {
+        $card = $this->getMyCard($cardUUID);
+        if (!$card) return false;
+        return $card->update(['is_active' => false]);
+    }
+
+    /**
+     * @param $cardID
+     * @return Model|null
+     */
+    public function getCard($cardID): ?Model
     {
         $card = db()->find('cards', $cardID, 'id',
             function (Builder $builder) use ($cardID) {
@@ -29,9 +66,10 @@ trait Card
 
     /**
      * @param $cardID
-     * @return mixed|null
+     * @return mixed
      */
-    public function getCardAuthCode($cardID) {
+    public function getCardAuthCode($cardID): mixed
+    {
 
         $card = db()->find('cards', $cardID, 'id',
             function (Builder $builder) use ($cardID) {

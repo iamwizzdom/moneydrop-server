@@ -79,7 +79,8 @@ class Loan extends Manager implements Api
 
         try {
 
-            switch (Request::getUriParam('type')) {
+            switch ($type = Request::getUriParam('type')) {
+                case "offers":
                 case "requests":
 
                     $date = date('m/y');
@@ -89,7 +90,7 @@ class Loan extends Manager implements Api
                     for ($i = 0; $i < 30; $i++) {
                         $list[] = [
                             'id' => $i,
-                            'type' => 'Loan request',
+                            'type' => "Loan {$type}",
                             'amount' => 65000,
                             'status' => $converter->convertEnvConst(STATE_SUCCESSFUL, "STATE_"),
                             'date' => $date
@@ -98,7 +99,7 @@ class Loan extends Manager implements Api
 
                     return [
                         'page' => get('page') + 1,
-                        'loan_requests' => $list
+                        "loan_{$type}" => $list
                     ];
 
                 case "request":

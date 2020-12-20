@@ -10,6 +10,8 @@ namespace app\middleware;
 
 
 use Exception;
+use que\common\exception\QueException;
+use que\common\exception\QueRuntimeException;
 use que\http\HTTP;
 use que\http\input\Input;
 use que\security\JWT\Exceptions\EmptyTokenException;
@@ -35,13 +37,18 @@ class UserMiddleware extends Middleware
      */
     public function handle(Input $input): MiddlewareResponse
     {
-        sleep(1);
+//        sleep(1);
         // TODO: Implement handle() method.
         $hasAccess = true;
         $message = "";
+        $code = HTTP::EXPIRED_AUTHENTICATION;
 
         try {
-            JWT::toUser(get_bearer_token() ?: '');
+            JWT::toUser(get_bearer_token() ?: '', true);
+        } catch (QueRuntimeException $e) {
+            $hasAccess = false;
+            $message = $e->getMessage();
+            $code = $e->getHttpCode();
         } catch (Exception $e) {
             $hasAccess = false;
             $message = $e->getMessage();
@@ -55,7 +62,7 @@ class UserMiddleware extends Middleware
             $this->setResponse(http()->output()->json([
                 'status' => false,
                 'message' => $message,
-            ], HTTP::EXPIRED_AUTHENTICATION));
+            ], $code));
 
             return $this;
         }

@@ -15,4 +15,4 @@ const PAYSTACK_MATCH_BVN_URL = 'https://api.paystack.co/bvn/match';
 const PAYSTACK_RESOLVE_ACCOUNT_URL = 'https://api.paystack.co/bank/resolve';
 const PAYSTACK_RESOLVE_CARD_URL = 'https://api.paystack.co/decision/bin';
 
-const PAYSTACK_KEY = 'sk_test_7befecf38cf1c8ca067203622551af4b9054a4fd';
+const PAYSTACK_KEY = 'sk_test_8d5f40d2aaca8d452582e98771f19cbd508d6483';
