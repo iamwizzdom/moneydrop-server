@@ -34,8 +34,9 @@ trait Card
      */
     public function getAllMyCards(): ?\que\database\model\ModelCollection
     {
-        $card = db()->findAll('cards', user('id'), 'user_id', function ($builder) {
+        $card = db()->findAll('cards', user('id'), 'user_id', function (Builder $builder) {
             $builder->where('is_active', true);
+            $builder->orderBy("desc", "id");
         });
         return $card->isSuccessful() ? $card->getAllWithModel() : null;
     }
@@ -70,12 +71,11 @@ trait Card
      */
     public function getCardAuthCode($cardID): mixed
     {
-
         $card = db()->find('cards', $cardID, 'id',
             function (Builder $builder) use ($cardID) {
                 $builder->selectJsonValue('auth', 'auth_code', '$.authorization_code');
                 $builder->orWhere('uuid', $cardID);
             });
-        return $card->isSuccessful() ? $card->getFirstWithModel()->getValue('authorization_code') : null;
+        return $card->isSuccessful() ? $card->getFirstWithModel()->getValue('auth_code') : null;
     }
 }

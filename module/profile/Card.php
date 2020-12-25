@@ -28,7 +28,7 @@ use utility\paystack\Paystack;
 
 class Card extends Manager implements Api
 {
-    use Paystack, \utility\Card;
+    use Paystack;
 
     /**
      * @inheritDoc
@@ -39,9 +39,6 @@ class Card extends Manager implements Api
         $validator = $this->validator($input);
 
         try {
-
-            if (empty($this->user('bvn'))) throw $this->baseException(
-                "Sorry, you must add your BVN to perform any card operation.", "Card Failed", HTTP::EXPECTATION_FAILED);
 
             switch (Request::getUriParam('type')) {
                 case 'add':
@@ -130,7 +127,7 @@ class Card extends Manager implements Api
                             $trans = [
                                 'uuid' => Str::uuidv4(),
                                 'user_id' => user('id'),
-                                'transaction_state' => TRANSACTION_TOPUP,
+                                'transaction_state' => TRANSACTION_TOP_UP,
                                 'transaction_type' => TRANSACTION_CREDIT,
                                 'gateway_reference' => $data['reference'],
                                 'amount' => $data['amount'] / 100,
@@ -209,7 +206,7 @@ class Card extends Manager implements Api
                             'status' => true,
                             'code' => HTTP::OK,
                             'title' => 'Card Successful',
-                            'message' => "Cards retrieved successfully.",
+                            'message' => !empty($cards) ? "Cards retrieved successfully." : "No Card found.",
                             'response' => $cards
                         ], HTTP::OK);
                     }
@@ -223,13 +220,13 @@ class Card extends Manager implements Api
                     if (!$card->isSuccessful()) return $this->http()->output()->json([
                         'status' => true,
                         'code' => HTTP::NOT_FOUND,
-                        'title' => 'Card Not Found ' . $cardID,
+                        'title' => 'Card Not Found',
                         'message' => "That card either does not exist or has been deactivated.",
                         'response' => []
                     ], HTTP::NOT_FOUND);
 
                     $card = $card->getFirstWithModel();
-                    $cardDetails = Arr::extract_by_keys($card->getValue('auth'),
+                    $cardDetails = Arr::extract_by_keys((array) $card->getValue('auth'),
                         ['card_type', 'last4', 'brand', 'exp_month', 'exp_year']);
                     $cardDetails['name'] = $card->getValue('name');
                     $cardDetails['uuid'] = $card->getValue('uuid');

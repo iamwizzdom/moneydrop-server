@@ -6,10 +6,12 @@ use module\access\PasswordReset;
 use module\access\Register;
 use module\access\Verification;
 use module\home\Dashboard;
+use profile\Bank;
 use profile\Card;
 use profile\Loan;
 use profile\Transaction;
 use profile\Update;
+use profile\Wallet;
 use que\route\Route;
 use que\route\RouteEntry;
 
@@ -67,6 +69,18 @@ Route::register()->groupApi('api/v1', function ($prefix) {
             $entry->setMiddleware('user.auth');
             $entry->setUri('/user/card/{type:alpha}/{subtype:alpha|uuid}');
             $entry->setModule(Card::class);
+        },
+        function (RouteEntry $entry) {
+            $entry->allowPostRequest()->allowGetRequest();
+            $entry->setMiddleware('user.auth');
+            $entry->setUri('/user/bank/{type:/^[a-zA-Z0-9-]+$/}/{?id:alpha|uuid}');
+            $entry->setModule(Bank::class);
+        },
+        function (RouteEntry $entry) {
+            $entry->allowPostRequest()->allowGetRequest();
+            $entry->setMiddleware('user.auth');
+            $entry->setUri('/user/wallet/{type:/^[a-zA-Z0-9-]+$/}/{id:uuid|/^[a-zA-Z0-9_]+$/}');
+            $entry->setModule(Wallet::class);
         },
         function (RouteEntry $entry) {
             $entry->allowPostRequest()->allowGetRequest();

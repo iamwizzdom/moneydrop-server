@@ -130,8 +130,8 @@ class WalletObserver implements \que\database\interfaces\observer\Observer
                     'title' => "Wallet " . ($isCredit ? "Credited" : "Debited"),
                     'name' => $name,
                     'action' => ($isCredit ? "credited" : "debited"),
-                    'amount' => number_format($amount),
-                    'balance' => number_format($model->getFloat('available_balance')),
+                    'amount' => number_format($amount, 2),
+                    'balance' => number_format($model->getFloat('available_balance'), 2),
                     'currency' => 'NGN',
                     'app_name' => config('template.app.header.name')
                 ]);

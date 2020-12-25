@@ -43,19 +43,19 @@ class TransactionObserver implements Observer
         db()->delete()->table('trans_ref_logs')->where(
             'reference', $model->getValue('gateway_reference'))->exec();
 
+        $walletBag = WalletBag::getInstance();
+
+        try {
+            $wallet = $walletBag->getWalletWithUserID($model->getInt('user_id'));
+        } catch (\Exception $e) {
+            $this->signal->undoOperation($e->getMessage());
+            return;
+        }
+
         if ($model->getInt('status') == APPROVAL_SUCCESSFUL) {
 
-            $walletBag = WalletBag::getInstance();
-
-            try {
-                $wallet = $walletBag->getWalletWithUserID($model->getInt('user_id'));
-            } catch (\Exception $e) {
-                $this->signal->undoOperation($e->getMessage());
-                return;
-            }
-
             switch ($model->getInt('transaction_state')) {
-                case TRANSACTION_TOPUP:
+                case TRANSACTION_TOP_UP:
                     try {
 
                         if ($wallet->creditWallet($model->getFloat('amount')) === false) {
@@ -77,6 +77,17 @@ class TransactionObserver implements Observer
                         $this->signal->undoOperation($e->getMessage());
                     }
                     break;
+                case TRANSACTION_WITHDRAWAL:
+                    try {
+
+                        if ($wallet->debitWallet($model->getFloat('amount')) === false) {
+                            throw new \Exception("Unable to withdraw from wallet at this time.");
+                        }
+
+                    } catch (\Exception $e) {
+                        $this->signal->undoOperation($e->getMessage());
+                    }
+                    break;
                 case TRANSACTION_TRANSFER:
                     db()->transStart();
                     try {
@@ -90,7 +101,7 @@ class TransactionObserver implements Observer
                         $transfer = db()->insert('transactions', [
                             'uuid' => Str::uuidv4(),
                             'user_id' => $wallet->getWallet()->getInt('user_id'),
-                            'transaction_state' => TRANSACTION_TOPUP,
+                            'transaction_state' => TRANSACTION_TOP_UP,
                             'transaction_type' => TRANSACTION_CREDIT,
                             'gateway_reference' => $model->getValue('uuid'),
                             'amount' => $model->getFloat('amount'),
@@ -110,6 +121,21 @@ class TransactionObserver implements Observer
                     break;
             }
 
+        } elseif ($model->getInt('status') == APPROVAL_PROCESSING) {
+
+            if ($model->getInt('transaction_state') == TRANSACTION_TRANSFER) {
+
+                try {
+
+                    if ($wallet->lockFund($model->getFloat('amount')) === false) {
+                        throw new \Exception("Unable to lock wallet fund at this time.");
+                    }
+
+                } catch (\Exception $e) {
+                    $this->signal->undoOperation($e->getMessage());
+                }
+
+            }
         }
     }
 
@@ -173,7 +199,7 @@ class TransactionObserver implements Observer
                 }
 
                 switch ($oldModel->getInt('transaction_state')) {
-                    case TRANSACTION_TOPUP:
+                    case TRANSACTION_TOP_UP:
                         try {
                             if ($wallet->debitWallet($oldModel->getFloat('amount')) === false) {
                                 throw new \Exception("Unable to debit wallet at this time.");
@@ -182,6 +208,7 @@ class TransactionObserver implements Observer
                             $this->signal->undoOperation($e->getMessage());
                         }
                         break;
+                    case TRANSACTION_WITHDRAWAL:
                     case TRANSACTION_CHARGE:
                         try {
                             if ($wallet->creditWallet($oldModel->getFloat('amount')) === false) {
@@ -197,7 +224,7 @@ class TransactionObserver implements Observer
 
                             $reverse = db()->update()->table('transactions')
                                 ->columns(['transaction_state' => TRANSACTION_REVERSED])
-                                ->where('transaction_state', TRANSACTION_TOPUP)
+                                ->where('transaction_state', TRANSACTION_TOP_UP)
                                 ->where('gateway_reference', $oldModel->getValue('uuid'))
                                 ->exec();
 
@@ -232,7 +259,7 @@ class TransactionObserver implements Observer
                 }
 
                 switch ($newModel->getInt('transaction_state')) {
-                    case TRANSACTION_TOPUP:
+                    case TRANSACTION_TOP_UP:
                         try {
                             if ($wallet->creditWallet($oldModel->getFloat('amount')) === false)
                                 throw new \Exception("Unable to credit wallet at this time.");
@@ -248,12 +275,20 @@ class TransactionObserver implements Observer
                             $this->signal->undoOperation($e->getMessage());
                         }
                         break;
+                    case TRANSACTION_WITHDRAWAL:
+                        try {
+                            if ($wallet->debitWallet($oldModel->getFloat('amount')) === false)
+                                throw new \Exception("Unable to withdraw from wallet at this time.");
+                        } catch (\Exception $e) {
+                            $this->signal->undoOperation($e->getMessage());
+                        }
+                        break;
                     case TRANSACTION_TRANSFER:
                         db()->transStart();
                         try {
 
                             $reverse = db()->update()->table('transactions')
-                                ->columns(['transaction_state' => TRANSACTION_TOPUP])
+                                ->columns(['transaction_state' => TRANSACTION_TOP_UP])
                                 ->where('transaction_state', TRANSACTION_REVERSED)
                                 ->where('gateway_reference', $oldModel->getValue('uuid'))
                                 ->exec();
@@ -274,6 +309,59 @@ class TransactionObserver implements Observer
                     default:
                         break;
                 }
+
+            } elseif ($oldModel->getInt('status') == APPROVAL_PROCESSING &&
+                $newModel->getInt('status') == APPROVAL_SUCCESSFUL) {
+
+                if ($newModel->getInt('transaction_state') == TRANSACTION_TRANSFER) {
+
+
+                    try {
+                        $wallet = $walletBag->getWalletWithUserID($newModel->getInt('user_id'));
+                    } catch (\Exception $e) {
+                        $this->signal->undoOperation($e->getMessage());
+                        return;
+                    }
+
+                    try {
+
+                        if ($wallet->debitLockedFund($newModel->getFloat('amount')) === false) {
+                            throw new \Exception("Unable to debit wallet at this time.");
+                        }
+
+                    } catch (\Exception $e) {
+                        $this->signal->undoOperation($e->getMessage());
+                    }
+
+                }
+            } elseif ($oldModel->getInt('status') == APPROVAL_PENDING &&
+                $newModel->getInt('status') == APPROVAL_PROCESSING) {
+
+                if ($newModel->getInt('transaction_state') == TRANSACTION_TRANSFER) {
+
+
+                    try {
+                        $wallet = $walletBag->getWalletWithUserID($newModel->getInt('user_id'));
+                    } catch (\Exception $e) {
+                        $this->signal->undoOperation($e->getMessage());
+                        return;
+                    }
+
+                    try {
+
+                        if ($wallet->lockFund($newModel->getFloat('amount')) === false) {
+                            throw new \Exception("Unable to lock wallet fund at this time.");
+                        }
+
+                    } catch (\Exception $e) {
+                        $this->signal->undoOperation($e->getMessage());
+                    }
+
+                }
+            } elseif ($oldModel->getInt('status') != APPROVAL_SUCCESSFUL &&
+                $newModel->getInt('status') == APPROVAL_SUCCESSFUL) {
+
+                $this->onCreated($newModel);
 
             }
         });

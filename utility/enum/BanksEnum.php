@@ -23,7 +23,7 @@ abstract class BanksEnum
     const FCM_BANK = 9; // FCMB
     const ALAT_WEMA_BANK = 10; // ALAT by Wema
 
-    private static $banks = [
+    private static array $banks = [
         self::ACCESS_BANK => [
             'id' => 1,
             "name" => "Access Bank",
@@ -119,14 +119,6 @@ abstract class BanksEnum
     /**
      * @return array
      */
-    public static function getList(): array
-    {
-        return self::$banks;
-    }
-
-    /**
-     * @return array
-     */
     public static function getBankKeys(): array
     {
         try {
@@ -137,25 +129,57 @@ abstract class BanksEnum
     }
 
     /**
-     * @param int $key
-     * @return array|int|mixed
+     * @return array
      */
-    public static function getBankID(int $key = 0)
+    public static function getBankIDs(): array
     {
-        if ($key == 0) {
-            $list = [];
-            foreach (self::$banks as $bank) $list[] = $bank['id'];
-            return $list;
-        }
-        return (array_key_exists($key, self::$banks) ? self::$banks[$key]['id'] : 0);
+        $list = [];
+        foreach (self::$banks as $bank) $list[] = $bank['id'];
+        return $list;
     }
 
     /**
      * @param int $key
+     * @return int|null
+     */
+    public static function getBankID(int $key): ?int
+    {
+        return self::$banks[$key]['id'] ?? null;
+    }
+
+    /**
      * @return array
      */
-    public static function getBank(int $key = 0) : array
+    public static function getBankCodes(): array
     {
-        return $key == 0 ? self::$banks : (array_key_exists($key, self::$banks) ? self::$banks[$key] : []);
+        $list = [];
+        foreach (self::$banks as $bank) $list[] = $bank['code'];
+        return $list;
+    }
+
+    /**
+     * @param int $key
+     * @return string|null
+     */
+    public static function getBankCode(int $key): ?string
+    {
+        return self::$banks[$key]['code'] ?? null;
+    }
+
+    /**
+     * @return array[]
+     */
+    public static function getBanks() : array
+    {
+        return self::$banks;
+    }
+
+    /**
+     * @param int $key
+     * @return array|null
+     */
+    public static function getBank(int $key) : ?array
+    {
+        return self::$banks[$key] ?? null;
     }
 }

@@ -13,6 +13,7 @@ use que\common\exception\BaseException;
 use que\common\manager\Manager;
 use que\common\structure\Api;
 use que\database\interfaces\Builder;
+use que\database\interfaces\model\Model;
 use que\http\HTTP;
 use que\http\input\Input;
 use que\http\output\response\Html;
@@ -20,6 +21,7 @@ use que\http\output\response\Json;
 use que\http\output\response\Jsonp;
 use que\http\output\response\Plain;
 use que\http\request\Request;
+use que\support\Str;
 use utility\paystack\exception\PaystackException;
 use utility\paystack\Paystack;
 
@@ -27,7 +29,8 @@ class Wallet extends Manager implements Api
 {
     use \utility\Wallet, Paystack;
 
-    const TOP_UP_AMOUNT = 1000;
+    const MIN_TOP_UP_AMOUNT = 1000;
+    const MIN_CASH_OUT_AMOUNT = 1000;
 
     /**
      * @inheritDoc
@@ -37,13 +40,17 @@ class Wallet extends Manager implements Api
         // TODO: Implement process() method.
         $validator = $this->validator($input);
 
+        $transaction = null;
+
         try {
 
             switch (Request::getUriParam('type')) {
                 case "top-up":
 
-                    $validator->validate('amount')->isNumber('Please enter a valid amount')
-                        ->isNumberGreaterThanOrEqual(self::TOP_UP_AMOUNT,
+                    $input['card'] = Request::getUriParam('id');
+
+                    $validator->validate('amount')->isFloatingNumber('Please enter a valid amount')
+                        ->isFloatingNumberGreaterThanOrEqual(self::MIN_TOP_UP_AMOUNT,
                             "Sorry, your top-up amount must be at least %s");
 
                     $validator->validate('card')->isUUID("That card is invalid")
@@ -54,71 +61,202 @@ class Wallet extends Manager implements Api
                             });
 
                     if ($validator->hasError()) throw $this->baseException(
-                        "The inputted data is invalid", "Wallet Failed", HTTP::UNPROCESSABLE_ENTITY);
+                        "The inputted data is invalid", "Top-up Failed", HTTP::UNPROCESSABLE_ENTITY);
 
                     try {
                         if ($this->isFrozenWallet()) throw $this->baseException(
-                            "Sorry, your wallet is frozen.", "Wallet Failed", HTTP::EXPECTATION_FAILED);
+                            "Sorry, your wallet is frozen.", "Top-up Failed", HTTP::EXPECTATION_FAILED);
                     } catch (\Exception $e) {
-                        throw $this->baseException($e->getMessage(), "Wallet Failed", HTTP::EXPECTATION_FAILED);
+                        throw $this->baseException($e->getMessage(), "Top-up Failed", HTTP::EXPECTATION_FAILED);
                     }
 
                     try {
                         if (!$this->isActiveWallet()) throw $this->baseException(
-                            "Sorry, your wallet is deactivated.", "Wallet Failed", HTTP::EXPECTATION_FAILED);
+                            "Sorry, your wallet is deactivated.", "Top-up Failed", HTTP::EXPECTATION_FAILED);
                     } catch (\Exception $e) {
-                        throw $this->baseException($e->getMessage(), "Wallet Failed", HTTP::EXPECTATION_FAILED);
+                        throw $this->baseException($e->getMessage(), "Top-up Failed", HTTP::EXPECTATION_FAILED);
                     }
 
                     try {
                         $charge = $this->charge_card($input['card'], $input['amount']);
                     } catch (PaystackException $e) {
-                        throw $this->baseException($e->getMessage(), "Wallet Failed", HTTP::EXPECTATION_FAILED);
+                        throw $this->baseException($e->getMessage(), "Top-up Failed", HTTP::EXPECTATION_FAILED);
                     }
 
                     if (!$charge->isSuccessful()) throw $this->baseException(
                         "Sorry, an unexpected error occurred connecting to payment gateway",
-                            "Wallet Failed", HTTP::BAD_GATEWAY);
+                            "Top-up Failed", HTTP::BAD_GATEWAY);
 
-                    $data = $charge->getResponseArray()['data'] ?? [];
+                    $response = $charge->getResponseArray();
+
+                    if (!($response['status'] ?? false)) throw $this->baseException(
+                        $response['message'] ?? "Failed to charge the selected card, please try another card.",
+                        "Top-up Failed", HTTP::EXPECTATION_FAILED);
+
+                    $data = $response['data'] ?? [];
+
+                    $trans = $this->db()->find('transactions', $data['reference'],
+                        'gateway_reference', function (Builder $builder) {
+                            $builder->select('id', 'transaction_state', 'amount', 'status', 'created_at');
+                        });
+
+                    if ($trans->isSuccessful()) {
+
+                        $transaction = $trans->getFirstWithModel();
+
+                        $transaction->offsetRename("transaction_state", 'type');
+                        $transaction->offsetRename("created_at", 'date');
+                        $type = $this->converter()->convertEnvConst($transaction['type'], "TRANSACTION_");
+                        $type = str_replace("_", "-", $type);
+                        $transaction->offsetSet("type", ucfirst($type));
+                        $transaction->offsetSet("status", strtolower(
+                            $this->converter()->convertEnvConst($transaction['status'], "APPROVAL_")));
+                        $transaction->offsetSet("date", get_date("d/m/y", $transaction['date']));
+                    }
 
                     if (($data['status'] ?? 'failed') != 'success') throw $this->baseException(
                         $data['message'] ?? "Failed to charge the selected card, please try another card.",
-                        "Wallet Failed", HTTP::EXPECTATION_FAILED);
+                        "Top-up Failed", HTTP::EXPECTATION_FAILED);
 
-                    try {
-                        $verify = $this->verify_transaction($data['reference']);
-                    } catch (PaystackException $e) {
-                        throw $this->baseException($e->getMessage(), "Wallet Failed", HTTP::EXPECTATION_FAILED);
-                    }
-
-                    $data = $verify->getResponseArray()['data'] ?? [];
-
-                    if (($data['status'] ?? 'failed') != 'success') throw $this->baseException(
-                        $data['message'] ?? "The charge on that card could not be verified at this time. This is usually rectified within 24 hours.",
-                        "Wallet Failed", HTTP::EXPECTATION_FAILED);
-
-                    try {
-                        $this->refreshWallet();
-                    } catch (\Exception $e) {
-                    }
+                    $this->refreshWallet();
 
                     return $this->http()->output()->json([
                         'status' => true,
                         'code' => HTTP::OK,
-                        'title' => 'Wallet Successful',
+                        'title' => 'Top-up Successful',
                         'message' => "Your wallet has been credited successfully",
                         'response' => [
-                            'balance' => $this->getAvailableBalance()
+                            'balance' => $this->getAvailableBalance(),
+                            'transaction' => $transaction?->getArray()
                         ]
                     ], HTTP::OK);
 
+                case 'cash-out':
+
+                    $input['recipient'] = Request::getUriParam('id');
+
+                    $validator->validate('amount')->isFloatingNumber('Please enter a valid amount')
+                        ->isFloatingNumberGreaterThanOrEqual(self::MIN_CASH_OUT_AMOUNT,
+                            "Sorry, your top-up amount must be at least %s");
+
+                    $validator->validate('recipient')->isNotEmpty('Please enter a valid recipient')
+                        ->isFoundInDB('bank_accounts', 'recipient_code',
+                            'That recipient either does not exist or has been deactivated', function (Builder $builder) {
+                                $builder->where('user_id', $this->user('id'));
+                                $builder->where('is_active', true);
+                            });
+
+                    if ($validator->hasError()) throw $this->baseException(
+                        "The inputted data is invalid", "Cash-out Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+                    try {
+                        if ($this->isFrozenWallet()) throw $this->baseException(
+                            "Sorry, your wallet is frozen.", "Cash-out Failed", HTTP::EXPECTATION_FAILED);
+                    } catch (\Exception $e) {
+                        throw $this->baseException($e->getMessage(), "Cash-out Failed", HTTP::EXPECTATION_FAILED);
+                    }
+
+                    try {
+                        if (!$this->isActiveWallet()) throw $this->baseException(
+                            "Sorry, your wallet is deactivated.", "Cash-out Failed", HTTP::EXPECTATION_FAILED);
+                    } catch (\Exception $e) {
+                        throw $this->baseException($e->getMessage(), "Cash-out Failed", HTTP::EXPECTATION_FAILED);
+                    }
+
+                    $reference = null;
+
+                    $ref = $this->db()->find('transactions', $this->user('id'), 'user_id',
+                        function (Builder $builder) use ($input) {
+                            $builder->where('amount', $input['amount']);
+                            $builder->where('recipient_code', $input['recipient']);
+                            $builder->where('transaction_state', TRANSACTION_WITHDRAWAL);
+                            $builder->where('status', APPROVAL_PROCESSING);
+                            $builder->orderBy('desc', 'id');
+                        });
+
+                    if ($ref->isSuccessful()) {
+                        $transaction = $ref->getFirstWithModel();
+                        $reference = $transaction->getValue('gateway_reference');
+                    }
+
+                    try {
+                        $transfer = $this->init_transfer($input['amount'], $input['recipient'], $reference ?: Str::uuidv4());
+                    } catch (PaystackException $e) {
+                        throw $this->baseException($e->getMessage(), "Cash-out Failed", HTTP::EXPECTATION_FAILED);
+                    }
+
+                    if (!$transfer->isSuccessful()) throw $this->baseException(
+                        "Sorry, an unexpected error occurred connecting to payment gateway",
+                        "Cash-out Failed", HTTP::BAD_GATEWAY);
+
+                    $response = $transfer->getResponseArray();
+
+                    if (!($response['status'] ?? false)) {
+                        throw $this->baseException(
+                            $response['message'] ?? "Sorry we couldn't complete that transfer at this time, let's try it again later.",
+                            "Cash-out Failed", HTTP::EXPECTATION_FAILED
+                        );
+                    }
+
+                    $data = $response['data'] ?? [];
+
+                    if (!$transaction) {
+
+                        $trans = $this->db()->find('transactions', $data['reference'],
+                            'gateway_reference', function (Builder $builder) {
+                                $builder->select('id', 'transaction_state', 'amount', 'status', 'created_at');
+                        });
+
+                        if ($trans->isSuccessful()) $transaction = $trans->getFirstWithModel();
+                    }
+
+                    if ($transaction) {
+                        $transaction->offsetRename("transaction_state", 'type');
+                        $transaction->offsetRename("created_at", 'date');
+                        $type = $this->converter()->convertEnvConst($transaction['type'], "TRANSACTION_");
+                        $type = str_replace("_", "-", $type);
+                        $transaction->offsetSet("type", ucfirst($type));
+                        $transaction->offsetSet("status", strtolower(
+                            $this->converter()->convertEnvConst($transaction['status'], "APPROVAL_")));
+                        $transaction->offsetSet("date", get_date("d/m/y", $transaction['date']));
+                    }
+
+                    if (($data['status'] ?? 'failed') != 'success') throw $this->baseException(
+                        $response['message'] ?? "Sorry we couldn't complete that transfer at this time, let's try it again later.",
+                        "Cash-out Failed", HTTP::EXPECTATION_FAILED);
+
+                    $account = $this->db()->find('bank_accounts', $input['recipient'], 'recipient_code',
+                        function (Builder $builder) {
+                            $builder->where('user_id', $this->user('id'));
+                            $builder->where('is_active', true);
+                        });
+
+                    $account = $account->getFirstWithModel();
+
+                    $bankName = $account->getValue('bank_name');
+                    $accountNumber = $account->getValue('account_number');
+
+                    $this->refreshWallet();
+
+                    return $this->http()->output()->json([
+                        'status' => true,
+                        'code' => HTTP::OK,
+                        'title' => 'Cash-out Successful',
+                        'message' => "The sum of {$input['amount']} NGN has been transferred to your {$bankName} account {$accountNumber}. " .
+                            "Please note that in some cases deposit to your account might take up to 24 hours.",
+                        'response' => [
+                            'balance' => $this->getAvailableBalance(),
+                            'transaction' => $transaction?->getArray()
+                        ]
+                    ], HTTP::OK);
                 default:
                     throw $this->baseException(
                         "Sorry, we're not sure what you're trying to do there.", "Wallet Failed", HTTP::BAD_REQUEST);
             }
 
         } catch (BaseException $e) {
+
+            $transaction?->update(['comment' => $e->getMessage()]);
 
             return $this->http()->output()->json([
                 'status' => $e->getStatus(),

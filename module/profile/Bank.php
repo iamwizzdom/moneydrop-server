@@ -1,0 +1,251 @@
+<?php
+
+
+namespace profile;
+
+
+use que\common\exception\BaseException;
+use que\common\manager\Manager;
+use que\common\structure\Api;
+use que\database\interfaces\Builder;
+use que\http\HTTP;
+use que\http\input\Input;
+use que\http\output\response\Html;
+use que\http\output\response\Json;
+use que\http\output\response\Jsonp;
+use que\http\output\response\Plain;
+use que\http\request\Request;
+use que\support\Arr;
+use que\support\Str;
+use utility\enum\BanksEnum;
+use utility\paystack\exception\PaystackException;
+use utility\paystack\Paystack;
+
+class Bank extends Manager implements Api
+{
+    use Paystack;
+
+    /**
+     * @inheritDoc
+     */
+    public function process(Input $input)
+    {
+        // TODO: Implement process() method.
+        $validator = $this->validator($input);
+
+        try {
+
+            if (empty($this->user('bvn'))) throw $this->baseException(
+                "Sorry, you must add your BVN to perform any bank operation.", "Bank Failed", HTTP::EXPECTATION_FAILED);
+
+            $type = Request::getUriParam('type');
+
+            switch ($type) {
+                case "add-account":
+
+                    $validator->validate('account_number')->isNumeric("Account number should be numeric")
+                        ->hasMinLength(6, "Account number should be at least %s digits")
+                        ->hasMaxLength(17, "Account number should not be more than %s digits")
+                        ->isNotFoundInDB('bank_accounts', 'account_number', 'You already added that account number',
+                            function (Builder $builder) {
+                                $builder->where('user_id', $this->user('id'));
+                                $builder->where('is_active', true);
+                        });
+
+                    $validator->validate('bank_code')->isNotEmpty("Please enter a valid bank code")
+                        ->isEqualToAny(BanksEnum::getBankCodes(), "Invalid bank code");
+
+                    if ($validator->hasError()) throw $this->baseException(
+                        "The inputted data is invalid", "Bank Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+                    try {
+                        $resolve = $this->resolve_account($input['account_number'], $input['bank_code']);
+                    } catch (PaystackException $e) {
+                        throw $this->baseException($e->getMessage(), "Bank Failed", HTTP::EXPECTATION_FAILED);
+                    }
+
+                    if (!$resolve->isSuccessful()) throw $this->baseException(
+                        "Sorry we couldn't resolve that account number at this time, let's try that again later.",
+                        "Bank Failed", HTTP::EXPECTATION_FAILED
+                    );
+
+                    $response = $resolve->getResponseArray();
+
+                    if (!($response['status'] ?? false)) {
+                        throw $this->baseException(
+                            $response['message'] ?? "Sorry we couldn't resolve that account number, seems it's invalid.",
+                            "Bank Failed", HTTP::EXPECTATION_FAILED
+                        );
+                    }
+
+                    try {
+                        $match = $this->match_bvn($this->user('bvn'), $input['account_number'], $input['bank_code']);
+                    } catch (PaystackException $e) {
+                        throw $this->baseException($e->getMessage(), "Bank Failed", HTTP::EXPECTATION_FAILED);
+                    }
+
+                    if (!$match->isSuccessful()) throw $this->baseException(
+                        "Sorry we couldn't verify that account number with your BVN at this time, let's try that again later.",
+                        "Bank Failed", HTTP::EXPECTATION_FAILED
+                    );
+
+                    $response = $match->getResponseArray();
+
+                    if (!($response['status'] ?? false)) {
+                        throw $this->baseException(
+                            $response['message'] ?? "Sorry that account number seems not to be associated with your BVN.",
+                            "Bank Failed", HTTP::EXPECTATION_FAILED
+                        );
+                    }
+
+                    if (($response['is_blacklisted'] ?? false)) {
+                        throw $this->baseException(
+                            $response['message'] ?? "Sorry that account number is blacklisted",
+                            "Bank Failed", HTTP::EXPECTATION_FAILED
+                        );
+                    }
+
+                    try {
+                        $recipient = $this->create_transfer_recipient(
+                            "{$this->user('firstname')} {$this->user('lastname')}",
+                            $input['account_number'], $input['bank_code']
+                        );
+                    } catch (PaystackException $e) {
+                        throw $this->baseException($e->getMessage(), "Bank Failed", HTTP::EXPECTATION_FAILED);
+                    }
+
+                    if (!$recipient->isSuccessful()) throw $this->baseException(
+                        "Sorry we couldn't add that account number at this time, let's that again later.",
+                        "Bank Failed", HTTP::EXPECTATION_FAILED
+                    );
+
+                    $response = $recipient->getResponseArray();
+
+                    if (!($response['status'] ?? false)) {
+                        throw $this->baseException(
+                            $response['message'] ?? "Sorry we couldn't add that account number at this time, let's that again later.",
+                            "Bank Failed", HTTP::EXPECTATION_FAILED
+                        );
+                    }
+
+                    $data = $response['data'] ?? [];
+
+                    $add = $this->db()->insert('bank_accounts', [
+                        'uuid' => Str::uuidv4(),
+                        'account_name' => $data['name'] ?? "{$this->user('firstname')} {$this->user('lastname')}",
+                        'account_number' => $input['account_number'],
+                        'bank_code' => $input['bank_code'],
+                        'bank_name' => $data['details']['bank_name'] ?? null,
+                        'currency' => $data['currency'] ?? null,
+                        'recipient_code' => $data['recipient_code'] ?? null,
+                        'user_id' => $this->user('id')
+                    ]);
+
+                    if (!$add->isSuccessful()) throw $this->baseException(
+                        "Sorry we couldn't add that account number at this time, let's that again later.",
+                        "Bank Failed", HTTP::EXPECTATION_FAILED
+                    );
+
+                    $account = Arr::extract_by_keys($add->getFirstArray(), ['uuid', 'account_name', 'account_number', 'bank_name', 'recipient_code']);
+
+                    $account['account_number'] = hide_number($account['account_number'], 0, strlen($account['account_number']) - 4);
+
+                    return $this->http()->output()->json([
+                        'status' => true,
+                        'code' => HTTP::OK,
+                        'title' => 'Bank Successful',
+                        'message' => "Successfully added account number",
+                        'response' => [
+                            'account' => $account
+                        ]
+                    ], HTTP::OK);
+                case 'retrieve':
+
+                    $id = Request::getUriParam('id');
+
+                    if ($id == 'all') {
+
+                        $accounts = $this->db()->findAll('bank_accounts', $this->user('id'), 'user_id',
+                            function (Builder $builder) {
+                            $builder->where('is_active', true);
+                            $builder->orderBy('desc', 'id');
+                        });
+
+                        $accountList = [];
+
+                        if ($accounts->isSuccessful()) $accountList = $accounts->getAllArray();
+
+                        Arr::callback($accountList, function ($account) {
+                            $account['account_number'] = hide_number($account['account_number'], 0, strlen($account['account_number']) - 4);
+                            return $account;
+                        });
+
+                        return $this->http()->output()->json([
+                            'status' => true,
+                            'code' => HTTP::OK,
+                            'title' => 'Bank Successful',
+                            'message' => !empty($accountList) ? "Bank accounts retrieved successfully." : "No Bank account found.",
+                            'response' => $accountList
+                        ], HTTP::OK);
+                    }
+
+                    $account = $this->db()->find('bank_accounts', $this->user('id'), 'user_id',
+                        function (Builder $builder) use ($id) {
+                            $builder->where('uuid', $id);
+                            $builder->where('is_active', true);
+                    });
+
+                    if (!$account->isSuccessful()) return $this->http()->output()->json([
+                        'status' => true,
+                        'code' => HTTP::NOT_FOUND,
+                        'title' => 'Bank Account Not Found',
+                        'message' => "That account either does not exist or has been deactivated.",
+                        'response' => []
+                    ], HTTP::NOT_FOUND);
+
+                    return $this->http()->output()->json([
+                        'status' => true,
+                        'code' => HTTP::OK,
+                        'title' => 'Bank Successful',
+                        'message' => "Bank account retrieved successfully.",
+                        'response' => $account->getFirstArray()
+                    ], HTTP::OK);
+                case 'remove':
+
+                    $id = Request::getUriParam('id');
+
+                    $account = $this->db()->find('bank_accounts', $id, 'uuid', function (Builder $builder) {
+                        $builder->where('user_id', $this->user('id'));
+                    });
+
+                    $remove = false;
+
+                    if ($account->isSuccessful()) {
+                        $remove = $account->getFirstWithModel()?->update(['is_active' => false]);
+                    }
+
+                    return $this->http()->output()->json([
+                        'status' => $remove,
+                        'code' => HTTP::OK,
+                        'title' => $remove ? 'Remove Successful' : 'Remove Failed',
+                        'message' => $remove ? "Bank account removed successfully." : "Bank account removal failed",
+                        'response' => []
+                    ], HTTP::OK);
+
+                default:
+                    throw $this->baseException(
+                        "Sorry, we're not sure what you're trying to do there.", "Bank Failed", HTTP::BAD_REQUEST);
+            }
+
+        } catch (BaseException $e) {
+
+            return $this->http()->output()->json([
+                'status' => $e->getStatus(),
+                'code' => $e->getCode(),
+                'title' => $e->getTitle(),
+                'message' => $e->getMessage(),
+                'error' => (object) $validator->getErrors()
+            ], $e->getCode());
+        }
+    }
+}

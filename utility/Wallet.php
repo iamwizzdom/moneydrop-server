@@ -82,7 +82,7 @@ trait Wallet
     public function creditWallet(float $amount): float|bool
     {
         $balance = ($this->getBalance() + $amount);
-        $avail_bal = (($bal = $this->getAvailableBalance()) + $amount);
+        $avail_bal = ($this->getAvailableBalance() + $amount);
         if ($this->updateBothBalance($balance, $avail_bal, true)) return $avail_bal;
         return false;
     }
@@ -108,9 +108,10 @@ trait Wallet
      */
     public function lockFund(float $amount): float|bool
     {
-        $balance = $this->getAvailableBalance();
-        if ($amount > $balance) throw new Exception("Insufficient fund");
-        if ($this->updateAvailableBalance($balance = ($balance - $amount))) return $balance;
+        $avail_bal = $this->getAvailableBalance();
+        if ($amount > $avail_bal) throw new Exception("Insufficient fund");
+        $avail_bal = ($avail_bal - $amount);
+        if ($this->updateAvailableBalance($avail_bal, true)) return $avail_bal;
         return false;
     }
 
@@ -119,29 +120,29 @@ trait Wallet
      * @return float|bool
      * @throws Exception
      */
-    public function retrieveLockedFund(float $amount): float|bool
+    public function debitLockedFund(float $amount): float|bool
     {
         $balance = $this->getBalance();
-        $avail_bal = $this->getAvailableBalance();
-        $lockedFund = ($balance - $avail_bal);
+        $lockedFund = ($balance - $this->getAvailableBalance());
         if ($amount > $lockedFund) throw new Exception("Insufficient fund");
-        if ($this->updateBalance($balance = ($balance - ($lockedFund - $amount)))) return $balance;
+        if ($this->updateBalance($balance = ($balance - $amount))) return $balance;
         return false;
     }
 
     /**
      * @param float $balance
+     * @param bool $forceUpdate
      * @return bool
      * @throws Exception
      */
-    private function updateBalance(float $balance): bool
+    private function updateBalance(float $balance, bool $forceUpdate = false): bool
     {
         if (!$this->wallet) throw new Exception("No wallet found");
 
-        if ($this->wallet->validate('is_active')->isNotEqual(true))
+        if (!$forceUpdate && $this->wallet->validate('is_active')->isNotEqual(true))
             throw new Exception("Wallet is deactivated");
 
-        if ($this->wallet->validate('is_frozen')->isEqual(true))
+        if (!$forceUpdate && $this->wallet->validate('is_frozen')->isEqual(true))
             throw new Exception("Wallet is frozen");
 
         return $this->wallet->update(['balance' => $balance]);
@@ -149,17 +150,18 @@ trait Wallet
 
     /**
      * @param float $balance
+     * @param bool $forceUpdate
      * @return bool
      * @throws Exception
      */
-    private function updateAvailableBalance(float $balance): bool
+    private function updateAvailableBalance(float $balance, bool $forceUpdate = false): bool
     {
         if (!$this->wallet) throw new Exception("No wallet found");
 
-        if ($this->wallet->validate('is_active')->isNotEqual(true))
+        if (!$forceUpdate && $this->wallet->validate('is_active')->isNotEqual(true))
             throw new Exception("Wallet is deactivated");
 
-        if ($this->wallet->validate('is_frozen')->isEqual(true))
+        if (!$forceUpdate && $this->wallet->validate('is_frozen')->isEqual(true))
             throw new Exception("Wallet is frozen");
 
         return $this->wallet->update(['available_balance' => $balance]);
@@ -206,6 +208,14 @@ trait Wallet
     {
         if (!$this->wallet) throw new Exception("No wallet found");
         return $this->wallet->getBool('is_active');
+    }
+
+    /**
+     * @return bool
+     */
+    public function refreshWallet(): bool
+    {
+        return $this->wallet ? $this->wallet->refresh() : false;
     }
 
     /**

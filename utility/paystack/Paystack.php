@@ -7,6 +7,7 @@ namespace utility\paystack;
 use que\http\curl\CurlRequest;
 use que\http\curl\CurlResponse;
 use que\support\Str;
+use que\utility\random\UUID;
 use utility\Card;
 use utility\paystack\exception\PaystackException;
 
@@ -60,7 +61,7 @@ trait Paystack
                 $trans = [
                     'uuid' => Str::uuidv4(),
                     'user_id' => user('id'),
-                    'transaction_state' => TRANSACTION_TOPUP,
+                    'transaction_state' => TRANSACTION_TOP_UP,
                     'transaction_type' => TRANSACTION_CREDIT,
                     'gateway_reference' => $data['reference'],
                     'amount' => $amount,
@@ -149,17 +150,28 @@ trait Paystack
                     'uuid' => Str::uuidv4(),
                     'user_id' => user('id'),
                     'card_id' => $cardUUID,
-                    'transaction_state' => TRANSACTION_TOPUP,
+                    'transaction_state' => TRANSACTION_TOP_UP,
                     'transaction_type' => TRANSACTION_CREDIT,
                     'gateway_reference' => $data['reference'],
                     'amount' => $amount,
                     'currency' => $currency,
-                    'status' => ($data['status'] ?? '') == 'success' ? APPROVAL_SUCCESSFUL : APPROVAL_FAILED
+                    'status' => APPROVAL_PENDING
                 ];
 
                 if ($extraCharge) $trans['fees'] = $extraCharge;
 
-                db()->insert('transactions', $trans);
+                $trans = db()->insert('transactions', $trans);
+
+                $verify = $this->verify_transaction($data['reference']);
+
+                if ($trans->isSuccessful() && $verify->isSuccessful()) {
+
+                    $data = $verify->getResponseArray()['data'] ?? [];
+
+                    $trans->getFirstWithModel()->update([
+                        'status' => ($data['status'] ?? 'failed') == 'success' ? APPROVAL_SUCCESSFUL : APPROVAL_FAILED
+                    ]);
+                }
             }
         }
 
@@ -239,7 +251,7 @@ trait Paystack
     {
         if (empty($accountNumber)) throw new PaystackException("Please set a valid account number.");
 
-        if (empty($bankCode)) throw new PaystackException("Please set a valid account code.");
+        if (empty($bankCode)) throw new PaystackException("Please set a valid bank code.");
 
         $curl = CurlRequest::getInstance();
 
@@ -278,6 +290,114 @@ trait Paystack
             'Cache-Control: no-cache'
         ]);
         return $curl->_exec();
+    }
+
+    /**
+     * @param string $name
+     * @param string $accountNumber
+     * @param string $bankCode
+     * @param string $currency
+     * @return CurlResponse
+     * @throws PaystackException
+     */
+    public function create_transfer_recipient(string $name, string $accountNumber,
+                                              string $bankCode, string $currency = 'NGN'): CurlResponse
+    {
+
+        if (empty($name)) throw new PaystackException("Please set a valid account name.");
+        if (empty($accountNumber)) throw new PaystackException("Please set a valid account number.");
+        if (empty($bankCode)) throw new PaystackException("Please set a valid bank code.");
+
+        $curl = CurlRequest::getInstance();
+
+        $curl->setUrl(PAYSTACK_TRANSFER_RECIPIENT_URL);
+        $curl->setPosts([
+            'type' => 'nuban',
+            'name' => $name,
+            'account_number' => $accountNumber,
+            'bank_code' => $bankCode,
+            'currency' => $currency
+        ]);
+        $curl->setHeaders([
+            'Authorization: Bearer ' . PAYSTACK_KEY,
+            'Content-Type: application/json',
+            'Cache-Control: no-cache'
+        ]);
+        return $curl->_exec();
+    }
+
+    /**
+     * @param float $amount
+     * @param string $recipient
+     * @param string $reference
+     * @param string|null $reason
+     * @param string $currency
+     * @return CurlResponse
+     * @throws PaystackException
+     */
+    public function init_transfer(float $amount, string $recipient, string $reference,
+                                  string $reason = null, string $currency = "NGN"): CurlResponse
+    {
+
+
+        if ($amount < WALLET_TRANSFER_MIN) throw new PaystackException(sprintf(
+            "Sorry you can't an amount less than %s {$currency}", WALLET_TRANSFER_MIN));
+        if (empty($recipient)) throw new PaystackException("Please set a valid recipient.");
+        if (empty($reference) || !UUID::is_valid($reference)) throw new PaystackException("Please set a valid reference.");
+
+        $curl = CurlRequest::getInstance();
+
+        $curl->setUrl(PAYSTACK_TRANSFER_URL);
+        $post = [
+            'source' => 'balance',
+            'amount' => $amount,
+            'recipient' => $recipient,
+            'reference' => $reference,
+            'currency' => $currency
+        ];
+        if ($reason) $post['reason'] = $reason;
+        $curl->setPosts($post);
+        $curl->setHeaders([
+            'Authorization: Bearer ' . PAYSTACK_KEY,
+            'Content-Type: application/json',
+            'Cache-Control: no-cache'
+        ]);
+
+        $response = $curl->_exec();
+
+        if ($response->isSuccessful()) {
+
+            $data = $response->getResponseArray()['data'] ?? [];
+
+            if (!empty($data)) {
+
+                $trans = [
+                    'uuid' => Str::uuidv4(),
+                    'user_id' => user('id'),
+                    'transaction_state' => TRANSACTION_WITHDRAWAL,
+                    'transaction_type' => TRANSACTION_DEBIT,
+                    'recipient_code' => $recipient,
+                    'gateway_reference' => $data['reference'],
+                    'transfer_code' => $data['transfer_code'],
+                    'amount' => $amount,
+                    'currency' => $currency,
+                    'status' => APPROVAL_PENDING
+                ];
+
+                if ($reason) $trans['comment'] = $reason;
+
+                $trans = db()->insert('transactions', $trans);
+
+                if ($trans->isSuccessful()) {
+
+                    $trans->getFirstWithModel()->update([
+                        'status' => ($data['status'] ?? 'failed') == 'success' ? APPROVAL_PROCESSING : APPROVAL_FAILED
+                    ]);
+                }
+            }
+        }
+
+        return $response;
     }
 
 }

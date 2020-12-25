@@ -20,6 +20,7 @@ use que\security\JWT\JWT;
 use que\support\Arr;
 use que\user\User;
 use utility\Card;
+use utility\enum\BanksEnum;
 
 class Login extends Manager implements Api
 {
@@ -97,7 +98,8 @@ class Login extends Manager implements Api
                 'response' => [
                     'token' => JWT::fromUser($input->user()),
                     'user' => $user->getArray(),
-                    'cards' => $cards
+                    'cards' => $cards,
+                    'banks' => BanksEnum::getBanks(),
                 ]
             ], HTTP::OK);
 
