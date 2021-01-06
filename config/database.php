@@ -6,12 +6,16 @@
  * Time: 9:34 AM
  */
 
-use custom\model\CustomModel;
+use custom\model\CardModel;
+use custom\model\UserModel;
+use custom\model\LoanModel;
+use custom\model\TransactionModel;
+use observers\LoanObserver;
 use observers\TransactionObserver;
 use observers\UserObserver;
 use observers\WalletObserver;
 use que\database\drivers\mysql\MySqlDriver;
-use que\database\model\Model;
+use que\database\model\CentralModel;
 
 return [
 
@@ -71,8 +75,11 @@ return [
     |
     */
     'models' => [
-        'que' => Model::class,
-        'custom' => CustomModel::class
+        'que' => CentralModel::class,
+        'loanModel' => LoanModel::class,
+        'transactionModel' => TransactionModel::class,
+        'userModel' => UserModel::class,
+        'cardModel' => CardModel::class,
     ],
 
     /*
@@ -88,6 +95,7 @@ return [
         'users' => UserObserver::class,
         'wallets' => WalletObserver::class,
         'transactions' => TransactionObserver::class,
+        'loans' => LoanObserver::class,
     ],
 
     /*

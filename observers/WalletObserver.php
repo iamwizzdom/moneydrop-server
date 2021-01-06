@@ -7,22 +7,13 @@ namespace observers;
 use que\common\exception\QueException;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
-use que\database\observer\ObserverSignal;
+use que\database\observer\Observer;
 use que\mail\Mail;
 use que\mail\Mailer;
 use que\user\XUser;
 
-class WalletObserver implements \que\database\interfaces\observer\Observer
+class WalletObserver extends Observer
 {
-    private ObserverSignal $signal;
-
-    /**
-     * @inheritDoc
-     */
-    public function __construct(ObserverSignal $signal)
-    {
-        $this->signal = $signal;
-    }
 
     /**
      * @inheritDoc
@@ -211,14 +202,5 @@ class WalletObserver implements \que\database\interfaces\observer\Observer
     public function onDeleteRetryComplete(ModelCollection $models, bool $status, int $attempts)
     {
         // TODO: Implement onDeleteRetryComplete() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getSignal(): ObserverSignal
-    {
-        // TODO: Implement getSignal() method.
-        return $this->signal;
     }
 }

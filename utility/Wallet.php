@@ -32,8 +32,7 @@ trait Wallet
 
         restart:
 
-        $wallet = db()->find('wallets', $walletID ?: ($userID ?: user('id')),
-            $walletID ? 'id' : 'user_id');
+        $wallet = db()->find('wallets', $walletID ?: ($userID ?: user('id')), $walletID ? 'id' : 'user_id');
 
         if (!$wallet->isSuccessful() && !$restarted) {
             if (!$walletID) $this->createWallet(($userID ?: user('id')));
@@ -82,8 +81,8 @@ trait Wallet
     public function creditWallet(float $amount): float|bool
     {
         $balance = ($this->getBalance() + $amount);
-        $avail_bal = ($this->getAvailableBalance() + $amount);
-        if ($this->updateBothBalance($balance, $avail_bal, true)) return $avail_bal;
+        $availableBalance = ($this->getAvailableBalance() + $amount);
+        if ($this->updateBothBalance($balance, $availableBalance, true)) return $availableBalance;
         return false;
     }
 
@@ -95,9 +94,9 @@ trait Wallet
     public function debitWallet(float $amount): float|bool
     {
         $balance = $this->getBalance();
-        $avail_bal = $this->getAvailableBalance();
-        if ($amount > $avail_bal) throw new Exception("Insufficient fund");
-        if ($this->updateBothBalance(($balance - $amount), $bal = ($avail_bal - $amount))) return $bal;
+        $availableBalance = $this->getAvailableBalance();
+        if ($amount > $availableBalance) throw new Exception("Insufficient fund");
+        if ($this->updateBothBalance(($balance - $amount), $bal = ($availableBalance - $amount))) return $bal;
         return false;
     }
 
@@ -108,10 +107,26 @@ trait Wallet
      */
     public function lockFund(float $amount): float|bool
     {
-        $avail_bal = $this->getAvailableBalance();
-        if ($amount > $avail_bal) throw new Exception("Insufficient fund");
-        $avail_bal = ($avail_bal - $amount);
-        if ($this->updateAvailableBalance($avail_bal, true)) return $avail_bal;
+        $availableBalance = $this->getAvailableBalance();
+        if ($amount > $availableBalance) throw new Exception("Insufficient fund");
+        $availableBalance = ($availableBalance - $amount);
+        if ($this->updateAvailableBalance($availableBalance, true)) return $availableBalance;
+        return false;
+    }
+
+    /**
+     * @param float $amount
+     * @return float|bool
+     * @throws Exception
+     */
+    public function unlockFund(float $amount): float|bool
+    {
+        $availableBalance = $this->getAvailableBalance();
+        $balance = $this->getBalance();
+        if ($amount > $balance) throw new Exception("Insufficient fund");
+        $balance = ($balance - $amount);
+        $availableBalance = ($availableBalance + $amount);
+        if ($this->updateBothBalance($balance, $availableBalance,true)) return $balance;
         return false;
     }
 
@@ -169,12 +184,12 @@ trait Wallet
 
     /**
      * @param float $balance
-     * @param float $avail_bal
+     * @param float $availableBalance
      * @param bool $forceUpdate
      * @return bool
      * @throws Exception
      */
-    private function updateBothBalance(float $balance, float $avail_bal, bool $forceUpdate = false): bool
+    private function updateBothBalance(float $balance, float $availableBalance, bool $forceUpdate = false): bool
     {
         if (!$this->wallet) throw new Exception("No wallet found");
 
@@ -186,7 +201,7 @@ trait Wallet
 
         return $this->wallet->update([
             'balance' => $balance,
-            'available_balance' => $avail_bal
+            'available_balance' => $availableBalance
         ]);
     }
 

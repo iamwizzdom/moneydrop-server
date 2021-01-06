@@ -95,24 +95,11 @@ class Wallet extends Manager implements Api
 
                     $data = $response['data'] ?? [];
 
-                    $trans = $this->db()->find('transactions', $data['reference'],
-                        'gateway_reference', function (Builder $builder) {
-                            $builder->select('id', 'transaction_state', 'amount', 'status', 'created_at');
-                        });
+                    $trans = $this->db()->find('transactions', $data['reference'], 'gateway_reference');
 
-                    if ($trans->isSuccessful()) {
+                    $trans->setModelKey("transactionModel");
 
-                        $transaction = $trans->getFirstWithModel();
-
-                        $transaction->offsetRename("transaction_state", 'type');
-                        $transaction->offsetRename("created_at", 'date');
-                        $type = $this->converter()->convertEnvConst($transaction['type'], "TRANSACTION_");
-                        $type = str_replace("_", "-", $type);
-                        $transaction->offsetSet("type", ucfirst($type));
-                        $transaction->offsetSet("status", strtolower(
-                            $this->converter()->convertEnvConst($transaction['status'], "APPROVAL_")));
-                        $transaction->offsetSet("date", get_date("d/m/y", $transaction['date']));
-                    }
+                    if ($trans->isSuccessful()) $transaction = $trans->getFirstWithModel();
 
                     if (($data['status'] ?? 'failed') != 'success') throw $this->baseException(
                         $data['message'] ?? "Failed to charge the selected card, please try another card.",
@@ -127,7 +114,7 @@ class Wallet extends Manager implements Api
                         'message' => "Your wallet has been credited successfully",
                         'response' => [
                             'balance' => $this->getAvailableBalance(),
-                            'transaction' => $transaction?->getArray()
+                            'transaction' => $transaction ?: []
                         ]
                     ], HTTP::OK);
 
@@ -169,10 +156,12 @@ class Wallet extends Manager implements Api
                         function (Builder $builder) use ($input) {
                             $builder->where('amount', $input['amount']);
                             $builder->where('recipient_code', $input['recipient']);
-                            $builder->where('transaction_state', TRANSACTION_WITHDRAWAL);
+                            $builder->where('type', TRANSACTION_WITHDRAWAL);
                             $builder->where('status', APPROVAL_PROCESSING);
                             $builder->orderBy('desc', 'id');
                         });
+
+                    $ref->setModelKey("transactionModel");
 
                     if ($ref->isSuccessful()) {
                         $transaction = $ref->getFirstWithModel();
@@ -201,24 +190,9 @@ class Wallet extends Manager implements Api
                     $data = $response['data'] ?? [];
 
                     if (!$transaction) {
-
-                        $trans = $this->db()->find('transactions', $data['reference'],
-                            'gateway_reference', function (Builder $builder) {
-                                $builder->select('id', 'transaction_state', 'amount', 'status', 'created_at');
-                        });
-
+                        $trans = $this->db()->find('transactions', $data['reference'], 'gateway_reference');
+                        $trans->setModelKey("transactionModel");
                         if ($trans->isSuccessful()) $transaction = $trans->getFirstWithModel();
-                    }
-
-                    if ($transaction) {
-                        $transaction->offsetRename("transaction_state", 'type');
-                        $transaction->offsetRename("created_at", 'date');
-                        $type = $this->converter()->convertEnvConst($transaction['type'], "TRANSACTION_");
-                        $type = str_replace("_", "-", $type);
-                        $transaction->offsetSet("type", ucfirst($type));
-                        $transaction->offsetSet("status", strtolower(
-                            $this->converter()->convertEnvConst($transaction['status'], "APPROVAL_")));
-                        $transaction->offsetSet("date", get_date("d/m/y", $transaction['date']));
                     }
 
                     if (($data['status'] ?? 'failed') != 'success') throw $this->baseException(
@@ -246,7 +220,7 @@ class Wallet extends Manager implements Api
                             "Please note that in some cases deposit to your account might take up to 24 hours.",
                         'response' => [
                             'balance' => $this->getAvailableBalance(),
-                            'transaction' => $transaction?->getArray()
+                            'transaction' => $transaction ?: []
                         ]
                     ], HTTP::OK);
                 default:

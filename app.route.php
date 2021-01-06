@@ -85,7 +85,13 @@ Route::register()->groupApi('api/v1', function ($prefix) {
         function (RouteEntry $entry) {
             $entry->allowPostRequest()->allowGetRequest();
             $entry->setMiddleware('user.auth');
-            $entry->setUri('/user/loan/{type:alpha}/');
+            $entry->setUri('/loan/{type:alpha}');
+            $entry->setModule(\loan\Loan::class);
+        },
+        function (RouteEntry $entry) {
+            $entry->allowPostRequest()->allowGetRequest();
+            $entry->setMiddleware('user.auth');
+            $entry->setUri('/user/loan/{type:alpha}');
             $entry->setModule(Loan::class);
         },
         function (RouteEntry $entry) {
@@ -93,6 +99,12 @@ Route::register()->groupApi('api/v1', function ($prefix) {
             $entry->setMiddleware('user.auth');
             $entry->setUri('/user/transactions');
             $entry->setModule(Transaction::class);
+        },
+        function (RouteEntry $entry) {
+            $entry->allowPostRequest()->allowGetRequest();
+            $entry->setMiddleware('user.auth');
+            $entry->setUri('/loan/{type:alpha}/');
+            $entry->setModule(\loan\Loan::class);
         },
     ];
 

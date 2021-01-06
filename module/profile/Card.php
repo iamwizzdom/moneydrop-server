@@ -127,12 +127,13 @@ class Card extends Manager implements Api
                             $trans = [
                                 'uuid' => Str::uuidv4(),
                                 'user_id' => user('id'),
-                                'transaction_state' => TRANSACTION_TOP_UP,
-                                'transaction_type' => TRANSACTION_CREDIT,
+                                'type' => TRANSACTION_TOP_UP,
+                                'direction' => "b2w",
                                 'gateway_reference' => $data['reference'],
                                 'amount' => $data['amount'] / 100,
                                 'currency' => $data['currency'],
-                                'status' => APPROVAL_SUCCESSFUL
+                                'status' => APPROVAL_SUCCESSFUL,
+                                'comment' => "Card add top-up transaction"
                             ];
 
                             db()->insert('transactions', $trans);
@@ -166,11 +167,7 @@ class Card extends Manager implements Api
                                 ], HTTP::OK);
                             }
 
-                            $card = $card->getFirstWithModel();
-                            $cardDetails = Arr::extract_by_keys($card->getValue('auth'),
-                                ['card_type', 'last4', 'brand', 'exp_month', 'exp_year']);
-                            $cardDetails['name'] = $card->getValue('name');
-                            $cardDetails['uuid'] = $card->getValue('uuid');
+                            $card->setModelKey("cardModel");
 
                             return $this->http()->output()->json([
                                 'status' => true,
@@ -178,7 +175,7 @@ class Card extends Manager implements Api
                                 'title' => 'Verification Successful',
                                 'message' => "Card added successfully.",
                                 'response' => [
-                                    'card' => $cardDetails
+                                    'card' => $card->getFirstWithModel()
                                 ]
                             ], HTTP::CREATED);
 
@@ -193,21 +190,12 @@ class Card extends Manager implements Api
 
                     if ($cardID == 'all') {
 
-                        $cards = $this->getAllMyCards()?->getArray() ?: [];
-
-                        Arr::callback($cards, function ($card) {
-                            $card = array_merge($card, Arr::extract_by_keys((array) $card['auth'],
-                                ['card_type', 'last4', 'brand', 'exp_month', 'exp_year']));
-                            unset($card['auth']);
-                            return $card;
-                        });
-
                         return $this->http()->output()->json([
                             'status' => true,
                             'code' => HTTP::OK,
                             'title' => 'Card Successful',
                             'message' => !empty($cards) ? "Cards retrieved successfully." : "No Card found.",
-                            'response' => $cards
+                            'response' => $this->getAllMyCards() ?: []
                         ], HTTP::OK);
                     }
 
@@ -225,18 +213,14 @@ class Card extends Manager implements Api
                         'response' => []
                     ], HTTP::NOT_FOUND);
 
-                    $card = $card->getFirstWithModel();
-                    $cardDetails = Arr::extract_by_keys((array) $card->getValue('auth'),
-                        ['card_type', 'last4', 'brand', 'exp_month', 'exp_year']);
-                    $cardDetails['name'] = $card->getValue('name');
-                    $cardDetails['uuid'] = $card->getValue('uuid');
+                    $card->setModelKey('cardModel');
 
                     return $this->http()->output()->json([
                         'status' => true,
                         'code' => HTTP::OK,
                         'title' => 'Card Successful',
                         'message' => "Card retrieved successfully.",
-                        'response' => $cardDetails
+                        'response' => $card->getFirstWithModel()
                     ], HTTP::OK);
 
                 case 'remove':

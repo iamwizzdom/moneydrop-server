@@ -61,12 +61,13 @@ trait Paystack
                 $trans = [
                     'uuid' => Str::uuidv4(),
                     'user_id' => user('id'),
-                    'transaction_state' => TRANSACTION_TOP_UP,
-                    'transaction_type' => TRANSACTION_CREDIT,
+                    'type' => TRANSACTION_TOP_UP,
+                    'direction' => 'b2w',
                     'gateway_reference' => $data['reference'],
                     'amount' => $amount,
                     'currency' => $currency,
-                    'status' => APPROVAL_PENDING
+                    'status' => APPROVAL_PENDING,
+                    'comment' => 'Add card charge/top-up transaction'
                 ];
 
                 if ($extraCharge) $trans['fees'] = $extraCharge;
@@ -150,12 +151,13 @@ trait Paystack
                     'uuid' => Str::uuidv4(),
                     'user_id' => user('id'),
                     'card_id' => $cardUUID,
-                    'transaction_state' => TRANSACTION_TOP_UP,
-                    'transaction_type' => TRANSACTION_CREDIT,
+                    'type' => TRANSACTION_TOP_UP,
+                    'direction' => 'b2w',
                     'gateway_reference' => $data['reference'],
                     'amount' => $amount,
                     'currency' => $currency,
-                    'status' => APPROVAL_PENDING
+                    'status' => APPROVAL_PENDING,
+                    'comment' => "wallet top-up transaction"
                 ];
 
                 if ($extraCharge) $trans['fees'] = $extraCharge;
@@ -374,14 +376,15 @@ trait Paystack
                 $trans = [
                     'uuid' => Str::uuidv4(),
                     'user_id' => user('id'),
-                    'transaction_state' => TRANSACTION_WITHDRAWAL,
-                    'transaction_type' => TRANSACTION_DEBIT,
+                    'type' => TRANSACTION_WITHDRAWAL,
+                    'direction' => "w2b",
                     'recipient_code' => $recipient,
                     'gateway_reference' => $data['reference'],
                     'transfer_code' => $data['transfer_code'],
                     'amount' => $amount,
                     'currency' => $currency,
-                    'status' => APPROVAL_PENDING
+                    'status' => APPROVAL_PENDING,
+                    'comment' => 'Wallet cash-out transaction'
                 ];
 
                 if ($reason) $trans['comment'] = $reason;

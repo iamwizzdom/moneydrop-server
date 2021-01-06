@@ -1,23 +1,16 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Wisdom Emenike
- * Date: 5/10/2020
- * Time: 11:09 PM
- */
+
 
 namespace observers;
 
 
-use que\common\exception\QueException;
+use loan\Loan;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
 use que\database\observer\Observer;
-use que\http\HTTP;
-use que\mail\Mail;
-use que\mail\Mailer;
+use que\support\Str;
 
-class UserObserver extends Observer
+class LoanObserver extends Observer
 {
 
     /**
@@ -34,28 +27,20 @@ class UserObserver extends Observer
     public function onCreated(Model $model)
     {
         // TODO: Implement onCreated() method.
-        try {
+        if ($model->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
 
-            $mailer = Mailer::getInstance();
-
-            $mail = new Mail('register');
-            $mail->addRecipient($model->getValue('email'),
-                $name = "{$model->getValue('firstname')} {$model->getValue('lastname')}");
-            $mail->setSubject("Successful Registration");
-            $mail->setData([
-                'title' => 'Successful Registration',
-                'name' => $name,
-                'app_name' => config('template.app.header.name')
+            $trans = db()->insert('transactions', [
+                'uuid' => Str::uuidv4(),
+                'user_id' => $model->getInt('user_id'),
+                'type' => TRANSACTION_CHARGE,
+                'direction' => "w2s",
+                'gateway_reference' => $model->getValue('uuid'),
+                'amount' => $model->getFloat('amount'),
+                'status' => APPROVAL_PROCESSING,
+                'comment' => "Loan offer charge transaction"
             ]);
-            $mail->setHtmlPath('email/html/successful-registration-notice.tpl');
-            $mail->setBodyPath('email/text/successful-registration-notice.txt');
-            $mail->setFrom('account@moneydrop.com', 'MoneyDrop');
 
-            $mailer->addMail($mail);
-            $mailer->prepare('register');
-            $mailer->dispatch('register');
-
-        } catch (QueException $e) {
+            if (!$trans->isSuccessful()) $this->getSignal()->undoOperation("Unable to transact at this time");
         }
     }
 
@@ -65,7 +50,6 @@ class UserObserver extends Observer
     public function onCreateFailed(Model $model, array $errors, $errorCode)
     {
         // TODO: Implement onCreateFailed() method.
-        $this->getSignal()->retryOperation(2);
     }
 
     /**
@@ -98,40 +82,18 @@ class UserObserver extends Observer
     public function onUpdated(ModelCollection $newModels, ModelCollection $oldModels)
     {
         // TODO: Implement onUpdated() method.
-        $newModels->map(function (Model $model) use ($oldModels) {
+        $newModels->map(function (Model $newModel) use ($oldModels) {
 
-            $oldModel = $oldModels->find(function (Model $m) use ($model) {
-                return $model->validate('id')->isEqual($m->getValue('id'));
-            });
+            if ($newModel->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
 
-            if ($model->validate('password')->isNotEqual($oldModel->getValue('password'))) {
-
-                try {
-
-                    $mailer = Mailer::getInstance();
-
-                    $mail = new Mail('reset');
-                    $mail->addRecipient($model->getValue('email'),
-                        $name = "{$model->getValue('firstname')} {$model->getValue('lastname')}");
-                    $mail->setSubject("Password Reset");
-                    $mail->setData([
-                        'title' => 'Password Reset',
-                        'name' => $name,
-                        'app_name' => config('template.app.header.name')
-                    ]);
-                    $mail->setHtmlPath('email/html/reset-password.tpl');
-                    $mail->setBodyPath('email/text/reset-password.txt');
-
-                    $mailer->addMail($mail);
-                    $mailer->prepare('reset');
-                    $mailer->dispatch('reset');
-
-                } catch (QueException $e) {
+                if ($newModel->getInt('status') == STATE_SUCCESSFUL) {
+                    $trans = db()->find('transactions', $newModel->getValue('uuid'), 'gateway_reference');
+                    $status = $trans->getFirstWithModel()?->update(['status' => APPROVAL_SUCCESSFUL]);
+                    if (!$status) $this->getSignal()->undoOperation("Unable to transact at this time");
                 }
-
             }
-
         });
+
     }
 
     /**
@@ -140,7 +102,6 @@ class UserObserver extends Observer
     public function onUpdateFailed(ModelCollection $models, array $errors, $errorCode)
     {
         // TODO: Implement onUpdateFailed() method.
-        $this->getSignal()->retryOperation(1);
     }
 
     /**
@@ -181,7 +142,6 @@ class UserObserver extends Observer
     public function onDeleteFailed(ModelCollection $models, array $errors, $errorCode)
     {
         // TODO: Implement onDeleteFailed() method.
-        $this->getSignal()->retryOperation(3);
     }
 
     /**

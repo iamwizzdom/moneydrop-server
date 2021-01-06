@@ -21,12 +21,12 @@ trait Card
      */
     public function getMyCard($cardID): ?Model
     {
-        $card = db()->find('cards', $cardID, 'id',
+        $card = db()->find('cards', $cardID, is_numeric($cardID) ? 'id' : 'uuid',
             function (Builder $builder) use ($cardID) {
-                $builder->orWhere('uuid', $cardID);
                 $builder->where('user_id', user('id'));
             });
-        return $card->isSuccessful() ? $card->getFirstWithModel() : null;
+        $card->setModelKey('cardModel');
+        return $card->getFirstWithModel();
     }
 
     /**
@@ -38,7 +38,8 @@ trait Card
             $builder->where('is_active', true);
             $builder->orderBy("desc", "id");
         });
-        return $card->isSuccessful() ? $card->getAllWithModel() : null;
+        $card->setModelKey('cardModel');
+        return $card->getAllWithModel();
     }
 
     /**
@@ -58,11 +59,9 @@ trait Card
      */
     public function getCard($cardID): ?Model
     {
-        $card = db()->find('cards', $cardID, 'id',
-            function (Builder $builder) use ($cardID) {
-                $builder->orWhere('uuid', $cardID);
-            });
-        return $card->isSuccessful() ? $card->getFirstWithModel() : null;
+        $card = db()->find('cards', $cardID, is_numeric($cardID) ? 'id' : 'uuid');
+        $card->setModelKey('cardModel');
+        return $card->getFirstWithModel();
     }
 
     /**
@@ -71,11 +70,10 @@ trait Card
      */
     public function getCardAuthCode($cardID): mixed
     {
-        $card = db()->find('cards', $cardID, 'id',
+        $card = db()->find('cards', $cardID, is_numeric($cardID) ? 'id' : 'uuid',
             function (Builder $builder) use ($cardID) {
                 $builder->selectJsonValue('auth', 'auth_code', '$.authorization_code');
-                $builder->orWhere('uuid', $cardID);
             });
-        return $card->isSuccessful() ? $card->getFirstWithModel()->getValue('auth_code') : null;
+        return $card->getFirstWithModel()?->getValue('auth_code');
     }
 }

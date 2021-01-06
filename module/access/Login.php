@@ -53,31 +53,8 @@ class Login extends Manager implements Api
             if (!$user->isSuccessful()) throw $this->baseException(
                 'Email and password do not match', 'Invalid Credentials', HTTP::UNAUTHORIZED, false);
 
+            $user->setModelKey('userModel');
             $user = $user->getFirstWithModel();
-
-            $emailVerification = $this->db()->find('verifications', $user['email'],
-                'data', function (Builder $builder) {
-                    $builder->where('type', 'email');
-                    $builder->where('is_verified', true);
-                    $builder->where('is_active', true);
-                });
-
-            $phoneVerification = $this->db()->find('verifications', $user['phone'],
-                'data', function (Builder $builder) {
-                    $builder->where('type', 'phone');
-                    $builder->where('is_verified', true);
-                    $builder->where('is_active', true);
-                });
-
-            $user->offsetSet('verified', [
-                'email' => $emailVerification->isSuccessful(),
-                'phone' => $phoneVerification->isSuccessful()
-            ]);
-
-            $user->offsetSet('country_id', $this->converter()->convertCountry($user['country_id'] ?: 0, 'countryName'));
-            $user->offsetSet('state_id', $this->converter()->convertState($user['state_id'] ?: 0, 'stateName'));
-            $user->offsetRename('country_id', 'country');
-            $user->offsetRename('state_id', 'state');
 
             User::login($user->getObject());
 
@@ -90,14 +67,15 @@ class Login extends Manager implements Api
                 return $card;
             });
 
+            $user->set('token', JWT::fromUser($input->user()));
+
             return $this->http()->output()->json([
                 'status' => true,
                 'code' => HTTP::OK,
                 'title' => 'Login Successful',
                 'message' => "Hi {$user['firstname']}, welcome.",
                 'response' => [
-                    'token' => JWT::fromUser($input->user()),
-                    'user' => $user->getArray(),
+                    'user' => $user,
                     'cards' => $cards,
                     'banks' => BanksEnum::getBanks(),
                 ]

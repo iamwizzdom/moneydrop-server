@@ -22,52 +22,24 @@ class Dashboard extends Manager implements Api
     public function process(Input $input)
     {
         // TODO: Implement process() method.
-        $date = date('m/y');
-        $converter = converter();
 
-        $trans = $this->db()->select('id', 'transaction_state', 'amount', 'status', 'created_at')
+        $trans = $this->db()->select('*')
             ->table('transactions')->where('user_id', $this->user('id'))
-            ->orderBy('desc', 'id')->limit(4)->exec();
+            ->orderBy('desc', 'id')->limit(3)->exec();
 
-        $transactions = [];
+        $trans->setModelKey("transactionModel");
 
-        if ($trans->isSuccessful()) {
+        $loans = $this->db()->select("*")->table('loans')
+            ->where('user_id', $this->user('id'))
+            ->where('is_active', true)
+            ->orderBy('desc', 'id')->limit(2)->exec();
 
-            $transactions = $trans->getAllWithModel();
-
-            iterable_callback($transactions, function (Model $model) use ($converter) {
-                $model->offsetRename("transaction_state", 'type');
-                $model->offsetRename("created_at", 'date');
-                $type = $converter->convertEnvConst($model['type'], "TRANSACTION_");
-                $type = str_replace("_", "-", $type);
-                $model->offsetSet("type", ucfirst($type));
-                $model->offsetSet("status", strtolower($converter->convertEnvConst($model['status'], "APPROVAL_")));
-                $model->offsetSet("date", get_date("d/m/y", $model['date']));
-                return $model;
-            });
-
-            $transactions = $transactions->getArray();
-        }
+        $loans->setModelKey("loanModel");
 
         return [
             'balance' => $this->getAvailableBalance(),
-            'loan_requests' => [
-                [
-                    'id' => 1,
-                    'type' => 'Loan request',
-                    'amount' => 20000,
-                    'status' => $converter->convertEnvConst(STATE_PENDING, "STATE_"),
-                    'date' => $date
-                ],
-                [
-                    'id' => 2,
-                    'type' => 'Loan request',
-                    'amount' => 65000,
-                    'status' => $converter->convertEnvConst(STATE_SUCCESSFUL, "STATE_"),
-                    'date' => $date
-                ]
-            ],
-            'transactions' => $transactions
+            'loans' => $loans->getAllWithModel(),
+            'transactions' => $trans->getAllWithModel() ?: []
         ];
     }
-}
+}https://www.xvideos.com/video44138993/bangbros_-_horny_and_busty_pawg_lena_paul_wants_some_dick#
