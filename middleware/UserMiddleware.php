@@ -37,14 +37,14 @@ class UserMiddleware extends Middleware
      */
     public function handle(Input $input): MiddlewareResponse
     {
-//        sleep(1);
+//        sleep(2);
         // TODO: Implement handle() method.
         $hasAccess = true;
         $message = "";
         $code = HTTP::EXPIRED_AUTHENTICATION;
 
         try {
-            JWT::toUser(get_bearer_token() ?: '', true);
+            JWT::toUser(get_bearer_token() ?: '', "userModel", false);
         } catch (QueRuntimeException $e) {
             $hasAccess = false;
             $message = $e->getMessage();

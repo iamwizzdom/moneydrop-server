@@ -1,11 +1,13 @@
 <?php
 
+use loan\LoanApplication;
 use module\access\ForgotPassword;
 use module\access\Login;
 use module\access\PasswordReset;
 use module\access\Register;
 use module\access\Verification;
 use module\home\Dashboard;
+use notification\Notification;
 use profile\Bank;
 use profile\Card;
 use profile\Loan;
@@ -51,6 +53,42 @@ Route::register()->groupApi('api/v1', function ($prefix) {
         ];
     });
 
+    Route::register()->groupApi("{$prefix}/user", function ($prefix) {
+
+        return [
+            function (RouteEntry $entry) {
+                $entry->allowPostRequest()->allowGetRequest();
+                $entry->setMiddleware('user.auth');
+                $entry->setUri('/card/{type:alpha}/{subtype:alpha|uuid}');
+                $entry->setModule(Card::class);
+            },
+            function (RouteEntry $entry) {
+                $entry->allowPostRequest()->allowGetRequest();
+                $entry->setMiddleware('user.auth');
+                $entry->setUri('/bank/{type:/^[a-zA-Z0-9-]+$/}/{?id:alpha|uuid}');
+                $entry->setModule(Bank::class);
+            },
+            function (RouteEntry $entry) {
+                $entry->allowPostRequest()->allowGetRequest();
+                $entry->setMiddleware('user.auth');
+                $entry->setUri('/wallet/{type:/^[a-zA-Z0-9-]+$/}/{id:uuid|/^[a-zA-Z0-9_]+$/}');
+                $entry->setModule(Wallet::class);
+            },
+            function (RouteEntry $entry) {
+                $entry->allowPostRequest()->allowGetRequest();
+                $entry->setMiddleware('user.auth');
+                $entry->setUri('/loan/{type:alpha}');
+                $entry->setModule(Loan::class);
+            },
+            function (RouteEntry $entry) {
+                $entry->allowPostRequest()->allowGetRequest();
+                $entry->setMiddleware('user.auth');
+                $entry->setUri('/transactions');
+                $entry->setModule(Transaction::class);
+            },
+        ];
+    });
+
     return [
         function (RouteEntry $entry) {
             $entry->allowGetRequest();
@@ -67,44 +105,26 @@ Route::register()->groupApi('api/v1', function ($prefix) {
         function (RouteEntry $entry) {
             $entry->allowPostRequest()->allowGetRequest();
             $entry->setMiddleware('user.auth');
-            $entry->setUri('/user/card/{type:alpha}/{subtype:alpha|uuid}');
-            $entry->setModule(Card::class);
-        },
-        function (RouteEntry $entry) {
-            $entry->allowPostRequest()->allowGetRequest();
-            $entry->setMiddleware('user.auth');
-            $entry->setUri('/user/bank/{type:/^[a-zA-Z0-9-]+$/}/{?id:alpha|uuid}');
-            $entry->setModule(Bank::class);
-        },
-        function (RouteEntry $entry) {
-            $entry->allowPostRequest()->allowGetRequest();
-            $entry->setMiddleware('user.auth');
-            $entry->setUri('/user/wallet/{type:/^[a-zA-Z0-9-]+$/}/{id:uuid|/^[a-zA-Z0-9_]+$/}');
-            $entry->setModule(Wallet::class);
-        },
-        function (RouteEntry $entry) {
-            $entry->allowPostRequest()->allowGetRequest();
-            $entry->setMiddleware('user.auth');
             $entry->setUri('/loan/{type:alpha}');
             $entry->setModule(\loan\Loan::class);
         },
         function (RouteEntry $entry) {
             $entry->allowPostRequest()->allowGetRequest();
             $entry->setMiddleware('user.auth');
-            $entry->setUri('/user/loan/{type:alpha}');
-            $entry->setModule(Loan::class);
+            $entry->setUri('/loan/{id:uuid}/{type:alpha}');
+            $entry->setModule(LoanApplication::class);
         },
         function (RouteEntry $entry) {
-            $entry->allowPostRequest()->allowGetRequest();
+            $entry->allowPostRequest();
             $entry->setMiddleware('user.auth');
-            $entry->setUri('/user/transactions');
-            $entry->setModule(Transaction::class);
+            $entry->setUri('/loan/{id:uuid}/{type:alpha}/{_id:uuid}/grant');
+            $entry->setModule(LoanApplication::class);
         },
         function (RouteEntry $entry) {
-            $entry->allowPostRequest()->allowGetRequest();
+            $entry->allowGetRequest();
             $entry->setMiddleware('user.auth');
-            $entry->setUri('/loan/{type:alpha}/');
-            $entry->setModule(\loan\Loan::class);
+            $entry->setUri('/notifications');
+            $entry->setModule(Notification::class);
         },
     ];
 

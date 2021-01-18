@@ -58,8 +58,6 @@ class Update extends Manager implements Api
                         throw $this->baseException("Failed to update picture at this time, please try again later.",
                         "Update Failed", HTTP::EXPECTATION_FAILED);
 
-                    $this->modifyUser();
-
                     return $this->http()->output()->json([
                         'status' => true,
                         'code' => HTTP::OK,
@@ -88,8 +86,6 @@ class Update extends Manager implements Api
                         "Failed to update name at this time, please try again later.",
                         "Update Failed", HTTP::EXPECTATION_FAILED);
 
-                    $this->modifyUser();
-
                     return $this->http()->output()->json([
                         'status' => true,
                         'code' => HTTP::OK,
@@ -103,7 +99,8 @@ class Update extends Manager implements Api
                 case 'phone':
 
                     $validator->validate('phone')->isPhoneNumber("Please enter a valid phone number")
-                        ->hasMinLength(13, "Enter your phone number with your country code, and it must be at least %s characters long")
+                        ->startsWithAny(['+234', '234'], "Sorry, we only support nigerian phone numbers for now.")
+                        ->hasMinLength(13, "Enter your phone number with your country code, and it must be at least %s digits long")
                         ->isNotEqual($this->user('phone'), "That's already your phone number.")
                         ->isUniqueInDB("users", "phone", "That phone number already exist", $this->user('id'));
 
@@ -113,8 +110,6 @@ class Update extends Manager implements Api
                     if (!$this->user()->update($validator->getValidated())) throw $this->baseException(
                         "Failed to update phone number at this time, please try again later.",
                         "Update Failed", HTTP::EXPECTATION_FAILED);
-
-                    $this->modifyUser();
 
                     return $this->http()->output()->json([
                         'status' => true,
@@ -142,8 +137,6 @@ class Update extends Manager implements Api
                     if (!$this->user()->update($validator->getValidated())) throw $this->baseException(
                         "Failed to update email at this time, please try again later.",
                         "Update Failed", HTTP::EXPECTATION_FAILED);
-
-                    $this->modifyUser();
 
                     return $this->http()->output()->json([
                         'status' => true,
@@ -175,8 +168,6 @@ class Update extends Manager implements Api
                     if (!$this->user()->update($validator->getValidated())) throw $this->baseException(
                         "Failed to update date of birth at this time, please try again later.",
                         "Update Failed", HTTP::EXPECTATION_FAILED);
-
-                    $this->modifyUser();
 
                     return $this->http()->output()->json([
                         'status' => true,
@@ -243,8 +234,6 @@ class Update extends Manager implements Api
                         "Failed to update BVN at this time, please try again later.",
                         "Update Failed", HTTP::EXPECTATION_FAILED);
 
-                    $this->modifyUser();
-
                     return $this->http()->output()->json([
                         'status' => true,
                         'code' => HTTP::OK,
@@ -272,8 +261,6 @@ class Update extends Manager implements Api
                         throw $this->baseException("Failed to update password at this time, please try again later.",
                         "Update Failed", HTTP::EXPECTATION_FAILED);
 
-                    $this->modifyUser();
-
                     return $this->http()->output()->json([
                         'status' => true,
                         'code' => HTTP::OK,
@@ -298,32 +285,5 @@ class Update extends Manager implements Api
                 'error' => (object) $validator->getErrors()
             ], $e->getCode());
         }
-    }
-
-    private function modifyUser() {
-
-        $emailVerification = $this->db()->find('verifications', $this->user('email'),
-            'data', function (Builder $builder) {
-                $builder->where('type', 'email');
-                $builder->where('is_verified', true);
-                $builder->where('is_active', true);
-            });
-
-        $phoneVerification = $this->db()->find('verifications', $this->user('phone'),
-            'data', function (Builder $builder) {
-                $builder->where('type', 'phone');
-                $builder->where('is_verified', true);
-                $builder->where('is_active', true);
-            });
-
-        $this->user()->offsetSet('verified', [
-            'email' => $emailVerification->isSuccessful(),
-            'phone' => $phoneVerification->isSuccessful()
-        ]);
-
-        $this->user()->offsetSet('country_id', $this->converter()->convertCountry($this->user('country_id') ?: 0, 'countryName'));
-        $this->user()->offsetSet('state_id', $this->converter()->convertState($this->user('state_id') ?: 0, 'stateName'));
-        $this->user()->getModel()->offsetRename('country_id', 'country');
-        $this->user()->getModel()->offsetRename('state_id', 'state');
     }
 }

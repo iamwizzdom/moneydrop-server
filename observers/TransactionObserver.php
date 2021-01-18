@@ -4,6 +4,7 @@
 namespace observers;
 
 
+use custom\model\TransactionModel;
 use Exception;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
@@ -31,6 +32,12 @@ class TransactionObserver extends Observer
     public function onCreating(Model $model)
     {
         // TODO: Implement onCreating() method.
+        if (!$model instanceof TransactionModel) $model = TransactionModel::cast($model);
+        if ($model->getInt('type') == TRANSACTION_TRANSFER) {
+            $model->load('to_wallet')->to_wallet->load('user');
+            if (empty($model->getValue('narration')) && $model->to_wallet)
+                $model->set('narration', "Transfer to {$model->to_wallet->firstname} {$model->to_wallet->lastname}");
+        }
     }
 
     /**
@@ -96,17 +103,20 @@ class TransactionObserver extends Observer
                             throw new Exception("Unable to debit wallet at this time.");
                         }
 
-                        $wallet = $walletBag->getWalletWithID($model->getInt('wallet_id'));
+                        $wallet = $walletBag->getWalletWithID($model->getInt('to_wallet_id'));
+
+                        $model->load('user')->user->load('wallet');
 
                         $transfer = db()->insert('transactions', [
                             'uuid' => Str::uuidv4(),
                             'user_id' => $wallet->getWallet()->getInt('user_id'),
                             'type' => TRANSACTION_TOP_UP,
+                            'from_wallet_id' => $model->user->wallet->id,
                             'direction' => "w2w",
                             'gateway_reference' => $model->getValue('uuid'),
                             'amount' => $model->getFloat('amount'),
                             'status' => APPROVAL_SUCCESSFUL,
-                            'comment' => "Money transfer top-up transaction"
+                            'narration' => "Money transfer from {$model->user->firstname} {$model->user->lastname}"
                         ]);
 
                         if (!$transfer->isSuccessful()) throw new Exception($transfer->getQueryError());
@@ -187,6 +197,9 @@ class TransactionObserver extends Observer
                 return $newModel->validate('id')->isEqual($m->getValue('id'));
             });
 
+            if (!$newModel instanceof TransactionModel) $newModel = TransactionModel::cast($newModel);
+            if (!$oldModel instanceof TransactionModel) $oldModel = TransactionModel::cast($oldModel);
+
             if ($oldModel->getInt('status') != APPROVAL_SUCCESSFUL &&
                 $newModel->getInt('status') == APPROVAL_REVERSED) {
 
@@ -204,6 +217,14 @@ class TransactionObserver extends Observer
                     try {
                         if ($wallet->unlockFund($oldModel->getFloat('amount')) === false) {
                             throw new Exception("Unable to credit wallet at this time.");
+                        }
+                    } catch (Exception $e) {
+                        $this->getSignal()->undoOperation($e->getMessage());
+                    }
+                } elseif ($i == TRANSACTION_TOP_UP) {
+                    try {
+                        if ($wallet->debitWallet($oldModel->getFloat('amount')) === false) {
+                            throw new Exception("Unable to debit wallet at this time.");
                         }
                     } catch (Exception $e) {
                         $this->getSignal()->undoOperation($e->getMessage());
@@ -258,42 +279,53 @@ class TransactionObserver extends Observer
                             break;
                     }
 
+                } elseif ($newModel->getInt('type') == TRANSACTION_TOP_UP) {
+                    try {
+                        if ($wallet->createWallet($oldModel->getFloat('amount')) === false) {
+                            throw new Exception("Unable to credit wallet at this time.");
+                        }
+                    } catch (Exception $e) {
+                        $this->getSignal()->undoOperation($e->getMessage());
+                    }
                 }
 
             } elseif ($oldModel->getInt('status') == APPROVAL_PROCESSING &&
                 $newModel->getInt('status') == APPROVAL_SUCCESSFUL) {
 
+
+                try {
+                    $wallet = $walletBag->getWalletWithUserID($newModel->getInt('user_id'));
+                } catch (Exception $e) {
+                    $this->getSignal()->undoOperation($e->getMessage());
+                    return;
+                }
+
                 if ($newModel->getInt('type') == TRANSACTION_TRANSFER ||
                     $newModel->getInt('type') == TRANSACTION_CHARGE) {
-
-
-                    try {
-                        $wallet = $walletBag->getWalletWithUserID($newModel->getInt('user_id'));
-                    } catch (Exception $e) {
-                        $this->getSignal()->undoOperation($e->getMessage());
-                        return;
-                    }
 
                     db()->transStart();
                     try {
 
-                        if ($wallet->debitLockedFund($oldModel->getFloat('amount')) === false) {
+                        if ($wallet->debitLockedFund($newModel->getFloat('amount')) === false) {
                             throw new Exception("Unable to debit wallet at this time.");
                         }
 
                         if ($newModel->getInt('type') == TRANSACTION_TRANSFER) {
 
-                            $wallet = $walletBag->getWalletWithID($oldModel->getInt('wallet_id'));
+                            $wallet = $walletBag->getWalletWithID($newModel->getInt('to_wallet_id'));
+
+                            $newModel->load('user')->user->load('wallet');
 
                             $transfer = db()->insert('transactions', [
                                 'uuid' => Str::uuidv4(),
                                 'user_id' => $wallet->getWallet()->getInt('user_id'),
                                 'type' => TRANSACTION_TOP_UP,
+                                'from_wallet_id' => $newModel->user->wallet->id,
                                 'direction' => "w2w",
-                                'gateway_reference' => $oldModel->getValue('uuid'),
-                                'amount' => $oldModel->getFloat('amount'),
+                                'gateway_reference' => $newModel->getValue('uuid'),
+                                'amount' => $newModel->getFloat('amount'),
                                 'status' => APPROVAL_SUCCESSFUL,
-                                'comment' => "Money transfer top-up transaction"
+                                'narration' => "Money transfer from {$newModel->user->firstname} {$newModel->user->lastname}"
                             ]);
 
                             if (!$transfer->isSuccessful()) throw new Exception($transfer->getQueryError());
@@ -306,7 +338,16 @@ class TransactionObserver extends Observer
                         $this->getSignal()->undoOperation($e->getMessage());
                     }
 
+                } elseif ($newModel->getInt('type') == TRANSACTION_TOP_UP) {
+                    try {
+                        if ($wallet->createWallet($oldModel->getFloat('amount')) === false) {
+                            throw new Exception("Unable to credit wallet at this time.");
+                        }
+                    } catch (Exception $e) {
+                        $this->getSignal()->undoOperation($e->getMessage());
+                    }
                 }
+
             } elseif ($oldModel->getInt('status') == APPROVAL_PENDING &&
                 $newModel->getInt('status') == APPROVAL_PROCESSING) {
 

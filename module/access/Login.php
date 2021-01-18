@@ -58,15 +58,6 @@ class Login extends Manager implements Api
 
             User::login($user->getObject());
 
-            $cards = $this->getAllMyCards()?->getArray() ?: [];
-
-            Arr::callback($cards, function ($card) {
-                $card = array_merge($card, Arr::extract_by_keys((array) $card['auth'],
-                    ['card_type', 'last4', 'brand', 'exp_month', 'exp_year']));
-                unset($card['auth']);
-                return $card;
-            });
-
             $user->set('token', JWT::fromUser($input->user()));
 
             return $this->http()->output()->json([
@@ -76,7 +67,7 @@ class Login extends Manager implements Api
                 'message' => "Hi {$user['firstname']}, welcome.",
                 'response' => [
                     'user' => $user,
-                    'cards' => $cards,
+                    'cards' => $this->getAllMyCards(),
                     'banks' => BanksEnum::getBanks(),
                 ]
             ], HTTP::OK);

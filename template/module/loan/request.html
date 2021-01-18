@@ -47,16 +47,16 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="tenor">Max Tenor
+                            <label for="tenure">Max Tenure
                                 <small>(Monthly)</small>
                             </label>
                             <div class="position-relative">
                                 <input type="text" min="1" max="12"
-                                       class="form-control {if isset($form.status.tenor)}{call name=class_name key=$form.status.tenor}{/if}"
-                                       id="tenor" name="tenor"
-                                       value="{if isset($form.post.tenor)}{$form.post.tenor}{/if}"
-                                       placeholder="Max Repayment Tenor">
-                                {if isset($form.error.tenor)}{call name=form_feedback value=$form.error.tenor}{/if}
+                                       class="form-control {if isset($form.status.tenure)}{call name=class_name key=$form.status.tenure}{/if}"
+                                       id="tenure" name="tenure"
+                                       value="{if isset($form.post.tenure)}{$form.post.tenure}{/if}"
+                                       placeholder="Max Repayment Tenure">
+                                {if isset($form.error.tenure)}{call name=form_feedback value=$form.error.tenure}{/if}
                                 <span class="icon-inside"><i class="fas fa-calendar-check"></i></span>
                             </div>
                         </div>

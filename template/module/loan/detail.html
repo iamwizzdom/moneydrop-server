@@ -41,8 +41,8 @@
                     <hr class="mx-n3">
 
                     <div class="d-flex">
-                        <span class="btn-link mr-auto">Tenor:</span>
-                        <span class="ml-auto loan-tenor-txt">{$data.loan.tenor} month(s)</span>
+                        <span class="btn-link mr-auto">Tenure:</span>
+                        <span class="ml-auto loan-tenure-txt">{$data.loan.tenure} month(s)</span>
                     </div>
 
                     <div class="d-flex">
@@ -58,15 +58,15 @@
                     {$totalInterest = (($repayment * floatval($data.loan.interest)) / 100)}
                     {/if}
 
-                    {if $data.loan.tenor > 0}
-                    {$totalInterest = ($totalInterest * $data.loan.tenor)}
+                    {if $data.loan.tenure > 0}
+                    {$totalInterest = ($totalInterest * $data.loan.tenure)}
                     {/if}
 
                     {$repayment = ($repayment + $totalInterest)}
 
                     <div class="d-flex">
                         <span class="btn-link mr-auto">Monthly Repayment:</span>
-                        <span class="ml-auto loan-monthly-repayment-txt">{CURRENCY_NAIRA}{number_format(($repayment / $data.loan.tenor), 2)}</span>
+                        <span class="ml-auto loan-monthly-repayment-txt">{CURRENCY_NAIRA}{number_format(($repayment / $data.loan.tenure), 2)}</span>
                     </div>
 
                     <div class="d-flex">
@@ -242,9 +242,9 @@
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="tenor">Max Tenor <small>(Monthly)</small></label>
-                                        <input type="number" min="1" max="12" class="form-control" id="tenor" name="tenor"
-                                               value="{$data.loan.tenor}" placeholder="Max Repayment Tenor">
+                                        <label for="tenure">Max Tenure <small>(Monthly)</small></label>
+                                        <input type="number" min="1" max="12" class="form-control" id="tenure" name="tenure"
+                                               value="{$data.loan.tenure}" placeholder="Max Repayment Tenure">
                                     </div>
 
                                     <div class="form-group">

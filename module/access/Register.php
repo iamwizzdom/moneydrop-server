@@ -35,8 +35,8 @@ class Register extends Manager implements Api
                 ->hasMinLength(3, "Your last name must be at least %s characters long");
 
             $validator->validate('phone')->isPhoneNumber("Please enter a valid phone number")
-                ->hasMinLength(7, "Your phone number must be at least %s digits long.")
-                ->hasMaxLength(15, "Your phone number must not be more than %s digits.")
+                ->startsWithAny(['+234', '234'], "Sorry, we only support nigerian phone numbers for now.")
+                ->hasMinLength(13, "Enter your phone number with your country code, and it must be at least %s digits long")
                 ->isUniqueInDB("users", "phone", "That phone number already exist");
 
             $validator->validate('email')->isEmail("Please enter a valid email address")->toLower()
@@ -78,6 +78,7 @@ class Register extends Manager implements Api
                 "Registration Failed", HTTP::EXPECTATION_FAILED, false);
 
             $user->setModelKey('userModel');
+
             $user = $user->getFirstWithModel();
 
             User::login($user->getObject());

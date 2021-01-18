@@ -37,9 +37,10 @@ class Dashboard extends Manager implements Api
         $loans->setModelKey("loanModel");
 
         return [
-            'balance' => $this->getAvailableBalance(),
-            'loans' => $loans->getAllWithModel(),
-            'transactions' => $trans->getAllWithModel() ?: []
+            'balance' => $this->getBalance(),
+            'available_balance' => $this->getAvailableBalance(),
+            'loans' => $loans->getAllWithModel() ?: [],
+            'transactions' => $trans->getAllWithModel()?->load('user') ?: []
         ];
     }
-}https://www.xvideos.com/video44138993/bangbros_-_horny_and_busty_pawg_lena_paul_wants_some_dick#
+}

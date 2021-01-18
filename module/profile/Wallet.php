@@ -113,7 +113,8 @@ class Wallet extends Manager implements Api
                         'title' => 'Top-up Successful',
                         'message' => "Your wallet has been credited successfully",
                         'response' => [
-                            'balance' => $this->getAvailableBalance(),
+                            'balance' => $this->getBalance(),
+                            'available_balance' => $this->getAvailableBalance(),
                             'transaction' => $transaction ?: []
                         ]
                     ], HTTP::OK);
@@ -219,7 +220,8 @@ class Wallet extends Manager implements Api
                         'message' => "The sum of {$input['amount']} NGN has been transferred to your {$bankName} account {$accountNumber}. " .
                             "Please note that in some cases deposit to your account might take up to 24 hours.",
                         'response' => [
-                            'balance' => $this->getAvailableBalance(),
+                            'balance' => $this->getBalance(),
+                            'available_balance' => $this->getAvailableBalance(),
                             'transaction' => $transaction ?: []
                         ]
                     ], HTTP::OK);
@@ -230,7 +232,7 @@ class Wallet extends Manager implements Api
 
         } catch (BaseException $e) {
 
-            $transaction?->update(['comment' => $e->getMessage()]);
+            $transaction?->update(['narration' => $e->getMessage()]);
 
             return $this->http()->output()->json([
                 'status' => $e->getStatus(),

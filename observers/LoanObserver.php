@@ -4,7 +4,9 @@
 namespace observers;
 
 
+use custom\model\LoanModel;
 use loan\Loan;
+use que\database\interfaces\Builder;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
 use que\database\observer\Observer;
@@ -37,7 +39,7 @@ class LoanObserver extends Observer
                 'gateway_reference' => $model->getValue('uuid'),
                 'amount' => $model->getFloat('amount'),
                 'status' => APPROVAL_PROCESSING,
-                'comment' => "Loan offer charge transaction"
+                'narration' => "Loan offer charge transaction"
             ]);
 
             if (!$trans->isSuccessful()) $this->getSignal()->undoOperation("Unable to transact at this time");
@@ -84,11 +86,34 @@ class LoanObserver extends Observer
         // TODO: Implement onUpdated() method.
         $newModels->map(function (Model $newModel) use ($oldModels) {
 
+            if (!$newModel instanceof LoanModel) $newModel = LoanModel::cast($newModel);
+
+
+            log_err(['loan' => $newModel]);
+
             if ($newModel->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
 
                 if ($newModel->getInt('status') == STATE_SUCCESSFUL) {
+
                     $trans = db()->find('transactions', $newModel->getValue('uuid'), 'gateway_reference');
-                    $status = $trans->getFirstWithModel()?->update(['status' => APPROVAL_SUCCESSFUL]);
+
+                    $application = db()->find('loan_applications', $newModel->getValue('uuid'), 'loan_id', function (Builder $builder) {
+                        $builder->where('is_granted', true);
+                        $builder->where('is_active', true);
+                    });
+                    $application->setModelKey('loanApplicationModel');
+                    $application = $application->getFirstWithModel();
+                    $application->load('loan');
+                    $application->applicant->load('wallet');
+                    $application->loan->user->load('wallet');
+
+                    $trans = $trans->getFirstWithModel();
+
+                    $status = $trans->update(['type' => TRANSACTION_TRANSFER,
+                        'from_wallet_id' => $application->loan->user->wallet->id,
+                        'to_wallet_id' => $application->applicant->wallet->id,
+                        'status' => APPROVAL_SUCCESSFUL]);
+
                     if (!$status) $this->getSignal()->undoOperation("Unable to transact at this time");
                 }
             }

@@ -7,9 +7,12 @@
  */
 
 use custom\model\CardModel;
+use custom\model\LoanApplicationModel;
 use custom\model\UserModel;
 use custom\model\LoanModel;
 use custom\model\TransactionModel;
+use custom\model\WalletModel;
+use observers\LoanApplicationObserver;
 use observers\LoanObserver;
 use observers\TransactionObserver;
 use observers\UserObserver;
@@ -76,10 +79,12 @@ return [
     */
     'models' => [
         'que' => CentralModel::class,
+        'walletModel' => WalletModel::class,
         'loanModel' => LoanModel::class,
         'transactionModel' => TransactionModel::class,
         'userModel' => UserModel::class,
         'cardModel' => CardModel::class,
+        'loanApplicationModel' => LoanApplicationModel::class
     ],
 
     /*
@@ -96,6 +101,7 @@ return [
         'wallets' => WalletObserver::class,
         'transactions' => TransactionObserver::class,
         'loans' => LoanObserver::class,
+        'loan_applications' => LoanApplicationObserver::class,
     ],
 
     /*

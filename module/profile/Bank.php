@@ -50,7 +50,7 @@ class Bank extends Manager implements Api
                             function (Builder $builder) {
                                 $builder->where('user_id', $this->user('id'));
                                 $builder->where('is_active', true);
-                        });
+                            });
 
                     $validator->validate('bank_code')->isNotEmpty("Please enter a valid bank code")
                         ->isEqualToAny(BanksEnum::getBankCodes(), "Invalid bank code");
@@ -98,9 +98,18 @@ class Bank extends Manager implements Api
                         );
                     }
 
-                    if (($response['is_blacklisted'] ?? false)) {
+                    $data = $response['data'] ?? [];
+
+                    if (($data['is_blacklisted'] ?? false)) {
                         throw $this->baseException(
-                            $response['message'] ?? "Sorry that account number is blacklisted",
+                            "Sorry that account number is blacklisted",
+                            "Bank Failed", HTTP::EXPECTATION_FAILED
+                        );
+                    }
+
+                    if (LIVE && !($data['account_number'] ?? false)) {
+                        throw $this->baseException(
+                            "Sorry that account number is not linked with your BVN",
                             "Bank Failed", HTTP::EXPECTATION_FAILED
                         );
                     }
@@ -158,7 +167,7 @@ class Bank extends Manager implements Api
                         'response' => [
                             'account' => $account
                         ]
-                    ], HTTP::OK);
+                    ]);
                 case 'retrieve':
 
                     $id = Request::getUriParam('id');
@@ -167,9 +176,9 @@ class Bank extends Manager implements Api
 
                         $accounts = $this->db()->findAll('bank_accounts', $this->user('id'), 'user_id',
                             function (Builder $builder) {
-                            $builder->where('is_active', true);
-                            $builder->orderBy('desc', 'id');
-                        });
+                                $builder->where('is_active', true);
+                                $builder->orderBy('desc', 'id');
+                            });
 
                         $accountList = [];
 
@@ -185,7 +194,10 @@ class Bank extends Manager implements Api
                             'code' => HTTP::OK,
                             'title' => 'Bank Successful',
                             'message' => !empty($accountList) ? "Bank accounts retrieved successfully." : "No Bank account found.",
-                            'response' => $accountList
+                            'response' => [
+                                'accounts' => $accountList,
+                                'banks' => BanksEnum::getBanks()
+                            ]
                         ], HTTP::OK);
                     }
 
@@ -193,7 +205,7 @@ class Bank extends Manager implements Api
                         function (Builder $builder) use ($id) {
                             $builder->where('uuid', $id);
                             $builder->where('is_active', true);
-                    });
+                        });
 
                     if (!$account->isSuccessful()) return $this->http()->output()->json([
                         'status' => true,
@@ -244,7 +256,7 @@ class Bank extends Manager implements Api
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'error' => (object) $validator->getErrors()
+                'error' => (object)$validator->getErrors()
             ], $e->getCode());
         }
     }

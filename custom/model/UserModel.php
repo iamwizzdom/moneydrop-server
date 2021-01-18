@@ -14,13 +14,14 @@ use que\database\model\Model;
 class UserModel extends Model
 {
     protected string $modelKey = 'userModel';
-    protected array $appends = ['verified', 'country_name', 'state_name'];
+    protected array $appends = ['verified', 'country', 'state'];
+    protected array $casts = ['gender' => 'int'];
 
-    public function getCountryName() {
+    public function getCountry() {
         return converter()->convertCountry($this->getInt('country_id'), 'countryName');
     }
 
-    public function getStateName() {
+    public function getState() {
         return converter()->convertState($this->getInt('state_id'), 'stateName');
     }
 
@@ -44,5 +45,9 @@ class UserModel extends Model
             'email' => $emailVerification->isSuccessful(),
             'phone' => $phoneVerification->isSuccessful()
         ];
+    }
+
+    public function getWallet() {
+        return $this->hasOne('wallets', 'user_id');
     }
 }

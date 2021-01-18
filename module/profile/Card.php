@@ -124,7 +124,7 @@ class Card extends Manager implements Api
                                     "Verification Failed", HTTP::EXPECTATION_FAILED);
                             }
 
-                            $trans = [
+                            $trans = db()->insert('transactions', [
                                 'uuid' => Str::uuidv4(),
                                 'user_id' => user('id'),
                                 'type' => TRANSACTION_TOP_UP,
@@ -133,10 +133,8 @@ class Card extends Manager implements Api
                                 'amount' => $data['amount'] / 100,
                                 'currency' => $data['currency'],
                                 'status' => APPROVAL_SUCCESSFUL,
-                                'comment' => "Card add top-up transaction"
-                            ];
-
-                            db()->insert('transactions', $trans);
+                                'narration' => "Card add top-up transaction"
+                            ]);
 
                             if (!$authorization['reusable']) return $this->http()->output()->json([
                                 'status' => true,
@@ -166,6 +164,8 @@ class Card extends Manager implements Api
                                     'response' => []
                                 ], HTTP::OK);
                             }
+
+                            $trans->getFirstWithModel()?->update(['card_id' => $card->getFirstWithModel()->getValue('uuid')]);
 
                             $card->setModelKey("cardModel");
 

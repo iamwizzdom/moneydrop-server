@@ -67,7 +67,7 @@ trait Paystack
                     'amount' => $amount,
                     'currency' => $currency,
                     'status' => APPROVAL_PENDING,
-                    'comment' => 'Add card charge/top-up transaction'
+                    'narration' => 'Add card charge/top-up transaction'
                 ];
 
                 if ($extraCharge) $trans['fees'] = $extraCharge;
@@ -157,7 +157,7 @@ trait Paystack
                     'amount' => $amount,
                     'currency' => $currency,
                     'status' => APPROVAL_PENDING,
-                    'comment' => "wallet top-up transaction"
+                    'narration' => "wallet top-up transaction"
                 ];
 
                 if ($extraCharge) $trans['fees'] = $extraCharge;
@@ -227,11 +227,11 @@ trait Paystack
             'bank_code' => $bankCode
         ];
 
-        if (!is_null($firstName)) $post['first_name'] = $firstName;
+        if (!empty($firstName)) $post['first_name'] = $firstName;
 
-        if (!is_null($middleName)) $post['middle_name'] = $middleName;
+        if (!empty($middleName)) $post['middle_name'] = $middleName;
 
-        if (!is_null($lastName)) $post['last_name'] = $lastName;
+        if (!empty($lastName)) $post['last_name'] = $lastName;
 
         $curl->setUrl(PAYSTACK_MATCH_BVN_URL);
         $curl->setPosts($post);
@@ -384,10 +384,10 @@ trait Paystack
                     'amount' => $amount,
                     'currency' => $currency,
                     'status' => APPROVAL_PENDING,
-                    'comment' => 'Wallet cash-out transaction'
+                    'narration' => 'Wallet cash-out transaction'
                 ];
 
-                if ($reason) $trans['comment'] = $reason;
+                if ($reason) $trans['narration'] = $reason;
 
                 $trans = db()->insert('transactions', $trans);
 

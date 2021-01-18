@@ -4,16 +4,17 @@
 namespace observers;
 
 
-use custom\model\WalletModel;
+use custom\model\LoanApplicationModel;
+use loan\Loan;
 use que\common\exception\QueException;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
 use que\database\observer\Observer;
 use que\mail\Mail;
 use que\mail\Mailer;
-use que\user\XUser;
+use que\support\Str;
 
-class WalletObserver extends Observer
+class LoanApplicationObserver extends Observer
 {
 
     /**
@@ -32,25 +33,50 @@ class WalletObserver extends Observer
         // TODO: Implement onCreated() method.
         try {
 
+            if (!$model instanceof LoanApplicationModel) $model = LoanApplicationModel::cast($model);
+
+            if (!$model->has('loan')) $model->load('loan');
+
+            if ($model->loan->getInt('loan_type') == Loan::LOAN_TYPE_REQUEST) {
+
+                $trans = db()->insert('transactions', [
+                    'uuid' => Str::uuidv4(),
+                    'user_id' => $model->getInt('user_id'),
+                    'type' => TRANSACTION_CHARGE,
+                    'direction' => "w2s",
+                    'gateway_reference' => $model->getValue('uuid'),
+                    'amount' => $model->getFloat('amount'),
+                    'status' => APPROVAL_PROCESSING,
+                    'narration' => "Loan request application charge transaction"
+                ]);
+
+                if (!$trans->isSuccessful()) {
+                    $this->getSignal()->undoOperation("Unable to transact at this time");
+                    return;
+                }
+            }
+
             $mailer = Mailer::getInstance();
 
-            $mail = new Mail('wallet-created');
-            $user = XUser::getUser($model->getInt('user_id'), 'model');
-            $mail->addRecipient($user->getValue('email'),
-                $name = "{$user->getValue('firstname')} {$user->getValue('lastname')}");
-            $mail->setSubject("Wallet Created");
+            $mail = new Mail('loan-application');
+            $mail->addRecipient($model->loan->user->email,
+                $name = "{$model->loan->user->firstname} {$model->loan->user->lastname}");
+            $mail->setSubject("Loan Application");
             $mail->setData([
-                'title' => 'Wallet Created',
+                'title' => 'Loan Application',
                 'name' => $name,
+                'type' => $model->loan->type,
+                'amount' => "NGN {$model->loan->amount}",
+                'applicant' => "{$model->applicant->firstname} {$model->applicant->lastname}",
                 'app_name' => config('template.app.header.name')
             ]);
-            $mail->setHtmlPath('email/html/wallet-created.tpl');
-            $mail->setBodyPath('email/text/wallet-created.txt');
+            $mail->setHtmlPath('email/html/loan-application.tpl');
+            $mail->setBodyPath('email/text/loan-application.txt');
             $mail->setFrom('noreply@moneydrop.com', 'MoneyDrop');
 
             $mailer->addMail($mail);
-            $mailer->prepare('wallet-created');
-            $mailer->dispatch('wallet-created');
+            $mailer->prepare('loan-application');
+            $mailer->dispatch('loan-application');
 
         } catch (QueException $e) {
         }
@@ -94,57 +120,30 @@ class WalletObserver extends Observer
     public function onUpdated(ModelCollection $newModels, ModelCollection $oldModels)
     {
         // TODO: Implement onUpdated() method.
-        $newModels->map(function (Model $model) use ($oldModels) {
+        $newModels->map(function (Model $newModel) use ($oldModels) {
 
-            $oldModel = $oldModels->find(function (Model $m) use ($model) {
-                return $model->validate('id')->isEqual($m->getValue('id'));
-            });
+            if (!$newModel instanceof LoanApplicationModel) $newModel = LoanApplicationModel::cast($newModel);
 
-            if (!$model instanceof WalletModel) $model = WalletModel::cast($model);
-            if (!$oldModel instanceof WalletModel) $oldModel = WalletModel::cast($oldModel);
+            if (!$newModel->has('loan')) $newModel->load('loan');
 
-            try {
+            if ($newModel->loan->getInt('loan_type') == Loan::LOAN_TYPE_REQUEST) {
 
-                $isCredit = $model->validate('available_balance')
-                    ->isFloatingNumberGreaterThan($oldModel->getFloat('available_balance'));
+                $trans = db()->find('transactions', $newModel->getValue('uuid'), 'gateway_reference');
+                $trans = $trans->getFirstWithModel();
 
-                if ($isCredit) {
-                    $amount = $model->getFloat('available_balance') - $oldModel->getFloat('available_balance');
-                } else {
-                    $amount = $oldModel->getFloat('available_balance') - $model->getFloat('available_balance');
-                    if ($amount == 0) {
-                        $c_amount = $oldModel->getFloat('balance') - $model->getFloat('balance');
-                        if ($c_amount > 0) $amount = $c_amount;
-                    }
+                if (!$newModel->getInt('is_active')) {
+                    $status = $trans->update(['status' => APPROVAL_REVERSED]);
+                } elseif ($newModel->getBool('is_granted')) {
+                    $status = $trans->update(['status' => APPROVAL_SUCCESSFUL]);
                 }
 
-                $mailer = Mailer::getInstance();
+                if (!$status) $this->getSignal()->undoOperation("Unable to transact at this time");
 
-                $mail = new Mail('wallet-updated');
-                $user = $model->load('user')->user;
-                $mail->addRecipient($user->getValue('email'),
-                    $name = "{$user->getValue('firstname')} {$user->getValue('lastname')}");
-                $mail->setSubject("Wallet " . ($isCredit ? "Credited" : "Debited"));
-                $mail->setData([
-                    'title' => "Wallet " . ($isCredit ? "Credited" : "Debited"),
-                    'name' => $name,
-                    'action' => ($isCredit ? "credited" : "debited"),
-                    'amount' => number_format($amount, 2),
-                    'balance' => number_format($model->getFloat('available_balance'), 2),
-                    'currency' => 'NGN',
-                    'app_name' => config('template.app.header.name')
-                ]);
-                $mail->setHtmlPath('email/html/wallet-updated.tpl');
-                $mail->setBodyPath('email/text/wallet-updated.txt');
-                $mail->setFrom('noreply@moneydrop.com', 'MoneyDrop');
-
-                $mailer->addMail($mail);
-                $mailer->prepare('wallet-updated');
-                $mailer->dispatch('wallet-updated');
-
-            } catch (QueException $e) {
+            } elseif ($newModel->loan->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
+                if ($newModel->getBool('is_granted')) {
+                    $newModel->loan->update(['status' => STATE_SUCCESSFUL]);
+                }
             }
-
         });
     }
 
