@@ -23,65 +23,6 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
 {
     use Wallet;
 
-    const MIN_LOAN_AMOUNT = 5000;
-
-    const LOAN_TYPE_OFFER = -7;
-    const LOAN_TYPE_REQUEST = -8;
-
-    const INTEREST_TYPE_STATIC = 1;
-    const INTEREST_TYPE_NON_STATIC = 2;
-
-    /**
-     * Loan tenure constants
-     */
-    const LOAN_TENURE_ONE_WEEK = -1;
-    const LOAN_TENURE_TWO_WEEKS = -2;
-    const LOAN_TENURE_THREE_WEEKS = -3;
-    const LOAN_TENURE_ONE_MONTH = 1;
-    const LOAN_TENURE_TWO_MONTHS = 2;
-    const LOAN_TENURE_THREE_MONTHS = 3;
-    const LOAN_TENURE_FOUR_MONTHS = 4;
-    const LOAN_TENURE_FIVE_MONTHS = 5;
-    const LOAN_TENURE_SIX_MONTHS = 6;
-    const LOAN_TENURE_SEVEN_MONTHS = 7;
-    const LOAN_TENURE_EIGHT_MONTHS = 8;
-    const LOAN_TENURE_NINE_MONTHS = 9;
-    const LOAN_TENURE_TEN_MONTHS = 10;
-    const LOAN_TENURE_ELEVEN_MONTHS = 11;
-    const LOAN_TENURE_ONE_YEAR = 12;
-    const LOAN_TENURE_ONE_YEAR_AND_SIX_MONTHS = 18;
-    const LOAN_TENURE_TWO_YEARS = 24;
-    const LOAN_TENURE_TWO_YEARS_AND_SIX_MONTHS = 30;
-    const LOAN_TENURE_THREE_YEARS = 36;
-    const LOAN_TENURE_THREE_YEARS_AND_SIX_MONTHS = 42;
-    const LOAN_TENURE_FOUR_YEARS = 48;
-    const LOAN_TENURE_FOUR_YEARS_AND_SIX_MONTHS = 54;
-    const LOAN_TENURE_FIVE_YEARS = 60;
-    const LOAN_TENURE_FIVE_YEARS_AND_SIX_MONTHS = 66;
-    const LOAN_TENURE_SIX_YEARS = 72;
-    const LOAN_TENURE_SIX_YEARS_AND_SIX_MONTHS = 78;
-    const LOAN_TENURE_SEVEN_YEARS = 84;
-    const LOAN_TENURE_SEVEN_YEARS_AND_SIX_MONTHS = 90;
-    const LOAN_TENURE_EIGHT_YEARS = 96;
-    const LOAN_TENURE_EIGHT_YEARS_AND_SIX_MONTHS = 102;
-    const LOAN_TENURE_NINE_YEARS = 108;
-    const LOAN_TENURE_NINE_YEARS_AND_SIX_MONTHS = 114;
-    const LOAN_TENURE_TEN_YEARS = 120;
-
-    /**
-     * Loan purpose
-     */
-    const LOAN_PURPOSE_HOUSEHOLD_PURCHASE = 1;
-    const LOAN_PURPOSE_PAY_RENT = 2;
-    const LOAN_PURPOSE_GADGET_PURCHASE = 3;
-    const LOAN_PURPOSE_CAR_PURCHASE = 4;
-    const LOAN_PURPOSE_HOUSE_PURCHASE = 5;
-    const LOAN_PURPOSE_PAY_SCHOOL_FEES = 6;
-    const LOAN_PURPOSE_START_BUSINESS = 7;
-    const LOAN_PURPOSE_HEALTHCARE = 8;
-    const LOAN_PURPOSE_TRAVEL = 9;
-    const LOAN_PURPOSE_OTHERS = -1;
-
     /**
      * @inheritDoc
      */
@@ -99,7 +40,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                     $validator->validate('amount')->if(function (Condition $condition) use ($type) {
                         return $type == 'request' || $this->getAvailableBalance() > (float) $condition->getValue();
                     }, "Sorry, you don't have up to {$input['amount']} NGN in your wallet")->isNumeric('Please enter a valid amount')
-                        ->isNumberGreaterThanOrEqual(self::MIN_LOAN_AMOUNT, "Sorry, you must {$type} at least %s NGN");
+                        ->isNumberGreaterThanOrEqual(\model\Loan::MIN_LOAN_AMOUNT, "Sorry, you must {$type} at least %s NGN");
 
                     $validator->validate('tenure')->isNumeric("Please a loan tenure")
                         ->isEqualToAny(get_class_consts($this, 'LOAN_TENURE_'), 'Please select a valid tenure');
@@ -107,7 +48,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                     $validator->validate('interest')->isNumeric('Please enter a valid interest rate');
 
                     $validator->validate('interest_type')->isNumeric('Please select an interest type')
-                        ->isEqualToAny([self::INTEREST_TYPE_STATIC, self::INTEREST_TYPE_NON_STATIC], "Please select a valid interest type");
+                        ->isEqualToAny([\model\Loan::INTEREST_TYPE_STATIC, \model\Loan::INTEREST_TYPE_NON_STATIC], "Please select a valid interest type");
 
                     $validator->validate('purpose', true)->isNumeric('Please select a loan purpose')
                         ->isEqualToAny(get_class_consts($this, 'LOAN_PURPOSE_'), "Please select a valid loan purpose");
@@ -116,7 +57,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                         ->hasMinWord(10, "Please write a meaningful note of at least %s words");
 
 //                    $validator->validate('loan_type')->isNumeric('Loan type must be numeric')
-//                        ->isEqualToAny([self::LOAN_TYPE_OFFER, self::LOAN_TYPE_REQUEST], "Please select a valid loan type");
+//                        ->isEqualToAny([\model\Loan::LOAN_TYPE_OFFER, \model\Loan::LOAN_TYPE_REQUEST], "Please select a valid loan type");
 
                     $validator->validate('is_fund_raiser', true)->isBool(
                         "Please enter a valid value to tell us if this is a fund raiser loan or not.");
@@ -129,7 +70,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                         $builder->where('tenure', \input('tenure'));
                         $builder->where('interest', \input('interest'));
                         $builder->where('interest_type', \input('interest_type'));
-                        $builder->where('loan_type', $type == "offer" ? self::LOAN_TYPE_OFFER : self::LOAN_TYPE_REQUEST);
+                        $builder->where('loan_type', $type == "offer" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST);
                         $builder->where('status', STATE_PENDING);
                         $builder->where('is_active', true);
                     });
@@ -141,7 +82,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                         'uuid' => Str::uuidv4(),
                         'user_id' => user('id'),
                         'status' => STATE_PENDING,
-                        'loan_type' => $type == "offer" ? self::LOAN_TYPE_OFFER : self::LOAN_TYPE_REQUEST
+                        'loan_type' => $type == "offer" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST
                     ], $validator->getValidated()));
 
                     if (!$loan->isSuccessful()) throw $this->baseException(
@@ -167,7 +108,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
 
                     $loans = $this->db()->select("*")->table('loans')
                         ->where('is_active', true)
-                        ->where('loan_type', $type == "offers" ? self::LOAN_TYPE_OFFER : self::LOAN_TYPE_REQUEST)
+                        ->where('loan_type', $type == "offers" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST)
                         ->orderBy('desc', 'id')->paginate(30);
 
                     $loans->setModelKey("loanModel");
@@ -187,26 +128,26 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
 
                 case "constants":
 
-                    $tenure = array_flip(get_class_consts($this, 'LOAN_TENURE_'));
-                    $purpose = array_flip(get_class_consts($this, 'LOAN_PURPOSE_'));
-                    $interest_type = array_flip(get_class_consts($this, 'INTEREST_TYPE_'));
+                    $tenures = array_flip(get_class_consts(\model\Loan::class, 'LOAN_TENURE_'));
+                    $purposes = array_flip(get_class_consts(\model\Loan::class, 'LOAN_PURPOSE_'));
+                    $interest_types = array_flip(get_class_consts(\model\Loan::class, 'INTEREST_TYPE_'));
 
-                    Arr::callback($tenure, function ($tenure) {
+                    Arr::callback($tenures, function ($tenure) {
                         return ucfirst(strtolower(str_replace("_", " ", str_start_from($tenure, 'LOAN_TENURE_'))));
                     });
 
-                    Arr::callback($purpose, function ($tenure) {
-                        return ucfirst(strtolower(str_replace("_", " ", str_start_from($tenure, 'LOAN_PURPOSE_'))));
+                    Arr::callback($purposes, function ($purpose) {
+                        return ucfirst(strtolower(str_replace("_", " ", str_start_from($purpose, 'LOAN_PURPOSE_'))));
                     });
 
-                    Arr::callback($interest_type, function ($tenure) {
-                        return ucfirst(strtolower(str_replace("_", " ", str_start_from($tenure, 'INTEREST_TYPE_')))) . " interest";
+                    Arr::callback($interest_types, function ($interest_type) {
+                        return ucfirst(strtolower(str_replace("_", " ", str_start_from($interest_type, 'INTEREST_TYPE_')))) . " interest";
                     });
 
                     return [
-                        'tenure' => $tenure,
-                        'purpose' => $purpose,
-                        'interest_type' => $interest_type
+                        'tenure' => $tenures,
+                        'purpose' => $purposes,
+                        'interest_type' => $interest_types
                     ];
                 default:
                     throw $this->baseException(

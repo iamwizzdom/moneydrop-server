@@ -6,12 +6,12 @@
  * Time: 7:20 PM
  */
 
-namespace custom\model;
+namespace model;
 
 use que\database\interfaces\Builder;
 use que\database\model\Model;
 
-class UserModel extends Model
+class User extends Model
 {
     protected string $modelKey = 'userModel';
     protected array $appends = ['verified', 'country', 'state'];

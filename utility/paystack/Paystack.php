@@ -170,7 +170,7 @@ trait Paystack
 
                     $data = $verify->getResponseArray()['data'] ?? [];
 
-                    $trans->getFirstWithModel()->update([
+                    $trans->getFirstWithModel()?->update([
                         'status' => ($data['status'] ?? 'failed') == 'success' ? APPROVAL_SUCCESSFUL : APPROVAL_FAILED
                     ]);
                 }
@@ -393,7 +393,7 @@ trait Paystack
 
                 if ($trans->isSuccessful()) {
 
-                    $trans->getFirstWithModel()->update([
+                    $trans->getFirstWithModel()?->update([
                         'status' => ($data['status'] ?? 'failed') == 'success' ? APPROVAL_PROCESSING : APPROVAL_FAILED
                     ]);
                 }

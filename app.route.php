@@ -1,11 +1,12 @@
 <?php
 
+use history\History;
 use loan\LoanApplication;
-use module\access\ForgotPassword;
-use module\access\Login;
-use module\access\PasswordReset;
-use module\access\Register;
-use module\access\Verification;
+use access\ForgotPassword;
+use access\Login;
+use access\PasswordReset;
+use access\Register;
+use access\Verification;
 use module\home\Dashboard;
 use notification\Notification;
 use profile\Bank;
@@ -125,6 +126,12 @@ Route::register()->groupApi('api/v1', function ($prefix) {
             $entry->setMiddleware('user.auth');
             $entry->setUri('/notifications');
             $entry->setModule(Notification::class);
+        },
+        function (RouteEntry $entry) {
+            $entry->allowGetRequest();
+            $entry->setMiddleware('user.auth');
+            $entry->setUri('/history');
+            $entry->setModule(History::class);
         },
     ];
 

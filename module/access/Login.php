@@ -1,7 +1,7 @@
 <?php
 
 
-namespace module\access;
+namespace access;
 
 
 use que\common\exception\BaseException;

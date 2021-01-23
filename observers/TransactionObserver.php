@@ -4,7 +4,7 @@
 namespace observers;
 
 
-use custom\model\TransactionModel;
+use model\Transaction;
 use Exception;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
@@ -32,7 +32,7 @@ class TransactionObserver extends Observer
     public function onCreating(Model $model)
     {
         // TODO: Implement onCreating() method.
-        if (!$model instanceof TransactionModel) $model = TransactionModel::cast($model);
+        if (!$model instanceof Transaction) $model = Transaction::cast($model);
         if ($model->getInt('type') == TRANSACTION_TRANSFER) {
             $model->load('to_wallet')->to_wallet->load('user');
             if (empty($model->getValue('narration')) && $model->to_wallet)
@@ -197,8 +197,8 @@ class TransactionObserver extends Observer
                 return $newModel->validate('id')->isEqual($m->getValue('id'));
             });
 
-            if (!$newModel instanceof TransactionModel) $newModel = TransactionModel::cast($newModel);
-            if (!$oldModel instanceof TransactionModel) $oldModel = TransactionModel::cast($oldModel);
+            if (!$newModel instanceof Transaction) $newModel = Transaction::cast($newModel);
+            if (!$oldModel instanceof Transaction) $oldModel = Transaction::cast($oldModel);
 
             if ($oldModel->getInt('status') != APPROVAL_SUCCESSFUL &&
                 $newModel->getInt('status') == APPROVAL_REVERSED) {
@@ -353,7 +353,6 @@ class TransactionObserver extends Observer
 
                 if ($newModel->getInt('type') == TRANSACTION_TRANSFER ||
                     $newModel->getInt('type') == TRANSACTION_CHARGE) {
-
 
                     try {
                         $wallet = $walletBag->getWalletWithUserID($newModel->getInt('user_id'));

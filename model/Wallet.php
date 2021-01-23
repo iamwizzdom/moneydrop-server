@@ -6,12 +6,12 @@
  * Time: 7:20 PM
  */
 
-namespace custom\model;
+namespace model;
 
 use loan\Loan;
 use que\database\model\Model;
 
-class WalletModel extends Model
+class Wallet extends Model
 {
     protected string $modelKey = 'walletModel';
 

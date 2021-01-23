@@ -1,7 +1,7 @@
 <?php
 
 
-namespace module\access;
+namespace access;
 
 
 use DateTime;
@@ -71,7 +71,7 @@ class PasswordReset extends Manager implements Api
 
             $update = $user->update(['password' => $validator->getValue('password')]);
 
-            if (!$update) throw $this->baseException(
+            if (!$update?->isSuccessful()) throw $this->baseException(
                 "Sorry, we couldn't reset your password at this time. Please try gain later",
                 "Password Reset Failed", HTTP::EXPECTATION_FAILED);
 

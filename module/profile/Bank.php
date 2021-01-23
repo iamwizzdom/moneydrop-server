@@ -233,7 +233,7 @@ class Bank extends Manager implements Api
                     $remove = false;
 
                     if ($account->isSuccessful()) {
-                        $remove = $account->getFirstWithModel()?->update(['is_active' => false]);
+                        $remove = !!$account->getFirstWithModel()?->update(['is_active' => false])?->isSuccessful();
                     }
 
                     return $this->http()->output()->json([

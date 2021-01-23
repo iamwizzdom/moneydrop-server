@@ -1,7 +1,7 @@
 <?php
 
 
-namespace module\access;
+namespace access;
 
 
 use DateTime;
@@ -166,7 +166,7 @@ class Verification extends Manager implements Api
 
                             $verified = $verify->update(['is_verified' => true]);
 
-                            if (!$verified) throw $this->baseException(
+                            if (!$verified?->isSuccessful()) throw $this->baseException(
                                 "Sorry, we could not verify that email at this time, please try again later.",
                                 "Verification failed", HTTP::EXPECTATION_FAILED);
 

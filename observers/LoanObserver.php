@@ -4,8 +4,7 @@
 namespace observers;
 
 
-use custom\model\LoanModel;
-use loan\Loan;
+use model\Loan;
 use que\database\interfaces\Builder;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
@@ -86,10 +85,7 @@ class LoanObserver extends Observer
         // TODO: Implement onUpdated() method.
         $newModels->map(function (Model $newModel) use ($oldModels) {
 
-            if (!$newModel instanceof LoanModel) $newModel = LoanModel::cast($newModel);
-
-
-            log_err(['loan' => $newModel]);
+            if (!$newModel instanceof Loan) $newModel = Loan::cast($newModel);
 
             if ($newModel->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
 
@@ -114,7 +110,7 @@ class LoanObserver extends Observer
                         'to_wallet_id' => $application->applicant->wallet->id,
                         'status' => APPROVAL_SUCCESSFUL]);
 
-                    if (!$status) $this->getSignal()->undoOperation("Unable to transact at this time");
+                    if (!$status?->isSuccessful()) $this->getSignal()->undoOperation($status?->getQueryError() ?: "Unable to transact at this time");
                 }
             }
         });

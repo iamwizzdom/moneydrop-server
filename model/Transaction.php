@@ -6,11 +6,11 @@
  * Time: 7:20 PM
  */
 
-namespace custom\model;
+namespace model;
 
 use que\database\model\Model;
 
-class TransactionModel extends Model
+class Transaction extends Model
 {
     protected string $modelKey = 'transactionModel';
     protected array $appends = ['card', 'status_readable', 'type_readable', 'direction_readable', 'date', 'date_time'];

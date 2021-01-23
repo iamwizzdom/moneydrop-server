@@ -160,7 +160,7 @@ trait Wallet
         if (!$forceUpdate && $this->wallet->validate('is_frozen')->isEqual(true))
             throw new Exception("Wallet is frozen");
 
-        return $this->wallet->update(['balance' => $balance]);
+        return !!$this->wallet->update(['balance' => $balance])?->isSuccessful();
     }
 
     /**
@@ -179,7 +179,7 @@ trait Wallet
         if (!$forceUpdate && $this->wallet->validate('is_frozen')->isEqual(true))
             throw new Exception("Wallet is frozen");
 
-        return $this->wallet->update(['available_balance' => $balance]);
+        return !!$this->wallet->update(['available_balance' => $balance])?->isSuccessful();
     }
 
     /**
@@ -199,10 +199,10 @@ trait Wallet
         if (!$forceUpdate && $this->wallet->validate('is_frozen')->isEqual(true))
             throw new Exception("Wallet is frozen");
 
-        return $this->wallet->update([
+        return !!$this->wallet->update([
             'balance' => $balance,
             'available_balance' => $availableBalance
-        ]);
+        ])?->isSuccessful();
     }
 
     /**
@@ -240,7 +240,7 @@ trait Wallet
     public function freezeWallet(): bool
     {
         if (!$this->wallet) throw new Exception("No wallet found");
-        return $this->wallet->update(['is_frozen' => true]);
+        return !!$this->wallet->update(['is_frozen' => true])?->isSuccessful();
     }
 
     /**
@@ -250,6 +250,6 @@ trait Wallet
     public function deactivateWallet(): bool
     {
         if (!$this->wallet) throw new Exception("No wallet found");
-        return $this->wallet->update(['is_active' => false]);
+        return !!$this->wallet->update(['is_active' => false])?->isSuccessful();
     }
 }

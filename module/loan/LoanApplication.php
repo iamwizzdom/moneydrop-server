@@ -18,6 +18,7 @@ use que\http\output\response\Plain;
 use que\http\request\Request;
 use que\support\Arr;
 use que\support\Config;
+use que\support\Num;
 use que\support\Str;
 use que\template\Pagination;
 use utility\Wallet;
@@ -58,7 +59,7 @@ class LoanApplication extends Manager implements Api
                         $loanValidator->isNotFoundInDB('loan_applications', 'loan_id', 'This loan is already granted to an applicant',
                             function (Builder $builder) {
                                 $builder->where('is_granted', true);
-                        });
+                            });
                     }
 
                     $availableRaise = null;
@@ -78,8 +79,8 @@ class LoanApplication extends Manager implements Api
                         } else $availableRaise = $loan->getFloat('amount') - $raised;
                     }
 
-                    $amountValidator = $validator->validate('amount', true)->isFloatingNumber('Please enter a valid amount')
-                        ->isFloatingNumberGreaterThanOrEqual(Loan::MIN_LOAN_AMOUNT, "Sorry, you must apply with at least %s NGN.")
+                    $amountValidator = $validator->validate('amount')->isFloatingNumber('Please enter a valid amount')
+                        ->isFloatingNumberGreaterThanOrEqual(\model\Loan::MIN_LOAN_AMOUNT, "Sorry, you must apply with at least %s NGN.")
                         ->isFloatingNumberLessThanOrEqual($loan->getFloat('amount'), "Sorry, you can't apply with an amount greater than the loan amount");
 
                     if ($availableRaise != null) {
@@ -92,14 +93,10 @@ class LoanApplication extends Manager implements Api
                     if ($validator->hasError()) throw $this->baseException(
                         "The inputted data is invalid", "Loan Failed", HTTP::UNPROCESSABLE_ENTITY);
 
-                    $defaultModel = \config("database.default.model");
-
-                    Config::set("database.default.model", "loanApplicationModel");
-
                     $application = $this->db()->insert('loan_applications', [
                         'uuid' => Str::uuidv4(),
                         'note' => $input['note'],
-                        'amount' => (float) $input['amount'],
+                        'amount' => (float)$input['amount'],
                         'loan_id' => $input['loan_id'],
                         'user_id' => $this->user('id')
                     ]);
@@ -110,8 +107,6 @@ class LoanApplication extends Manager implements Api
 
                     $application = $application->getFirstWithModel();
                     $application->load('loan');
-
-                    Config::set("database.default.model", $defaultModel);
 
                     $this->refreshWallet();
 
@@ -175,19 +170,30 @@ class LoanApplication extends Manager implements Api
 
                     $application->load('loan');
 
-                    $grant = $application->update(['is_granted' => true]);
+                    $grant = $application->update([
+                        'is_granted' => true,
+                        'due_date' => \model\Loan::getLoanDueDate($application->loan->tenure)
+                    ]);
 
-                    if (!$grant) throw $this->baseException(
-                        "Sorry we couldn't grant that loan at this time, please let's try that again later",
-                    "Loan Failed", HTTP::EXPECTATION_FAILED);
+                    if (!$grant?->isSuccessful()) throw $this->baseException(
+                        $grant?->getQueryError() ?: "Sorry we couldn't grant that loan at this time, please let's try that again later",
+                        "Loan Failed", HTTP::EXPECTATION_FAILED);
 
                     $this->refreshWallet();
+
+                    $amount = Num::to_word($application->loan->amount);
+
+                    if ($application->loan->loan_type == \model\Loan::LOAN_TYPE_OFFER) {
+                        $message = "You have successfully given {$application->applicant->firstname} a loan of {$amount} NGN.";
+                    } else {
+                        $message = "You have successfully received a loan of {$amount} NGN from {$application->applicant->firstname}.";
+                    }
 
                     return $this->http()->output()->json([
                         'status' => true,
                         'code' => HTTP::OK,
                         'title' => 'Loan Successful',
-                        'message' => "You have successfully granted {$application->applicant->firstname}'s this loan {$application->loan->type}.",
+                        'message' => $message,
                         'response' => [
                             'application' => $application,
                             'balance' => $this->getBalance(),
@@ -197,8 +203,10 @@ class LoanApplication extends Manager implements Api
 
                 case "applicants":
 
-                    $applications = $this->db()->select("*, la.id as id, la.uuid as uuid, la.user_id as user_id")
-                        ->table('loan_applications as la')
+                    $applications = $this->db()->select(
+                        "*, la.id as id, la.uuid as uuid, la.user_id as user_id",
+                        "la.created_at as created_at, la.updated_at as updated_at",
+                    )->table('loan_applications as la')
                         ->join('loans as l', 'l.uuid', 'la.loan_id')
                         ->where('la.loan_id', Request::getUriParam('id'))
                         ->where('l.user_id', $this->user('id'))

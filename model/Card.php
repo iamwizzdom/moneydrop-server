@@ -6,12 +6,12 @@
  * Time: 7:20 PM
  */
 
-namespace custom\model;
+namespace model;
 
 use loan\Loan;
 use que\database\model\Model;
 
-class CardModel extends Model
+class Card extends Model
 {
     protected string $modelKey = 'cardModel';
     protected array $appends = ['card_type', 'last4', 'brand', 'exp_month', 'exp_year'];

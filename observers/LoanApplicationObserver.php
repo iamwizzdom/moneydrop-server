@@ -4,8 +4,8 @@
 namespace observers;
 
 
-use custom\model\LoanApplicationModel;
-use loan\Loan;
+use model\LoanApplication;
+use model\Loan;
 use que\common\exception\QueException;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
@@ -33,7 +33,7 @@ class LoanApplicationObserver extends Observer
         // TODO: Implement onCreated() method.
         try {
 
-            if (!$model instanceof LoanApplicationModel) $model = LoanApplicationModel::cast($model);
+            if (!$model instanceof LoanApplication) $model = LoanApplication::cast($model);
 
             if (!$model->has('loan')) $model->load('loan');
 
@@ -51,7 +51,7 @@ class LoanApplicationObserver extends Observer
                 ]);
 
                 if (!$trans->isSuccessful()) {
-                    $this->getSignal()->undoOperation("Unable to transact at this time");
+                    $this->getSignal()->undoOperation($trans->getQueryError() ?: "Unable to transact at this time");
                     return;
                 }
             }
@@ -76,7 +76,7 @@ class LoanApplicationObserver extends Observer
 
             $mailer->addMail($mail);
             $mailer->prepare('loan-application');
-            $mailer->dispatch('loan-application');
+//            $mailer->dispatch('loan-application');
 
         } catch (QueException $e) {
         }
@@ -122,22 +122,31 @@ class LoanApplicationObserver extends Observer
         // TODO: Implement onUpdated() method.
         $newModels->map(function (Model $newModel) use ($oldModels) {
 
-            if (!$newModel instanceof LoanApplicationModel) $newModel = LoanApplicationModel::cast($newModel);
+            if (!$newModel instanceof LoanApplication) $newModel = LoanApplication::cast($newModel);
 
             if (!$newModel->has('loan')) $newModel->load('loan');
 
             if ($newModel->loan->getInt('loan_type') == Loan::LOAN_TYPE_REQUEST) {
 
                 $trans = db()->find('transactions', $newModel->getValue('uuid'), 'gateway_reference');
-                $trans = $trans->getFirstWithModel();
 
-                if (!$newModel->getInt('is_active')) {
-                    $status = $trans->update(['status' => APPROVAL_REVERSED]);
-                } elseif ($newModel->getBool('is_granted')) {
-                    $status = $trans->update(['status' => APPROVAL_SUCCESSFUL]);
+                if ($trans->isSuccessful()) {
+
+                    $transModel = $trans->getFirstWithModel();
+
+                    $status = null;
+
+                    if (!$newModel->getInt('is_active')) {
+                        $status = $transModel->update(['status' => APPROVAL_REVERSED]);
+                    } elseif ($newModel->getBool('is_granted')) {
+                        $status = $transModel->update(['status' => APPROVAL_SUCCESSFUL]);
+                    }
+
+                    if (!$status?->isSuccessful()) $this->getSignal()->undoOperation($status?->getQueryError() ?: "Unable to transact at this time");
+
+                } else {
+                    $this->getSignal()->undoOperation("No transaction was found for this loan.");
                 }
-
-                if (!$status) $this->getSignal()->undoOperation("Unable to transact at this time");
 
             } elseif ($newModel->loan->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
                 if ($newModel->getBool('is_granted')) {

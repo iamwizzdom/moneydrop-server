@@ -50,7 +50,7 @@ trait Card
     {
         $card = $this->getMyCard($cardUUID);
         if (!$card) return false;
-        return $card->update(['is_active' => false]);
+        return !!$card->update(['is_active' => false])?->isSuccessful();
     }
 
     /**

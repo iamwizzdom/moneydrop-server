@@ -45,7 +45,7 @@ class Loan extends Manager implements Api
                     $loans = $this->db()->select("*")->table('loans')
                         ->where('user_id', $this->user('id'))
                         ->where('is_active', true)
-                        ->where('loan_type', $type == "offers" ? \loan\Loan::LOAN_TYPE_OFFER : \loan\Loan::LOAN_TYPE_REQUEST)
+                        ->where('loan_type', $type == "offers" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST)
                         ->orderBy('desc', 'id')->paginate(30);
 
                     $loans->setModelKey("loanModel");

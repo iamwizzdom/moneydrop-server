@@ -4,7 +4,7 @@
 namespace observers;
 
 
-use custom\model\WalletModel;
+use model\Wallet;
 use que\common\exception\QueException;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
@@ -100,8 +100,8 @@ class WalletObserver extends Observer
                 return $model->validate('id')->isEqual($m->getValue('id'));
             });
 
-            if (!$model instanceof WalletModel) $model = WalletModel::cast($model);
-            if (!$oldModel instanceof WalletModel) $oldModel = WalletModel::cast($oldModel);
+            if (!$model instanceof Wallet) $model = Wallet::cast($model);
+            if (!$oldModel instanceof Wallet) $oldModel = Wallet::cast($oldModel);
 
             try {
 

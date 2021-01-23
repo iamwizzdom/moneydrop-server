@@ -6,12 +6,12 @@
  * Time: 9:34 AM
  */
 
-use custom\model\CardModel;
-use custom\model\LoanApplicationModel;
-use custom\model\UserModel;
-use custom\model\LoanModel;
-use custom\model\TransactionModel;
-use custom\model\WalletModel;
+use model\Card;
+use model\LoanApplication;
+use model\User;
+use model\Loan;
+use model\Transaction;
+use model\Wallet;
 use observers\LoanApplicationObserver;
 use observers\LoanObserver;
 use observers\TransactionObserver;
@@ -79,12 +79,12 @@ return [
     */
     'models' => [
         'que' => CentralModel::class,
-        'walletModel' => WalletModel::class,
-        'loanModel' => LoanModel::class,
-        'transactionModel' => TransactionModel::class,
-        'userModel' => UserModel::class,
-        'cardModel' => CardModel::class,
-        'loanApplicationModel' => LoanApplicationModel::class
+        'walletModel' => Wallet::class,
+        'loanModel' => Loan::class,
+        'transactionModel' => Transaction::class,
+        'userModel' => User::class,
+        'cardModel' => Card::class,
+        'loanApplicationModel' => LoanApplication::class
     ],
 
     /*
@@ -223,7 +223,7 @@ return [
              | Set to [bool](true) to shutdown Que and output all MySQL/SQL errors,
              | otherwise [bool](false) to output only FATAL errors
              */
-            'debug' => true
+            'debug' => false
         ]
 
     ],

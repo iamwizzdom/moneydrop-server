@@ -1,6 +1,6 @@
 <?php
 
-namespace module\access;
+namespace access;
 
 use que\common\exception\BaseException;
 use que\common\exception\QueException;
@@ -53,7 +53,7 @@ class Register extends Manager implements Api
             $validator->validate('dob')->isDate("Please enter a valid date of birth", 'Y-m-d')
                 ->isDateLessThanOrEqual(\DateTime::createFromFormat('Y-m-d', date('Y-m-d')),
                     "Sorry, we don't accept people that were born in the future")->isDateLessThanOrEqual(
-                    \DateTime::createFromFormat('Y-m-d', date('Y-m-d', strtotime('-15years'))),
+                    \DateTime::createFromFormat('Y-m-d', date('Y-m-d', strtotime('-15 years'))),
                     "You must be at least 15 years old to use " . config('template.app.header.name'));
 
             $validator->validate('gender', true)->isNumber("Please select a valid gender")
