@@ -55,10 +55,10 @@ class LoanApplication extends Manager implements Api
 
                     $loan = $this->db()->find('loans', $input['loan_id'], 'uuid')->getFirstWithModel();
 
-                    if ($loan->getBool('is_active') && !$loan->getBool('is_funder_raiser')) {
+                    if ($loan->getBool('is_active')) {
                         $loanValidator->isNotFoundInDB('loan_applications', 'loan_id', 'This loan is already granted to an applicant',
                             function (Builder $builder) {
-                                $builder->where('is_granted', true);
+                                $builder->where('status', APPROVAL_SUCCESSFUL);
                             });
                     }
 
@@ -152,7 +152,7 @@ class LoanApplication extends Manager implements Api
                         ->isNotFoundInDB('loan_applications', 'uuid', 'You already granted this loan to an applicant.',
                             function (Builder $builder) {
                                 $builder->where('loan_id', \input('loan_id'));
-                                $builder->where('is_granted', true);
+                                $builder->where('status', \model\LoanApplication::GRANTED);
                                 $builder->where('is_active', true);
                             });
 
@@ -171,7 +171,7 @@ class LoanApplication extends Manager implements Api
                     $application->load('loan');
 
                     $grant = $application->update([
-                        'is_granted' => true,
+                        'status' => \model\LoanApplication::GRANTED,
                         'due_date' => \model\Loan::getLoanDueDate($application->loan->tenure)
                     ]);
 
@@ -189,6 +189,12 @@ class LoanApplication extends Manager implements Api
                         $message = "You have successfully received a loan of {$amount} NGN from {$application->applicant->firstname}.";
                     }
 
+                    $this->db()->findAll('loan_applications', 'loan_id', $application->getInt('loan_id'),
+                        function (Builder $builder) {
+                        $builder->where('status', \model\LoanApplication::GRANTED, '!=');
+                        $builder->where('is_active', true);
+                    })->getAllWithModel()?->update(['status' => \model\LoanApplication::REJECTED]);
+
                     return $this->http()->output()->json([
                         'status' => true,
                         'code' => HTTP::OK,
@@ -203,16 +209,18 @@ class LoanApplication extends Manager implements Api
 
                 case "applicants":
 
-                    $applications = $this->db()->select(
-                        "*, la.id as id, la.uuid as uuid, la.user_id as user_id",
-                        "la.created_at as created_at, la.updated_at as updated_at",
-                    )->table('loan_applications as la')
-                        ->join('loans as l', 'l.uuid', 'la.loan_id')
-                        ->where('la.loan_id', Request::getUriParam('id'))
-                        ->where('l.user_id', $this->user('id'))
-                        ->where('la.is_active', true)
-                        ->orderBy('desc', 'la.id')
-                        ->paginate(30);
+                    $applications = $this->db()->select("*")
+                        ->table('loan_applications as la')
+                        ->where('loan_id', Request::getUriParam('id'))
+                        ->exists(function (Builder $builder) {
+                            $builder->table('loans')
+                                ->where('uuid', '{{la.loan_id}}')
+                                ->where('user_id', $this->user('id'))
+                                ->where('is_active', true);
+                        })
+                        ->where('is_active', true)
+                        ->orderBy('desc', 'id')
+                        ->paginate(PAGINATION_PER_PAGE);
 
                     $applications->setModelKey("loanApplicationModel");
 
@@ -223,7 +231,7 @@ class LoanApplication extends Manager implements Api
 
                     if ($applications) {
                         $applications->_set('has_granted', $applications->isTrueForAny(function (Model $model) {
-                            return $model->getBool('is_granted') === true;
+                            return $model->getInt('status') == \model\LoanApplication::GRANTED;
                         }));
                     }
 

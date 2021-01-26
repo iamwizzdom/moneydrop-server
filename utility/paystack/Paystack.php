@@ -70,7 +70,7 @@ trait Paystack
                     'narration' => 'Add card charge/top-up transaction'
                 ];
 
-                if ($extraCharge) $trans['fees'] = $extraCharge;
+                if ($extraCharge) $trans['fee'] = $extraCharge;
 
                 db()->insert('transactions', $trans);
             }
@@ -160,7 +160,7 @@ trait Paystack
                     'narration' => "wallet top-up transaction"
                 ];
 
-                if ($extraCharge) $trans['fees'] = $extraCharge;
+                if ($extraCharge) $trans['fee'] = $extraCharge;
 
                 $trans = db()->insert('transactions', $trans);
 

@@ -35,8 +35,7 @@ class TransactionObserver extends Observer
         if (!$model instanceof Transaction) $model = Transaction::cast($model);
         if ($model->getInt('type') == TRANSACTION_TRANSFER) {
             $model->load('to_wallet')->to_wallet->load('user');
-            if (empty($model->getValue('narration')) && $model->to_wallet)
-                $model->set('narration', "Transfer to {$model->to_wallet->firstname} {$model->to_wallet->lastname}");
+            if ($model->to_wallet) $model->set('narration', "Transfer to {$model->to_wallet->user->firstname} {$model->to_wallet->user->lastname}");
         }
     }
 
@@ -65,7 +64,7 @@ class TransactionObserver extends Observer
                 case TRANSACTION_TOP_UP:
                     try {
 
-                        if ($wallet->creditWallet($model->getFloat('amount')) === false) {
+                        if ($wallet->creditWallet(($model->getFloat('amount') - $model->getFloat('fee'))) === false) {
                             throw new Exception("Unable to credit wallet at this time.");
                         }
 
@@ -76,7 +75,7 @@ class TransactionObserver extends Observer
                 case TRANSACTION_CHARGE:
                     try {
 
-                        if ($wallet->debitWallet($model->getFloat('amount')) === false) {
+                        if ($wallet->debitWallet(($model->getFloat('amount') + $model->getFloat('fee'))) === false) {
                             throw new Exception("Unable to debit wallet at this time.");
                         }
 
@@ -87,7 +86,7 @@ class TransactionObserver extends Observer
                 case TRANSACTION_WITHDRAWAL:
                     try {
 
-                        if ($wallet->debitWallet($model->getFloat('amount')) === false) {
+                        if ($wallet->debitWallet(($model->getFloat('amount') + $model->getFloat('fee'))) === false) {
                             throw new Exception("Unable to withdraw from wallet at this time.");
                         }
 
@@ -99,24 +98,27 @@ class TransactionObserver extends Observer
                     db()->transStart();
                     try {
 
-                        if ($wallet->debitWallet($model->getFloat('amount')) === false) {
+                        if ($wallet->debitWallet(($model->getFloat('amount') + $model->getFloat('fee'))) === false) {
                             throw new Exception("Unable to debit wallet at this time.");
                         }
 
+                        if (!$model instanceof Transaction) $model = Transaction::cast($model);
+
                         $wallet = $walletBag->getWalletWithID($model->getInt('to_wallet_id'));
 
-                        $model->load('user')->user->load('wallet');
+                        $model->load('from_wallet')->from_wallet->load('user');
 
                         $transfer = db()->insert('transactions', [
                             'uuid' => Str::uuidv4(),
                             'user_id' => $wallet->getWallet()->getInt('user_id'),
                             'type' => TRANSACTION_TOP_UP,
-                            'from_wallet_id' => $model->user->wallet->id,
+                            'from_wallet_id' => $model->from_wallet_id,
                             'direction' => "w2w",
                             'gateway_reference' => $model->getValue('uuid'),
                             'amount' => $model->getFloat('amount'),
+                            'fee' => $model->getFloat('creditor_fee'),
                             'status' => APPROVAL_SUCCESSFUL,
-                            'narration' => "Money transfer from {$model->user->firstname} {$model->user->lastname}"
+                            'narration' => "Money transfer from {$model->from_wallet->user->firstname} {$model->from_wallet->user->lastname}"
                         ]);
 
                         if (!$transfer->isSuccessful()) throw new Exception($transfer->getQueryError());
@@ -139,7 +141,7 @@ class TransactionObserver extends Observer
 
                 try {
 
-                    if ($wallet->lockFund($model->getFloat('amount')) === false) {
+                    if ($wallet->lockFund(($model->getFloat('amount') + $model->getFloat('fee'))) === false) {
                         throw new Exception("Unable to lock wallet fund at this time.");
                     }
 
@@ -181,6 +183,15 @@ class TransactionObserver extends Observer
     public function onUpdating(ModelCollection $newModels, ModelCollection $oldModels)
     {
         // TODO: Implement onUpdating() method.
+        $newModels->map(function (Model $newModel) use ($oldModels) {
+
+            if (!$newModel instanceof Transaction) $newModel = Transaction::cast($newModel);
+            if ($newModel->getInt('type') == TRANSACTION_TRANSFER) {
+                $newModel->load('to_wallet')->to_wallet->load('user');
+                if ($newModel->to_wallet) $newModel->set('narration', "Transfer to {$newModel->to_wallet->user->firstname} {$newModel->to_wallet->user->lastname}");
+            }
+
+        });
     }
 
     /**
@@ -215,7 +226,7 @@ class TransactionObserver extends Observer
                 $i = $oldModel->getInt('type');
                 if ($i == TRANSACTION_TRANSFER || $i == TRANSACTION_CHARGE) {
                     try {
-                        if ($wallet->unlockFund($oldModel->getFloat('amount')) === false) {
+                        if ($wallet->unlockFund(($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
                             throw new Exception("Unable to credit wallet at this time.");
                         }
                     } catch (Exception $e) {
@@ -223,7 +234,7 @@ class TransactionObserver extends Observer
                     }
                 } elseif ($i == TRANSACTION_TOP_UP) {
                     try {
-                        if ($wallet->debitWallet($oldModel->getFloat('amount')) === false) {
+                        if ($wallet->debitWallet(($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
                             throw new Exception("Unable to debit wallet at this time.");
                         }
                     } catch (Exception $e) {
@@ -250,7 +261,7 @@ class TransactionObserver extends Observer
                         case APPROVAL_PROCESSING:
                             try {
 
-                                if ($wallet->lockFund($oldModel->getFloat('amount')) === false) {
+                                if ($wallet->lockFund(($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
                                     throw new Exception("Unable to lock wallet fund at this time.");
                                 }
 
@@ -263,7 +274,7 @@ class TransactionObserver extends Observer
                             if ($newModel->getInt('type') == TRANSACTION_CHARGE) {
                                 try {
 
-                                    if ($wallet->debitWallet($oldModel->getFloat('amount')) === false) {
+                                    if ($wallet->debitWallet(($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
                                         throw new Exception("Unable to debit wallet at this time.");
                                     }
 
@@ -281,7 +292,7 @@ class TransactionObserver extends Observer
 
                 } elseif ($newModel->getInt('type') == TRANSACTION_TOP_UP) {
                     try {
-                        if ($wallet->createWallet($oldModel->getFloat('amount')) === false) {
+                        if ($wallet->creditWallet(($oldModel->getFloat('amount') - $oldModel->getFloat('fee'))) === false) {
                             throw new Exception("Unable to credit wallet at this time.");
                         }
                     } catch (Exception $e) {
@@ -306,7 +317,7 @@ class TransactionObserver extends Observer
                     db()->transStart();
                     try {
 
-                        if ($wallet->debitLockedFund($newModel->getFloat('amount')) === false) {
+                        if ($wallet->debitLockedFund(($newModel->getFloat('amount') + $newModel->getFloat('fee'))) === false) {
                             throw new Exception("Unable to debit wallet at this time.");
                         }
 
@@ -314,18 +325,19 @@ class TransactionObserver extends Observer
 
                             $wallet = $walletBag->getWalletWithID($newModel->getInt('to_wallet_id'));
 
-                            $newModel->load('user')->user->load('wallet');
+                            $newModel->load('from_wallet')->from_wallet->load('user');
 
                             $transfer = db()->insert('transactions', [
                                 'uuid' => Str::uuidv4(),
                                 'user_id' => $wallet->getWallet()->getInt('user_id'),
                                 'type' => TRANSACTION_TOP_UP,
-                                'from_wallet_id' => $newModel->user->wallet->id,
+                                'from_wallet_id' => $newModel->from_wallet_id,
                                 'direction' => "w2w",
                                 'gateway_reference' => $newModel->getValue('uuid'),
                                 'amount' => $newModel->getFloat('amount'),
+                                'fee' => $newModel->getFloat('creditor_fee'),
                                 'status' => APPROVAL_SUCCESSFUL,
-                                'narration' => "Money transfer from {$newModel->user->firstname} {$newModel->user->lastname}"
+                                'narration' => "Money transfer from {$newModel->from_wallet->user->firstname} {$newModel->from_wallet->user->lastname}"
                             ]);
 
                             if (!$transfer->isSuccessful()) throw new Exception($transfer->getQueryError());
@@ -340,7 +352,7 @@ class TransactionObserver extends Observer
 
                 } elseif ($newModel->getInt('type') == TRANSACTION_TOP_UP) {
                     try {
-                        if ($wallet->createWallet($oldModel->getFloat('amount')) === false) {
+                        if ($wallet->creditWallet(($newModel->getFloat('amount') - $newModel->getFloat('fee'))) === false) {
                             throw new Exception("Unable to credit wallet at this time.");
                         }
                     } catch (Exception $e) {
@@ -363,7 +375,7 @@ class TransactionObserver extends Observer
 
                     try {
 
-                        if ($wallet->lockFund($newModel->getFloat('amount')) === false) {
+                        if ($wallet->lockFund(($newModel->getFloat('amount') + $newModel->getFloat('fee'))) === false) {
                             throw new Exception("Unable to lock wallet fund at this time.");
                         }
 

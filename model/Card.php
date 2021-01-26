@@ -14,6 +14,7 @@ use que\database\model\Model;
 class Card extends Model
 {
     protected string $modelKey = 'cardModel';
+    protected array $fillable = ['uuid', 'auth', 'name', 'user_id', 'status', 'is_active'];
     protected array $appends = ['card_type', 'last4', 'brand', 'exp_month', 'exp_year'];
     protected array $casts = ['is_active' => 'bool', 'created_at' => 'date:d/m/y'];
 

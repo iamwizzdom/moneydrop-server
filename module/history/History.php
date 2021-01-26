@@ -4,10 +4,11 @@
 namespace history;
 
 
+use model\Loan;
+use model\LoanApplication;
 use que\common\manager\Manager;
 use que\common\structure\Api;
 use que\database\interfaces\Builder;
-use que\http\HTTP;
 use que\http\input\Input;
 use que\http\output\response\Html;
 use que\http\output\response\Json;
@@ -32,32 +33,24 @@ class History extends Manager implements Api
             ->exists(function (Builder $builder) {
                 $builder->table('loans')
                     ->where('uuid', '{{la.loan_id}}')
-                    ->where('is_active', true);
-            })
-            ->notExists(function (Builder $builder) {
-                $builder->table('loan_applications as _la')
-                    ->where('loan_id', '{{la.loan_id}}')
-                    ->exists(function (Builder $builder) {
-                        $builder->table('loans')
-                            ->where('uuid', '{{_la.loan_id}}')
-                            ->where('is_fund_raiser', false)
-                            ->where('is_active', true);
-                    })
-                    ->where('is_granted', true)
+//                    ->where('loan_type', Loan::LOAN_TYPE_OFFER)
                     ->where('is_active', true);
             })
             ->where('is_active', true)
             ->endWhereGroup()
             ->startWhereGroup()
-            ->orWhereIn('loan_id', function (Builder $builder) {
-                $builder->select('uuid')->table('loans')
+            ->orExists(function (Builder $builder) {
+                $builder->table('loans')
+                    ->where('uuid', '{{la.loan_id}}')
                     ->where('user_id', $this->user('id'))
+                    ->where('loan_type', Loan::LOAN_TYPE_REQUEST)
                     ->where('is_active', true);
             })
-            ->where('is_granted', true)
+            ->where('status', LoanApplication::GRANTED)
             ->where('is_active', true)
             ->endWhereGroup()
-            ->paginate(30);
+            ->orderBy('desc', 'id')
+            ->paginate(PAGINATION_PER_PAGE);
 
         $applications->setModelKey('loanApplicationModel');
 

@@ -43,7 +43,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                         ->isNumberGreaterThanOrEqual(\model\Loan::MIN_LOAN_AMOUNT, "Sorry, you must {$type} at least %s NGN");
 
                     $validator->validate('tenure')->isNumeric("Please a loan tenure")
-                        ->isEqualToAny(get_class_consts($this, 'LOAN_TENURE_'), 'Please select a valid tenure');
+                        ->isEqualToAny(get_class_consts(\model\Loan::class, 'LOAN_TENURE_'), 'Please select a valid tenure');
 
                     $validator->validate('interest')->isNumeric('Please enter a valid interest rate');
 
@@ -51,7 +51,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                         ->isEqualToAny([\model\Loan::INTEREST_TYPE_STATIC, \model\Loan::INTEREST_TYPE_NON_STATIC], "Please select a valid interest type");
 
                     $validator->validate('purpose', true)->isNumeric('Please select a loan purpose')
-                        ->isEqualToAny(get_class_consts($this, 'LOAN_PURPOSE_'), "Please select a valid loan purpose");
+                        ->isEqualToAny(get_class_consts(\model\Loan::class, 'LOAN_PURPOSE_'), "Please select a valid loan purpose");
 
                     $validator->validate('note', true)->isNotEmpty("Your note shouldn't be empty")
                         ->hasMinWord(10, "Please write a meaningful note of at least %s words");
@@ -59,8 +59,8 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
 //                    $validator->validate('loan_type')->isNumeric('Loan type must be numeric')
 //                        ->isEqualToAny([\model\Loan::LOAN_TYPE_OFFER, \model\Loan::LOAN_TYPE_REQUEST], "Please select a valid loan type");
 
-                    $validator->validate('is_fund_raiser', true)->isBool(
-                        "Please enter a valid value to tell us if this is a fund raiser loan or not.");
+//                    $validator->validate('is_fund_raiser', true)->isBool(
+//                        "Please enter a valid value to tell us if this is a fund raiser loan or not.");
 
                     if ($validator->hasError()) throw $this->baseException(
                         "The inputted data is invalid", "Loan Failed", HTTP::UNPROCESSABLE_ENTITY);
@@ -81,7 +81,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                     $loan = $this->db()->insert('loans', array_merge([
                         'uuid' => Str::uuidv4(),
                         'user_id' => user('id'),
-                        'status' => STATE_PENDING,
+                        'status' => STATE_AWAITING,
                         'loan_type' => $type == "offer" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST
                     ], $validator->getValidated()));
 
@@ -107,9 +107,10 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                 case "requests":
 
                     $loans = $this->db()->select("*")->table('loans')
+                        ->where('status', STATE_SUCCESSFUL, '!=')
                         ->where('is_active', true)
                         ->where('loan_type', $type == "offers" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST)
-                        ->orderBy('desc', 'id')->paginate(30);
+                        ->orderBy('desc', 'id')->paginate(PAGINATION_PER_PAGE);
 
                     $loans->setModelKey("loanModel");
 

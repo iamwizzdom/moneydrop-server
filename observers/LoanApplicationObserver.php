@@ -76,7 +76,7 @@ class LoanApplicationObserver extends Observer
 
             $mailer->addMail($mail);
             $mailer->prepare('loan-application');
-//            $mailer->dispatch('loan-application');
+            $mailer->dispatch('loan-application');
 
         } catch (QueException $e) {
         }
@@ -128,29 +128,19 @@ class LoanApplicationObserver extends Observer
 
             if ($newModel->loan->getInt('loan_type') == Loan::LOAN_TYPE_REQUEST) {
 
-                $trans = db()->find('transactions', $newModel->getValue('uuid'), 'gateway_reference');
+                if ($newModel->getInt('status') == LoanApplication::GRANTED) {
+                    $update = $newModel->loan->update(['status' => STATE_SUCCESSFUL]);
+                    if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to grant loan at this time");
+                } elseif ($newModel->getInt('status') == LoanApplication::REJECTED) {
 
-                if ($trans->isSuccessful()) {
-
-                    $transModel = $trans->getFirstWithModel();
-
-                    $status = null;
-
-                    if (!$newModel->getInt('is_active')) {
-                        $status = $transModel->update(['status' => APPROVAL_REVERSED]);
-                    } elseif ($newModel->getBool('is_granted')) {
-                        $status = $transModel->update(['status' => APPROVAL_SUCCESSFUL]);
-                    }
-
-                    if (!$status?->isSuccessful()) $this->getSignal()->undoOperation($status?->getQueryError() ?: "Unable to transact at this time");
-
-                } else {
-                    $this->getSignal()->undoOperation("No transaction was found for this loan.");
+                    $trans = db()->find('transactions', $newModel->getValue('uuid'), 'gateway_reference');
+                    $trans->getFirstWithModel()?->update(['status' => APPROVAL_REVERSED]);
                 }
 
             } elseif ($newModel->loan->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
-                if ($newModel->getBool('is_granted')) {
-                    $newModel->loan->update(['status' => STATE_SUCCESSFUL]);
+                if ($newModel->getInt('status') == LoanApplication::GRANTED) {
+                    $update = $newModel->loan->update(['status' => STATE_SUCCESSFUL]);
+                    if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to grant loan at this time");
                 }
             }
         });

@@ -18,3 +18,5 @@ const PAYSTACK_TRANSFER_RECIPIENT_URL = 'https://api.paystack.co/transferrecipie
 const PAYSTACK_TRANSFER_URL = 'https://api.paystack.co/transfer';
 
 const PAYSTACK_KEY = 'sk_test_8d5f40d2aaca8d452582e98771f19cbd508d6483';
+
+const PAGINATION_PER_PAGE = 30;

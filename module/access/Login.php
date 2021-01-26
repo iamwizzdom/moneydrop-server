@@ -67,7 +67,7 @@ class Login extends Manager implements Api
                 'message' => "Hi {$user['firstname']}, welcome.",
                 'response' => [
                     'user' => $user,
-                    'cards' => $this->getAllMyCards(),
+                    'cards' => $this->getAllMyCards() ?: [],
                     'banks' => BanksEnum::getBanks(),
                 ]
             ], HTTP::OK);

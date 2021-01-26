@@ -61,7 +61,7 @@ class PasswordReset extends Manager implements Api
                 $code->update(['is_active' => false]);
 
                 $validator->addConditionError('otp', 'That OTP has expired');
-                throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::EXPIRED_AUTHENTICATION);
+                throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::UNPROCESSABLE_ENTITY);
             }
 
             if ($input->validate('otp')->hash()->isNotEqual($code->getValue('code'))) {

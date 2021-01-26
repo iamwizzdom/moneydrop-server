@@ -5,6 +5,7 @@ namespace observers;
 
 
 use model\Loan;
+use model\LoanApplication;
 use que\database\interfaces\Builder;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
@@ -87,30 +88,69 @@ class LoanObserver extends Observer
 
             if (!$newModel instanceof Loan) $newModel = Loan::cast($newModel);
 
-            if ($newModel->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
+            if ($newModel->getInt('status') == STATE_SUCCESSFUL) {
 
-                if ($newModel->getInt('status') == STATE_SUCCESSFUL) {
+                $application = db()->find('loan_applications', $newModel->getValue('uuid'), 'loan_id', function (Builder $builder) {
+                    $builder->where('status', LoanApplication::GRANTED);
+                    $builder->where('is_active', true);
+                });
+                $application->setModelKey('loanApplicationModel');
+                $application = $application->getFirstWithModel();
+                $application->load('loan');
+                $application->applicant->load('wallet');
+                $application->loan->user->load('wallet');
+
+                if ($newModel->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
 
                     $trans = db()->find('transactions', $newModel->getValue('uuid'), 'gateway_reference');
 
-                    $application = db()->find('loan_applications', $newModel->getValue('uuid'), 'loan_id', function (Builder $builder) {
-                        $builder->where('is_granted', true);
-                        $builder->where('is_active', true);
-                    });
-                    $application->setModelKey('loanApplicationModel');
-                    $application = $application->getFirstWithModel();
-                    $application->load('loan');
-                    $application->applicant->load('wallet');
-                    $application->loan->user->load('wallet');
+                    if ($trans->isSuccessful()) {
 
-                    $trans = $trans->getFirstWithModel();
+                        $transModel = $trans->getFirstWithModel();
 
-                    $status = $trans->update(['type' => TRANSACTION_TRANSFER,
-                        'from_wallet_id' => $application->loan->user->wallet->id,
-                        'to_wallet_id' => $application->applicant->wallet->id,
-                        'status' => APPROVAL_SUCCESSFUL]);
+                        if ($transModel->getFloat('amount') == $newModel->amount) {
 
-                    if (!$status?->isSuccessful()) $this->getSignal()->undoOperation($status?->getQueryError() ?: "Unable to transact at this time");
+                            $status = $transModel->update(['type' => TRANSACTION_TRANSFER,
+                                'from_wallet_id' => $application->loan->user->wallet->id,
+                                'to_wallet_id' => $application->applicant->wallet->id,
+                                'status' => APPROVAL_SUCCESSFUL]);
+
+                            if (!$status?->isSuccessful()) $this->getSignal()->undoOperation($status?->getQueryError() ?: "Unable to transact at this time");
+
+                        } else {
+                            $this->getSignal()->undoOperation("The amount found for the transaction on this loan does not match the loan amount.");
+                        }
+
+                    } else {
+                        $this->getSignal()->undoOperation("No transaction was found for this loan.");
+                    }
+
+
+                } elseif ($newModel->getInt('loan_type') == Loan::LOAN_TYPE_REQUEST) {
+
+                    $trans = db()->find('transactions', $application->getValue('uuid'), 'gateway_reference');
+
+                    if ($trans->isSuccessful()) {
+
+                        $transModel = $trans->getFirstWithModel();
+
+                        if ($transModel->getFloat('amount') == $newModel->amount) {
+
+                            $status = $transModel->update(['type' => TRANSACTION_TRANSFER,
+                                'from_wallet_id' => $application->applicant->wallet->id,
+                                'to_wallet_id' => $application->loan->user->wallet->id,
+                                'status' => APPROVAL_SUCCESSFUL]);
+
+                            if (!$status?->isSuccessful()) $this->getSignal()->undoOperation($status?->getQueryError() ?: "Unable to transact at this time");
+
+                        } else {
+                            $this->getSignal()->undoOperation("The amount found for the transaction on this loan application does not match the loan amount.");
+                        }
+
+                    } else {
+                        $this->getSignal()->undoOperation("No transaction was found for this loan application.");
+                    }
+
                 }
             }
         });

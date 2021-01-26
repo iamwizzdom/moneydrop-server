@@ -15,10 +15,11 @@ use que\database\model\Model;
 class Loan extends Model
 {
     protected string $modelKey = 'loanModel';
-    protected array $appends = ['status_readable', 'type', 'interest_type_readable', 'tenure_readable', 'purpose_readable', 'transaction', 'user', 'is_mine', 'has_applied'];
+    protected array $fillable = ['uuid', 'amount', 'tenure', 'interest', 'purpose', 'interest_type', 'note', 'loan_type', 'is_fund_raiser', 'user_id', 'status', 'is_active'];
+    protected array $appends = ['absolute_tenure', 'status_readable', 'type', 'loan_type_readable', 'interest_type_readable', 'tenure_readable', 'purpose_readable', 'transaction', 'user', 'is_mine', 'has_applied'];
     protected array $casts = [
-        'note' => 'string', 'amount' => 'double',
-        'interest' => 'double', 'is_fund_raiser' => 'bool', 'loan_type' => 'func::strtolower',
+        'note' => 'string', 'amount' => 'double', 'loan_type' => 'int',
+        'interest' => 'double', 'is_fund_raiser' => 'bool', 'loan_type_readable' => 'func::strtolower',
         'purpose_readable' => 'func::strtolower|str_replace,_, ,:subject|ucfirst',
         'tenure_readable' => 'func::strtolower|str_replace,_, ,:subject|ucfirst',
         'interest_type_readable' => 'func::strtolower|str_replace,_, ,:subject|ucfirst',
@@ -118,7 +119,7 @@ class Loan extends Model
         return converter()->convertClassConst($this->getInt('purpose'), $this, "LOAN_PURPOSE_");
     }
 
-    public function getType() {
+    public function getLoanTypeReadable() {
         return converter()->convertClassConst($this->getInt('loan_type'), $this, "LOAN_TYPE_");
     }
 
@@ -136,6 +137,27 @@ class Loan extends Model
             Loan::$applied[$loan_id] = $application->isSuccessful();
         }
         return Loan::$applied[$loan_id];
+    }
+
+    public function getApprovedApplicant() {
+        $applications = $this->hasMany('loan_applications', 'loan_id', 'uuid', 'loanApplicationModel');
+        return $applications->find(function (\que\database\interfaces\model\Model $model) {
+            return $model->getBool('is_active') && $model->getInt('status') == LoanApplication::GRANTED;
+        });
+    }
+
+    public function getAbsoluteTenure() {
+        $tenure = $this->getInt('tenure');
+        if ($tenure < Loan::LOAN_TENURE_ONE_MONTH) {
+            if ($tenure == Loan::LOAN_TENURE_ONE_WEEK) {
+                $tenure = (1 / 4);
+            } elseif ($tenure == Loan::LOAN_TENURE_TWO_WEEKS) {
+                $tenure = ((1 / 4) * 2);
+            } elseif ($tenure == Loan::LOAN_TENURE_THREE_WEEKS) {
+                $tenure = ((1 / 4) * 3);
+            }
+        }
+        return $tenure;
     }
 
     /**

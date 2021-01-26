@@ -13,8 +13,10 @@ use que\database\model\Model;
 class Transaction extends Model
 {
     protected string $modelKey = 'transactionModel';
+    protected array $fillable = ['uuid', 'user_id', 'card_id', 'to_wallet_id', 'from_wallet_id', 'recipient_code', 'direction',
+        'type', 'gateway_reference', 'transfer_code', 'amount', 'fee', 'creditor_fee', 'currency', 'status', 'narration'];
     protected array $appends = ['card', 'status_readable', 'type_readable', 'direction_readable', 'date', 'date_time'];
-    protected array $casts = ['narration' => 'string', 'fees' => 'double'];
+    protected array $casts = ['narration' => 'string', 'fee' => 'double', 'creditor_fee' => 'double'];
     protected array $hidden = ['updated_at'];
 
     public function getUser(): ?\que\database\interfaces\model\Model

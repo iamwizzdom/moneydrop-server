@@ -233,7 +233,7 @@ class Card extends Manager implements Api
                         'title' => $remove ? 'Remove Successful' : 'Remove Failed',
                         'message' => $remove ? "Card removed successfully." : "Card removal failed",
                         'response' => []
-                    ], HTTP::OK);
+                    ]);
 
                 default:
                     throw $this->baseException(
