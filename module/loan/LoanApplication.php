@@ -122,91 +122,6 @@ class LoanApplication extends Manager implements Api
                         ]
                     ], HTTP::CREATED);
 
-                case "application":
-
-                    $params = Request::getUriParams();
-
-                    if (!isset($params['_id'])) throw $this->baseException(
-                        "Sorry, we're not sure what you're trying to do there.", "Loan Failed", HTTP::BAD_REQUEST);
-
-                    $input['loan_id'] = $params['id'];
-                    $input['application_id'] = $params['_id'];
-
-                    $validator->validate('loan_id')->isUUID('Please enter a valid loan ID')
-                        ->isFoundInDB('loans', 'uuid', "Sorry, it seems that loan does not exist or is no longer eligible for granting.",
-                            function (Builder $builder) {
-                                $builder->where('status', STATE_AWAITING);
-                                $builder->where('is_active', true);
-                            })
-                        ->isFoundInDB('loans', 'uuid', "Sorry, you can't grant a loan that does not belong to you.",
-                            function (Builder $builder) {
-                                $builder->where('user_id', $this->user('id'));
-                                $builder->where('is_active', true);
-                            });
-
-                    $validator->validate('application_id')->isUUID('Please enter a valid application ID')
-                        ->isFoundInDB('loan_applications', 'uuid', "Sorry, it seems that application does not exist or it has been cancelled by the applicant.",
-                            function (Builder $builder) {
-                                $builder->where('is_active', true);
-                            })
-                        ->isNotFoundInDB('loan_applications', 'uuid', 'You already granted this loan to an applicant.',
-                            function (Builder $builder) {
-                                $builder->where('loan_id', \input('loan_id'));
-                                $builder->where('status', \model\LoanApplication::GRANTED);
-                                $builder->where('is_active', true);
-                            });
-
-                    if ($validator->hasError()) throw $this->baseException(
-                        "The inputted data is invalid", "Loan Failed", HTTP::UNPROCESSABLE_ENTITY);
-
-                    $application = $this->db()->find('loan_applications', $input['application_id'], 'uuid');
-
-                    if (!$application->isSuccessful()) throw $this->baseException(
-                        "Sorry we could not find that loan application.",
-                        "Loan Failed", HTTP::EXPECTATION_FAILED);
-
-                    $application->setModelKey('loanApplicationModel');
-                    $application = $application->getFirstWithModel();
-
-                    $application->load('loan');
-
-                    $grant = $application->update([
-                        'status' => \model\LoanApplication::GRANTED,
-                        'due_date' => \model\Loan::getLoanDueDate($application->loan->tenure)
-                    ]);
-
-                    if (!$grant?->isSuccessful()) throw $this->baseException(
-                        $grant?->getQueryError() ?: "Sorry we couldn't grant that loan at this time, please let's try that again later",
-                        "Loan Failed", HTTP::EXPECTATION_FAILED);
-
-                    $this->refreshWallet();
-
-                    $amount = Num::to_word($application->loan->amount);
-
-                    if ($application->loan->loan_type == \model\Loan::LOAN_TYPE_OFFER) {
-                        $message = "You have successfully given {$application->applicant->firstname} a loan of {$amount} NGN.";
-                    } else {
-                        $message = "You have successfully received a loan of {$amount} NGN from {$application->applicant->firstname}.";
-                    }
-
-                    $this->db()->findAll('loan_applications', 'loan_id', $application->getInt('loan_id'),
-                        function (Builder $builder) {
-                        $builder->where('status', \model\LoanApplication::GRANTED, '!=');
-                        $builder->where('is_active', true);
-                    })->getAllWithModel()?->update(['status' => \model\LoanApplication::REJECTED]);
-
-                    return $this->http()->output()->json([
-                        'status' => true,
-                        'code' => HTTP::OK,
-                        'title' => 'Loan Successful',
-                        'message' => $message,
-                        'response' => [
-                            'application' => $application,
-                            'balance' => $this->getBalance(),
-                            'available_balance' => $this->getAvailableBalance(),
-                        ]
-                    ]);
-
                 case "applicants":
 
                     $applications = $this->db()->select("*")
@@ -250,6 +165,176 @@ class LoanApplication extends Manager implements Api
                     throw $this->baseException(
                         "Sorry, we're not sure what you're trying to do there.", "Loan Failed", HTTP::BAD_REQUEST);
             }
+
+        } catch (BaseException $e) {
+
+            return $this->http()->output()->json([
+                'status' => $e->getStatus(),
+                'code' => $e->getCode(),
+                'title' => $e->getTitle(),
+                'message' => $e->getMessage(),
+                'error' => (object)$validator->getErrors()
+            ], $e->getCode());
+        }
+    }
+
+    public function grantApplication(Input $input) {
+
+        $validator = $this->validator($input);
+
+        try {
+
+            $params = Request::getUriParams();
+
+            $input['loan_id'] = $params['id'];
+            $input['application_id'] = $params['_id'];
+
+            $validator->validate('loan_id')->isUUID('Please enter a valid loan ID')
+                ->isFoundInDB('loans', 'uuid', "Sorry, it seems that loan does not exist or is no longer eligible for granting.",
+                    function (Builder $builder) {
+                        $builder->where('status', STATE_AWAITING);
+                        $builder->where('is_active', true);
+                    })
+                ->isFoundInDB('loans', 'uuid', "Sorry, you can't grant a loan that does not belong to you.",
+                    function (Builder $builder) {
+                        $builder->where('user_id', $this->user('id'));
+                        $builder->where('is_active', true);
+                    });
+
+            $validator->validate('application_id')->isUUID('Please enter a valid application ID');
+
+            if ($validator->hasError()) throw $this->baseException(
+                "The inputted data is invalid", "Loan Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+            $application = $this->db()->find('loan_applications', $input['application_id'], 'uuid');
+
+            if (!$application->isSuccessful()) throw $this->baseException(
+                "Sorry we could not find that loan application.",
+                "Loan Failed", HTTP::EXPECTATION_FAILED);
+
+            $application->setModelKey('loanApplicationModel');
+            $application = $application->getFirstWithModel();
+
+            if ($application->validate('is_active')->isNotEqual(true)) throw $this->baseException(
+                "Sorry, it seems that application has been cancelled.", "Loan Failed", HTTP::EXPECTATION_FAILED);
+
+            if ($application->validate('status')->isEqual(\model\LoanApplication::GRANTED))
+                throw $this->baseException("You already granted this loan to an applicant.", "Loan Failed", HTTP::EXPECTATION_FAILED);
+
+            $application->load('loan');
+
+            $grant = $application->update([
+                'status' => \model\LoanApplication::GRANTED,
+                'due_date' => \model\Loan::getLoanDueDate($application->loan->tenure)
+            ]);
+
+            if (!$grant?->isSuccessful()) throw $this->baseException(
+                $grant?->getQueryError() ?: "Sorry we couldn't grant that loan at this time, please let's try that again later",
+                "Loan Failed", HTTP::EXPECTATION_FAILED);
+
+            $this->refreshWallet();
+
+            $amount = Num::to_word($application->loan->amount);
+
+            if ($application->loan->loan_type == \model\Loan::LOAN_TYPE_OFFER) {
+                $message = "You have successfully given {$application->applicant->firstname} a loan of {$amount} NGN.";
+            } else {
+                $message = "You have successfully received a loan of {$amount} NGN from {$application->applicant->firstname}.";
+            }
+
+            $this->db()->findAll('loan_applications', 'loan_id', $application->getValue('loan_id'),
+                function (Builder $builder) {
+                    $builder->where('status', \model\LoanApplication::GRANTED, '!=');
+                    $builder->where('is_active', true);
+                })->getAllWithModel()?->update(['status' => \model\LoanApplication::REJECTED]);
+
+            return $this->http()->output()->json([
+                'status' => true,
+                'code' => HTTP::OK,
+                'title' => 'Loan Successful',
+                'message' => $message,
+                'response' => [
+                    'application' => $application,
+                    'balance' => $this->getBalance(),
+                    'available_balance' => $this->getAvailableBalance(),
+                ]
+            ]);
+
+        } catch (BaseException $e) {
+
+            return $this->http()->output()->json([
+                'status' => $e->getStatus(),
+                'code' => $e->getCode(),
+                'title' => $e->getTitle(),
+                'message' => $e->getMessage(),
+                'error' => (object)$validator->getErrors()
+            ], $e->getCode());
+        }
+    }
+
+    public function cancelApplication(Input $input) {
+
+        $validator = $this->validator($input);
+
+        try {
+
+            $params = Request::getUriParams();
+
+            $input['loan_id'] = $params['id'];
+            $input['application_id'] = $params['_id'];
+
+            $validator->validate('loan_id')->isUUID('Please enter a valid loan ID')
+                ->isFoundInDB('loans', 'uuid', "Sorry, it seems that loan does not exist or has already been granted to some else.",
+                    function (Builder $builder) {
+                        $builder->where('status', STATE_AWAITING);
+                        $builder->where('is_active', true);
+                    });
+
+            $validator->validate('application_id')->isUUID('Please enter a valid application ID');
+
+            if ($validator->hasError()) throw $this->baseException(
+                "The inputted data is invalid", "Loan Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+            $application = $this->db()->find('loan_applications', $input['application_id'], 'uuid');
+
+            if (!$application->isSuccessful()) throw $this->baseException(
+                "Sorry we could not find that loan application.",
+                "Loan Failed", HTTP::EXPECTATION_FAILED);
+
+            $application->setModelKey('loanApplicationModel');
+            $application = $application->getFirstWithModel();
+
+            if ($application->validate('is_active')->isNotEqual(true)) throw $this->baseException(
+                "Sorry, it seems that application has already been cancelled.", "Loan Failed", HTTP::EXPECTATION_FAILED);
+
+            if ($application->validate('user_id')->isNotEqual($this->user('id'))) throw $this->baseException(
+                "Sorry, you can't cancel an application that doesn't below to you.", "Loan Failed", HTTP::EXPECTATION_FAILED);
+
+            if ($application->validate('status')->isEqual(\model\LoanApplication::GRANTED)) throw $this->baseException(
+                "Sorry, you can't cancel an already granted application.", "Loan Failed", HTTP::EXPECTATION_FAILED);
+
+            if ($validator->hasError()) throw $this->baseException(
+                "The inputted data is invalid", "Loan Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+            $cancel = $application->update(['is_active' => false]);
+
+            if (!$cancel?->isSuccessful()) throw $this->baseException(
+                $cancel?->getQueryError() ?: "Sorry we couldn't cancel that loan application at this time, please let's try that again later",
+                "Loan Failed", HTTP::EXPECTATION_FAILED);
+
+            $this->refreshWallet();
+
+            return $this->http()->output()->json([
+                'status' => true,
+                'code' => HTTP::OK,
+                'title' => 'Loan Successful',
+                'message' => "You have successfully cancelled your application for this loan",
+                'response' => [
+                    'application' => $application,
+                    'balance' => $this->getBalance(),
+                    'available_balance' => $this->getAvailableBalance()
+                ]
+            ]);
 
         } catch (BaseException $e) {
 

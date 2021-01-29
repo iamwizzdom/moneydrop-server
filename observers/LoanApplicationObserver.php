@@ -131,7 +131,7 @@ class LoanApplicationObserver extends Observer
                 if ($newModel->getInt('status') == LoanApplication::GRANTED) {
                     $update = $newModel->loan->update(['status' => STATE_SUCCESSFUL]);
                     if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to grant loan at this time");
-                } elseif ($newModel->getInt('status') == LoanApplication::REJECTED) {
+                } elseif ($newModel->getBool('is_active') == false || $newModel->getInt('status') == LoanApplication::REJECTED) {
 
                     $trans = db()->find('transactions', $newModel->getValue('uuid'), 'gateway_reference');
                     $trans->getFirstWithModel()?->update(['status' => APPROVAL_REVERSED]);

@@ -16,8 +16,8 @@ class User extends Model
     protected string $modelKey = 'userModel';
     protected array $fillable = ['uuid', 'firstname', 'middlename', 'lastname', 'phone', 'email', 'password', 'bvn',
         'picture', 'dob', 'gender', 'address', 'country_id', 'state_id', 'status', 'is_active'];
-    protected array $appends = ['verified', 'country', 'state'];
-    protected array $casts = ['gender' => 'int', 'bvn' => 'string', 'status' => 'int'];
+    protected array $appends = ['verified', 'country', 'state', 'rating'];
+    protected array $casts = ['gender,country_id,state_id,status' => 'int', 'address,country,state,bvn' => 'string'];
 
     public function getCountry() {
         return converter()->convertCountry($this->getInt('country_id'), 'countryName');
@@ -51,5 +51,22 @@ class User extends Model
 
     public function getWallet() {
         return $this->hasOne('wallets', 'user_id');
+    }
+
+    public function getRating() {
+
+        $sum = db()->sum('ratings', 'rating')
+            ->where('user_id', $this->getInt('id'))
+            ->where('is_active', true)->exec();
+
+        $count = db()->count('ratings', 'id')
+            ->where('user_id', $this->getInt('id'))
+            ->where('is_active', true)->exec();
+
+        if (!$sum->isSuccessful() || !$count->isSuccessful()) return 0;
+
+        if (!($sum = $sum->getQueryResponse()) || !($count = $count->getQueryResponse())) return 0;
+
+        return round(($sum / $count), 1);
     }
 }

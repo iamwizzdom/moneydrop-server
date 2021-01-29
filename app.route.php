@@ -9,6 +9,8 @@ use access\Register;
 use access\Verification;
 use loan\Repayment;
 use module\home\Dashboard;
+use module\profile\Rate;
+use module\review\Review;
 use notification\Notification;
 use profile\Bank;
 use profile\Card;
@@ -94,6 +96,19 @@ Route::register()->groupApi('api/v1', function ($prefix) {
                 $entry->setUri('/transactions');
                 $entry->setModule(Transaction::class);
             },
+            function (RouteEntry $entry) {
+                $entry->allowPostRequest();
+                $entry->setMiddleware('user.auth');
+                $entry->setUri('/rate');
+                $entry->setModule(Rate::class);
+            },
+            function (RouteEntry $entry) {
+                $entry->allowGetRequest();
+                $entry->setMiddleware('user.auth');
+                $entry->setUri('/{id:uuid}/reviews');
+                $entry->setModule(Review::class);
+                $entry->setModuleMethod("viewReviews");
+            },
         ];
     });
 
@@ -128,8 +143,22 @@ Route::register()->groupApi('api/v1', function ($prefix) {
             function (RouteEntry $entry) {
                 $entry->allowPostRequest();
                 $entry->setMiddleware('user.auth');
-                $entry->setUri('/{id:uuid}/{type:alpha}/{_id:uuid}/grant');
+                $entry->setUri('/{id:uuid}/application/{_id:uuid}/grant');
                 $entry->setModule(LoanApplication::class);
+                $entry->setModuleMethod("grantApplication");
+            },
+            function (RouteEntry $entry) {
+                $entry->allowPostRequest();
+                $entry->setMiddleware('user.auth');
+                $entry->setUri('/{id:uuid}/application/{_id:uuid}/cancel');
+                $entry->setModule(LoanApplication::class);
+                $entry->setModuleMethod("cancelApplication");
+            },
+            function (RouteEntry $entry) {
+                $entry->allowPostRequest();
+                $entry->setMiddleware('user.auth');
+                $entry->setUri('/application/{id:uuid}/review');
+                $entry->setModule(Review::class);
             },
         ];
     });

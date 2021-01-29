@@ -133,7 +133,9 @@ class Repayment extends Manager implements Api
                     "Repayment History Failed", HTTP::UNAUTHORIZED);
 
             $repayments = $this->db()->select('*')->table('loan_repayments')
-                ->where('application_id', $application_id)->paginate(PAGINATION_PER_PAGE);
+                ->where('application_id', $application_id)
+                ->orderBy('desc', 'id')
+                ->paginate(PAGINATION_PER_PAGE);
 
             $repayments->setModelKey('loanRepaymentModel');
             $repayments = $repayments->getAllWithModel();

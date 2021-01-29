@@ -43,7 +43,7 @@ class History extends Manager implements Api
                 $builder->table('loans')
                     ->where('uuid', '{{la.loan_id}}')
                     ->where('user_id', $this->user('id'))
-                    ->where('loan_type', Loan::LOAN_TYPE_REQUEST)
+//                    ->where('loan_type', Loan::LOAN_TYPE_REQUEST)
                     ->where('is_active', true);
             })
             ->where('status', LoanApplication::GRANTED)

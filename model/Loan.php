@@ -16,7 +16,7 @@ class Loan extends Model
 {
     protected string $modelKey = 'loanModel';
     protected array $fillable = ['uuid', 'amount', 'tenure', 'interest', 'purpose', 'interest_type', 'note', 'loan_type', 'is_fund_raiser', 'user_id', 'status', 'is_active'];
-    protected array $appends = ['absolute_tenure', 'status_readable', 'type', 'loan_type_readable', 'interest_type_readable', 'tenure_readable', 'purpose_readable', 'transaction', 'user', 'is_mine', 'has_applied'];
+    protected array $appends = ['absolute_tenure', 'status_readable', 'type', 'loan_type_readable', 'interest_type_readable', 'tenure_readable', 'purpose_readable', 'transaction', 'user', 'is_mine', 'is_granted', 'has_applied'];
     protected array $casts = [
         'note' => 'string', 'amount' => 'double', 'loan_type' => 'int',
         'interest' => 'double', 'is_fund_raiser' => 'bool', 'loan_type_readable' => 'func::strtolower',
@@ -28,6 +28,7 @@ class Loan extends Model
     protected array $hidden = ['updated_at'];
     protected array $renames = ['created_at' => 'date'];
     public static array $applied = [];
+    public static array $granted = [];
 
     /**
      * Minimum loan amount
@@ -137,6 +138,18 @@ class Loan extends Model
             Loan::$applied[$loan_id] = $application->isSuccessful();
         }
         return Loan::$applied[$loan_id];
+    }
+
+    public function isGranted() {
+        $loan_id = $this->getValue('uuid');
+        if (!isset(Loan::$granted[$loan_id])) {
+            $application = db()->find('loan_applications', $loan_id, 'loan_id', function (Builder $builder) {
+                $builder->where('status', LoanApplication::GRANTED);
+                $builder->where('is_active', true);
+            });
+            Loan::$granted[$loan_id] = $application->isSuccessful();
+        }
+        return Loan::$granted[$loan_id];
     }
 
     public function getApprovedApplicant() {

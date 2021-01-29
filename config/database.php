@@ -9,6 +9,7 @@
 use model\Card;
 use model\LoanApplication;
 use model\LoanRepayment;
+use model\Review;
 use model\User;
 use model\Loan;
 use model\Transaction;
@@ -88,6 +89,7 @@ return [
         'cardModel' => Card::class,
         'loanApplicationModel' => LoanApplication::class,
         'loanRepaymentModel' => LoanRepayment::class,
+        'reviewModel' => Review::class,
     ],
 
     /*
