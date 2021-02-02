@@ -21,7 +21,9 @@ use que\http\output\response\Json;
 use que\http\output\response\Jsonp;
 use que\http\output\response\Plain;
 use que\http\request\Request;
+use que\support\Num;
 use que\support\Str;
+use que\utility\money\Item;
 use utility\paystack\exception\PaystackException;
 use utility\paystack\Paystack;
 
@@ -117,7 +119,7 @@ class Wallet extends Manager implements Api
                             'available_balance' => $this->getAvailableBalance(),
                             'transaction' => $transaction ?: []
                         ]
-                    ], HTTP::OK);
+                    ]);
 
                 case 'cash-out':
 
@@ -153,19 +155,19 @@ class Wallet extends Manager implements Api
 
                     $reference = null;
 
-                    $ref = $this->db()->find('transactions', $this->user('id'), 'user_id',
+                    $trans = $this->db()->find('transactions', $this->user('id'), 'user_id',
                         function (Builder $builder) use ($input) {
-                            $builder->where('amount', $input['amount']);
+                            $builder->where('amount', Num::item($input['amount'])->getCents());
                             $builder->where('recipient_code', $input['recipient']);
                             $builder->where('type', TRANSACTION_WITHDRAWAL);
                             $builder->where('status', APPROVAL_PROCESSING);
                             $builder->orderBy('desc', 'id');
                         });
 
-                    $ref->setModelKey("transactionModel");
+                    $trans->setModelKey("transactionModel");
 
-                    if ($ref->isSuccessful()) {
-                        $transaction = $ref->getFirstWithModel();
+                    if ($trans->isSuccessful()) {
+                        $transaction = $trans->getFirstWithModel();
                         $reference = $transaction->getValue('gateway_reference');
                     }
 
@@ -190,15 +192,15 @@ class Wallet extends Manager implements Api
 
                     $data = $response['data'] ?? [];
 
+                    if (($data['status'] ?? 'failed') != 'success') throw $this->baseException(
+                        $response['message'] ?? "Sorry we couldn't complete that transfer at this time, let's try it again later.",
+                        "Cash-out Failed", HTTP::EXPECTATION_FAILED);
+
                     if (!$transaction) {
                         $trans = $this->db()->find('transactions', $data['reference'], 'gateway_reference');
                         $trans->setModelKey("transactionModel");
                         if ($trans->isSuccessful()) $transaction = $trans->getFirstWithModel();
                     }
-
-                    if (($data['status'] ?? 'failed') != 'success') throw $this->baseException(
-                        $response['message'] ?? "Sorry we couldn't complete that transfer at this time, let's try it again later.",
-                        "Cash-out Failed", HTTP::EXPECTATION_FAILED);
 
                     $account = $this->db()->find('bank_accounts', $input['recipient'], 'recipient_code',
                         function (Builder $builder) {
@@ -213,6 +215,8 @@ class Wallet extends Manager implements Api
 
                     $this->refreshWallet();
 
+                    $input['amount'] = Item::cents($transaction->amount)->getFactor(true);
+
                     return $this->http()->output()->json([
                         'status' => true,
                         'code' => HTTP::OK,
@@ -224,7 +228,7 @@ class Wallet extends Manager implements Api
                             'available_balance' => $this->getAvailableBalance(),
                             'transaction' => $transaction ?: []
                         ]
-                    ], HTTP::OK);
+                    ]);
                 default:
                     throw $this->baseException(
                         "Sorry, we're not sure what you're trying to do there.", "Wallet Failed", HTTP::BAD_REQUEST);

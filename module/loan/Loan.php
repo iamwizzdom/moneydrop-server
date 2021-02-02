@@ -15,6 +15,7 @@ use que\http\output\response\Jsonp;
 use que\http\output\response\Plain;
 use que\http\request\Request;
 use que\support\Arr;
+use que\support\Num;
 use que\support\Str;
 use que\template\Pagination;
 use utility\Wallet;
@@ -65,8 +66,10 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                     if ($validator->hasError()) throw $this->baseException(
                         "The inputted data is invalid", "Loan Failed", HTTP::UNPROCESSABLE_ENTITY);
 
-                    $check = $this->db()->check('loans', function (Builder $builder) use ($type) {
-                        $builder->where('amount', \input('amount'));
+                    $amount = Num::item(\input('amount'))->getCents();
+
+                    $check = $this->db()->check('loans', function (Builder $builder) use ($type, $amount) {
+                        $builder->where('amount', $amount);
                         $builder->where('tenure', \input('tenure'));
                         $builder->where('interest', \input('interest'));
                         $builder->where('interest_type', \input('interest_type'));
@@ -78,15 +81,18 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                     if ($check->isSuccessful()) throw $this->baseException(
                         "You already {$type}ed that exact loan and it's still pending.", "Loan Failed", HTTP::CONFLICT);
 
+                    $data = $validator->getValidated();
+                    $data['amount'] = $amount;
+
                     $loan = $this->db()->insert('loans', array_merge([
                         'uuid' => Str::uuidv4(),
                         'user_id' => user('id'),
                         'status' => STATE_AWAITING,
                         'loan_type' => $type == "offer" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST
-                    ], $validator->getValidated()));
+                    ], $data));
 
                     if (!$loan->isSuccessful()) throw $this->baseException(
-                        "Failed to {$type} loan at this time, please try again later.",
+                        $loan->getQueryError() ?: "Failed to {$type} loan at this time, please try again later.",
                         "Loan Failed", HTTP::EXPECTATION_FAILED);
 
                     $loan->setModelKey("loanModel");

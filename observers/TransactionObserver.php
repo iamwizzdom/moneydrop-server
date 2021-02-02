@@ -4,13 +4,16 @@
 namespace observers;
 
 
+use model\Notification;
 use model\Transaction;
 use Exception;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
 use que\database\observer\Observer;
 use que\database\observer\ObserverSignal;
+use que\support\Num;
 use que\support\Str;
+use que\utility\money\Item;
 use utility\Wallet;
 use utility\wallet\WalletBag;
 
@@ -64,9 +67,15 @@ class TransactionObserver extends Observer
                 case TRANSACTION_TOP_UP:
                     try {
 
-                        if ($wallet->creditWallet(($model->getFloat('amount') - $model->getFloat('fee'))) === false) {
+                        if ($wallet->creditWallet($amount = ($model->getFloat('amount') - $model->getFloat('fee'))) === false) {
                             throw new Exception("Unable to credit wallet at this time.");
                         }
+
+                        $amount = Item::cents($amount)->getFactor(true);
+
+                        Notification::create("Top-up Transaction",
+                            "Your wallet has been credited {$amount} NGN",
+                            "transactionReceipt", $model->user_id, $model);
 
                     } catch (Exception $e) {
                         $this->getSignal()->discontinueOperation($e->getMessage());
@@ -75,9 +84,15 @@ class TransactionObserver extends Observer
                 case TRANSACTION_CHARGE:
                     try {
 
-                        if ($wallet->debitWallet(($model->getFloat('amount') + $model->getFloat('fee'))) === false) {
+                        if ($wallet->debitWallet($amount = ($model->getFloat('amount') + $model->getFloat('fee'))) === false) {
                             throw new Exception("Unable to debit wallet at this time.");
                         }
+
+                        $amount = Item::cents($amount)->getFactor(true);
+
+                        Notification::create("Charge Transaction",
+                            "Your wallet has been charged {$amount} NGN",
+                            "transactionReceipt", $model->user_id, $model);
 
                     } catch (Exception $e) {
                         $this->getSignal()->undoOperation($e->getMessage());
@@ -98,9 +113,15 @@ class TransactionObserver extends Observer
                     db()->transStart();
                     try {
 
-                        if ($wallet->debitWallet(($model->getFloat('amount') + $model->getFloat('fee'))) === false) {
+                        if ($wallet->debitWallet($amount = ($model->getFloat('amount') + $model->getFloat('fee'))) === false) {
                             throw new Exception("Unable to debit wallet at this time.");
                         }
+
+                        $amount = Item::cents($amount)->getFactor(true);
+
+                        Notification::create("Transfer Transaction",
+                            "Your wallet was debited {$amount} NGN",
+                            "transactionReceipt", $model->user_id, $model);
 
                         if (!$model instanceof Transaction) $model = Transaction::cast($model);
 
@@ -141,9 +162,15 @@ class TransactionObserver extends Observer
 
                 try {
 
-                    if ($wallet->lockFund(($model->getFloat('amount') + $model->getFloat('fee'))) === false) {
+                    if ($wallet->lockFund($amount = ($model->getFloat('amount') + $model->getFloat('fee'))) === false) {
                         throw new Exception("Unable to lock wallet fund at this time.");
                     }
+
+                    $amount = Item::cents($amount)->getFactor(true);
+
+                    Notification::create("Charge Transaction",
+                        "Your wallet has been charged {$amount} NGN",
+                        "transactionReceipt", $model->user_id, $model);
 
                 } catch (Exception $e) {
                     $this->getSignal()->undoOperation($e->getMessage());
@@ -226,17 +253,33 @@ class TransactionObserver extends Observer
                 $i = $oldModel->getInt('type');
                 if ($i == TRANSACTION_TRANSFER || $i == TRANSACTION_CHARGE) {
                     try {
-                        if ($wallet->unlockFund(($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
+
+                        if ($wallet->unlockFund($amount = ($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
                             throw new Exception("Unable to credit wallet at this time.");
                         }
+
+                        $amount = Item::cents($amount)->getFactor(true);
+
+                        Notification::create("Transaction Reversal",
+                            "The charge of {$amount} NGN on your wallet has been reversed",
+                            "transactionReceipt", $newModel->user_id, $newModel);
+
                     } catch (Exception $e) {
                         $this->getSignal()->undoOperation($e->getMessage());
                     }
                 } elseif ($i == TRANSACTION_TOP_UP) {
                     try {
-                        if ($wallet->debitWallet(($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
+
+                        if ($wallet->debitWallet($amount = ($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
                             throw new Exception("Unable to debit wallet at this time.");
                         }
+
+                        $amount = Item::cents($amount)->getFactor(true);
+
+                        Notification::create("Top-up Reversal",
+                            "The credit of {$amount} NGN on your wallet has been reversed",
+                            "transactionReceipt", $newModel->user_id, $newModel);
+
                     } catch (Exception $e) {
                         $this->getSignal()->undoOperation($e->getMessage());
                     }
@@ -261,9 +304,15 @@ class TransactionObserver extends Observer
                         case APPROVAL_PROCESSING:
                             try {
 
-                                if ($wallet->lockFund(($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
+                                if ($wallet->lockFund($amount = ($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
                                     throw new Exception("Unable to lock wallet fund at this time.");
                                 }
+
+                                $amount = Item::cents($amount)->getFactor(true);
+
+                                Notification::create("Charge Transaction",
+                                    "Your wallet was charged {$amount} NGN",
+                                    "transactionReceipt", $newModel->user_id, $newModel);
 
                             } catch (Exception $e) {
                                 $this->getSignal()->undoOperation($e->getMessage());
@@ -274,9 +323,15 @@ class TransactionObserver extends Observer
                             if ($newModel->getInt('type') == TRANSACTION_CHARGE) {
                                 try {
 
-                                    if ($wallet->debitWallet(($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
+                                    if ($wallet->debitWallet($amount = ($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
                                         throw new Exception("Unable to debit wallet at this time.");
                                     }
+
+                                    $amount = Item::cents($amount)->getFactor(true);
+
+                                    Notification::create("Charge Transaction",
+                                        "Your wallet was debited {$amount} NGN",
+                                        "transactionReceipt", $newModel->user_id, $newModel);
 
                                 } catch (Exception $e) {
                                     $this->getSignal()->undoOperation($e->getMessage());
@@ -292,9 +347,17 @@ class TransactionObserver extends Observer
 
                 } elseif ($newModel->getInt('type') == TRANSACTION_TOP_UP) {
                     try {
-                        if ($wallet->creditWallet(($oldModel->getFloat('amount') - $oldModel->getFloat('fee'))) === false) {
+
+                        if ($wallet->creditWallet($amount = ($oldModel->getFloat('amount') - $oldModel->getFloat('fee'))) === false) {
                             throw new Exception("Unable to credit wallet at this time.");
                         }
+
+                        $amount = Item::cents($amount)->getFactor(true);
+
+                        Notification::create("Top-up Transaction",
+                            "Your wallet was credited {$amount} NGN",
+                            "transactionReceipt", $newModel->user_id, $newModel);
+
                     } catch (Exception $e) {
                         $this->getSignal()->undoOperation($e->getMessage());
                     }
@@ -317,9 +380,15 @@ class TransactionObserver extends Observer
                     db()->transStart();
                     try {
 
-                        if ($wallet->debitLockedFund(($newModel->getFloat('amount') + $newModel->getFloat('fee'))) === false) {
+                        if ($wallet->debitLockedFund($amount = ($newModel->getFloat('amount') + $newModel->getFloat('fee'))) === false) {
                             throw new Exception("Unable to debit wallet at this time.");
                         }
+
+                        $amount = Item::cents($amount)->getFactor(true);
+
+                        Notification::create("Transfer Transaction",
+                            "Your wallet was debited {$amount} NGN",
+                            "transactionReceipt", $newModel->user_id, $newModel);
 
                         if ($newModel->getInt('type') == TRANSACTION_TRANSFER) {
 
@@ -352,9 +421,17 @@ class TransactionObserver extends Observer
 
                 } elseif ($newModel->getInt('type') == TRANSACTION_TOP_UP) {
                     try {
-                        if ($wallet->creditWallet(($newModel->getFloat('amount') - $newModel->getFloat('fee'))) === false) {
+
+                        if ($wallet->creditWallet($amount = ($newModel->getFloat('amount') - $newModel->getFloat('fee'))) === false) {
                             throw new Exception("Unable to credit wallet at this time.");
                         }
+
+                        $amount = Item::cents($amount)->getFactor(true);
+
+                        Notification::create("Top-up Transaction",
+                            "Your wallet was credited {$amount} NGN",
+                            "transactionReceipt", $newModel->user_id, $newModel);
+
                     } catch (Exception $e) {
                         $this->getSignal()->undoOperation($e->getMessage());
                     }
@@ -375,9 +452,15 @@ class TransactionObserver extends Observer
 
                     try {
 
-                        if ($wallet->lockFund(($newModel->getFloat('amount') + $newModel->getFloat('fee'))) === false) {
+                        if ($wallet->lockFund($amount = ($newModel->getFloat('amount') + $newModel->getFloat('fee'))) === false) {
                             throw new Exception("Unable to lock wallet fund at this time.");
                         }
+
+                        $amount = Item::cents($amount)->getFactor(true);
+
+                        Notification::create("Charge Transaction",
+                            "Your wallet was charged {$amount} NGN",
+                            "transactionReceipt", $newModel->user_id, $newModel);
 
                     } catch (Exception $e) {
                         $this->getSignal()->undoOperation($e->getMessage());

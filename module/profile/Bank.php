@@ -43,6 +43,16 @@ class Bank extends Manager implements Api
             switch ($type) {
                 case "add-account":
 
+
+                    $bank_accounts = $this->db()->count('bank_accounts', 'id')
+                        ->where('user_id', $this->user('id'))
+                        ->where('is_active', true)->exec();
+
+                    if ($bank_accounts->getQueryResponse() > 4) {
+                        throw $this->baseException("Sorry, you can't have more than 4 bank accounts.",
+                            "Bank Failed", HTTP::EXPECTATION_FAILED);
+                    }
+
                     $validator->validate('account_number')->isNumeric("Account number should be numeric")
                         ->hasMinLength(6, "Account number should be at least %s digits")
                         ->hasMaxLength(17, "Account number should not be more than %s digits")
@@ -155,7 +165,9 @@ class Bank extends Manager implements Api
                         "Bank Failed", HTTP::EXPECTATION_FAILED
                     );
 
-                    $account = Arr::extract_by_keys($add->getFirstArray(), ['uuid', 'account_name', 'account_number', 'bank_name', 'recipient_code']);
+                    $account = $add->getFirstArray();
+
+                    $account = Arr::extract_by_keys($account, ['uuid', 'account_name', 'account_number', 'bank_name', 'recipient_code']);
 
                     $account['account_number'] = hide_number($account['account_number'], 0, strlen($account['account_number']) - 4);
 

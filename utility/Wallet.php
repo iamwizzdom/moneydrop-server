@@ -11,7 +11,9 @@ namespace utility;
 
 use Exception;
 use que\database\interfaces\model\Model;
+use que\support\Num;
 use que\support\Str;
+use que\utility\money\Item;
 
 trait Wallet
 {
@@ -61,7 +63,8 @@ trait Wallet
     public function getBalance(): float
     {
         return $this->wallet && $this->wallet->validate(
-            'is_active')->isEqual(true) ? $this->wallet->getFloat('balance') : 0.0;
+            'is_active')->isEqual(true) ? Item::cents(
+            $this->wallet->getFloat('balance') ?: 0)->getFactor() : 0.0;
     }
 
     /**
@@ -70,7 +73,8 @@ trait Wallet
     public function getAvailableBalance(): float
     {
         return $this->wallet  && $this->wallet->validate(
-            'is_active')->isEqual(true) ? $this->wallet->getFloat('available_balance') : 0.0;
+            'is_active')->isEqual(true) ? Item::cents(
+                $this->wallet->getFloat('available_balance') ?: 0)->getFactor() : 0.0;
     }
 
     /**
@@ -80,8 +84,8 @@ trait Wallet
      */
     public function creditWallet(float $amount): float|bool
     {
-        $balance = ($this->getBalance() + $amount);
-        $availableBalance = ($this->getAvailableBalance() + $amount);
+        $balance = ((float) Num::item($this->getBalance())->getCents() + $amount);
+        $availableBalance = ((float) Num::item($this->getAvailableBalance())->getCents() + $amount);
         if ($this->updateBothBalance($balance, $availableBalance, true)) return $availableBalance;
         return false;
     }
@@ -93,8 +97,8 @@ trait Wallet
      */
     public function debitWallet(float $amount): float|bool
     {
-        $balance = $this->getBalance();
-        $availableBalance = $this->getAvailableBalance();
+        $balance = (float) Num::item($this->getBalance())->getCents();
+        $availableBalance = (float) Num::item($this->getAvailableBalance())->getCents();
         if ($amount > $availableBalance) throw new Exception("Insufficient fund");
         if ($this->updateBothBalance(($balance - $amount), $bal = ($availableBalance - $amount))) return $bal;
         return false;
@@ -107,7 +111,7 @@ trait Wallet
      */
     public function lockFund(float $amount): float|bool
     {
-        $availableBalance = $this->getAvailableBalance();
+        $availableBalance = Num::item($this->getAvailableBalance())->getCents();
         if ($amount > $availableBalance) throw new Exception("Insufficient fund");
         $availableBalance = ($availableBalance - $amount);
         if ($this->updateAvailableBalance($availableBalance, true)) return $availableBalance;
@@ -121,8 +125,8 @@ trait Wallet
      */
     public function unlockFund(float $amount): float|bool
     {
-        $availableBalance = $this->getAvailableBalance();
-        $balance = $this->getBalance();
+        $availableBalance = (float) Num::item($this->getAvailableBalance())->getCents();
+        $balance = (float) Num::item($this->getBalance())->getCents();
         if ($amount > $balance) throw new Exception("Insufficient fund");
         $balance = ($balance - $amount);
         $availableBalance = ($availableBalance + $amount);
@@ -137,8 +141,8 @@ trait Wallet
      */
     public function debitLockedFund(float $amount): float|bool
     {
-        $balance = $this->getBalance();
-        $lockedFund = ($balance - $this->getAvailableBalance());
+        $balance = (float) Num::item($this->getBalance())->getCents();
+        $lockedFund = ($balance - (float) Num::item($this->getAvailableBalance())->getCents());
         if ($amount > $lockedFund) throw new Exception("Insufficient fund");
         if ($this->updateBalance($balance = ($balance - $amount))) return $balance;
         return false;

@@ -42,7 +42,7 @@ class LoanObserver extends Observer
                 'narration' => "Loan offer charge transaction"
             ]);
 
-            if (!$trans->isSuccessful()) $this->getSignal()->undoOperation("Unable to transact at this time");
+            if (!$trans->isSuccessful()) $this->getSignal()->undoOperation($trans->getQueryError() ?: "Unable to transact at this time");
         }
     }
 

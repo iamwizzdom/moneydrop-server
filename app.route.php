@@ -63,7 +63,7 @@ Route::register()->groupApi('api/v1', function ($prefix) {
             function (RouteEntry $entry) {
                 $entry->allowPostRequest();
                 $entry->setMiddleware('user.auth');
-                $entry->setUri('/profile/update/{type:alpha}');
+                $entry->setUri('/profile/update/{type:alpha|/^[a-zA-Z0-9_]+$/}');
                 $entry->setModule(Update::class);
             },
             function (RouteEntry $entry) {

@@ -68,6 +68,8 @@ class Register extends Manager implements Api
             $validator->validate('state_id', true)->isNumber("Please select a valid state")
                 ->isFoundInDB('states', 'id', "That state does not exist on this platform");
 
+            $validator->validate('pn_token')->isNotEmpty("Please enter a valid token");
+
             if ($validator->hasError()) throw $this->baseException(
                 "The inputted data is invalid", "Registration Failed", HTTP::UNPROCESSABLE_ENTITY, false);
 

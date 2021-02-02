@@ -6,13 +6,16 @@ namespace observers;
 
 use model\LoanApplication;
 use model\Loan;
+use model\Notification;
 use que\common\exception\QueException;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
 use que\database\observer\Observer;
 use que\mail\Mail;
 use que\mail\Mailer;
+use que\support\Num;
 use que\support\Str;
+use que\utility\money\Item;
 
 class LoanApplicationObserver extends Observer
 {
@@ -56,6 +59,12 @@ class LoanApplicationObserver extends Observer
                 }
             }
 
+            $amount = Item::cents($model->loan->amount)->getFactor(true);
+
+            Notification::create("Loan Application",
+                "One {$model->applicant->firstname} {$model->applicant->lastname} has applied for you loan {$model->loan->type} of {$amount} NGN",
+                "loanApplicant", $model->loan->user->id, $model->loan, $model->applicant->picture);
+
             $mailer = Mailer::getInstance();
 
             $mail = new Mail('loan-application');
@@ -66,7 +75,7 @@ class LoanApplicationObserver extends Observer
                 'title' => 'Loan Application',
                 'name' => $name,
                 'type' => $model->loan->type,
-                'amount' => "NGN {$model->loan->amount}",
+                'amount' => $amount,
                 'applicant' => "{$model->applicant->firstname} {$model->applicant->lastname}",
                 'app_name' => config('template.app.header.name')
             ]);
@@ -131,16 +140,34 @@ class LoanApplicationObserver extends Observer
                 if ($newModel->getInt('status') == LoanApplication::GRANTED) {
                     $update = $newModel->loan->update(['status' => STATE_SUCCESSFUL]);
                     if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to grant loan at this time");
+                    else {
+                        $newModel->loan->load('user');
+                        Notification::create("Granted Loan",
+                            "Your application for {$newModel->loan->user->firstname}'s loan request has been granted",
+                            "loanApplicationDetails", $newModel->applicant->id, $newModel);
+                    }
                 } elseif ($newModel->getBool('is_active') == false || $newModel->getInt('status') == LoanApplication::REJECTED) {
 
                     $trans = db()->find('transactions', $newModel->getValue('uuid'), 'gateway_reference');
                     $trans->getFirstWithModel()?->update(['status' => APPROVAL_REVERSED]);
+
+                    $newModel->loan->load('user');
+                    Notification::create("Reject Loan Application",
+                        "Your application for {$newModel->loan->user->firstname}'s loan request has been rejected",
+                        "loanApplicationDetails", $newModel->applicant->id, $newModel);
                 }
 
             } elseif ($newModel->loan->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
                 if ($newModel->getInt('status') == LoanApplication::GRANTED) {
                     $update = $newModel->loan->update(['status' => STATE_SUCCESSFUL]);
                     if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to grant loan at this time");
+                    else {
+
+                        $newModel->loan->load('user');
+                        Notification::create("Granted Loan",
+                            "Your application for {$newModel->loan->user->firstname}'s loan offer has been granted",
+                            "loanApplicationDetails", $newModel->applicant->id, $newModel);
+                    }
                 }
             }
         });

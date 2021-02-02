@@ -54,6 +54,14 @@ class Repayment extends Manager implements Api
             if ($application->is_repaid) throw $this->baseException(
                 "Your repayment for this loan is already complete", "Repayment Failed", HTTP::NOT_ACCEPTABLE);
 
+            if ($application->loan->loan_type == \model\Loan::LOAN_TYPE_OFFER && $application->loan->user_id == $this->user('id') ||
+                $application->loan->loan_type == \model\Loan::LOAN_TYPE_REQUEST && $application->user_id == $this->user('id'))
+                throw $this->baseException("Sorry, you can't pay yourself", "Repayment Failed", HTTP::NOT_ACCEPTABLE);
+
+            if ($application->loan->loan_type == \model\Loan::LOAN_TYPE_OFFER && $application->user_id != $this->user('id') ||
+                $application->loan->loan_type == \model\Loan::LOAN_TYPE_REQUEST && $application->loan->user_id != $this->user('id'))
+                throw $this->baseException("Sorry, you can't pay for a loan you did not receive.", "Repayment Failed", HTTP::NOT_ACCEPTABLE);
+
             $amountUnpaid = $application->amount_payable - $application->repaid_amount;
 
             $validator->validate('amount')->isFloatingNumber("Please enter a valid amount")
@@ -66,7 +74,7 @@ class Repayment extends Manager implements Api
             $repay = $this->db()->insert('loan_repayments', [
                 'uuid' => Str::uuidv4(),
                 'application_id' => $input['application_id'],
-                'amount' => $input['amount'],
+                'amount' => Num::item($input['amount'])->getCents(),
                 'user_id' => $this->user('id')
             ]);
 

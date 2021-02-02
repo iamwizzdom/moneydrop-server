@@ -21,6 +21,7 @@ use que\support\Config;
 use que\support\Num;
 use que\support\Str;
 use que\template\Pagination;
+use que\utility\money\Item;
 use utility\Wallet;
 
 class LoanApplication extends Manager implements Api
@@ -51,41 +52,44 @@ class LoanApplication extends Manager implements Api
                             function (Builder $builder) {
                                 $builder->where('user_id', $this->user('id'));
                                 $builder->where('is_active', true);
+                            })->isNotFoundInDB('loan_applications', 'loan_id', 'This loan is already granted to an applicant',
+                            function (Builder $builder) {
+                                $builder->where('status', \model\LoanApplication::GRANTED);
+                                $builder->where('is_active', true);
                             });
 
                     $loan = $this->db()->find('loans', $input['loan_id'], 'uuid')->getFirstWithModel();
 
-                    if ($loan->getBool('is_active')) {
-                        $loanValidator->isNotFoundInDB('loan_applications', 'loan_id', 'This loan is already granted to an applicant',
-                            function (Builder $builder) {
-                                $builder->where('status', APPROVAL_SUCCESSFUL);
-                            });
-                    }
+//                    if ($loan->getBool('is_active')) {
+//                        $loanValidator->isNotFoundInDB('loan_applications', 'loan_id', 'This loan is already granted to an applicant',
+//                            function (Builder $builder) {
+//                                $builder->where('status', \model\LoanApplication::GRANTED);
+//                                $builder->where('is_active', true);
+//                            });
+//                    }
 
-                    $availableRaise = null;
+//                    $availableRaise = null;
 
-                    if ($loan->getBool('is_active') && $loan->getBool('is_funder_raiser')) {
+//                    if ($loan->getBool('is_active') && $loan->getBool('is_funder_raiser')) {
+//
+//                        $applications = $this->db()->findAll('loan_applications', $input['loan_id'], 'uuid', function (Builder $builder) {
+//                            $builder->where('is_active', true);
+//                        })->getAllWithModel();
+//
+//                        $raised = $applications->sumColumn('amount');
+//
+//                        if ($loan->validate('amount')->isFloatingNumberGreaterThanOrEqual($raised)) {
+//                            $loanValidator->getValidator()->addError('loan_id', "Sorry, this loan has already reached the maximum amount to be raised");
+//                        } else $availableRaise = $loan->getFloat('amount') - $raised;
+//                    }
 
-                        $applications = $this->db()->findAll('loan_applications', $input['loan_id'], 'uuid', function (Builder $builder) {
-                            $builder->where('is_active', true);
-                        })->getAllWithModel();
-
-                        $raised = $applications->sum(function (Model $model) {
-                            return $model->getFloat('amount');
-                        });
-
-                        if ($loan->validate('amount')->isFloatingNumberGreaterThanOrEqual($raised)) {
-                            $loanValidator->getValidator()->addError('loan_id', "Sorry, this loan has already reached the maximum amount to be raised");
-                        } else $availableRaise = $loan->getFloat('amount') - $raised;
-                    }
-
-                    $amountValidator = $validator->validate('amount')->isFloatingNumber('Please enter a valid amount')
+                    $validator->validate('amount')->isFloatingNumber('Please enter a valid amount')
                         ->isFloatingNumberGreaterThanOrEqual(\model\Loan::MIN_LOAN_AMOUNT, "Sorry, you must apply with at least %s NGN.")
-                        ->isFloatingNumberLessThanOrEqual($loan->getFloat('amount'), "Sorry, you can't apply with an amount greater than the loan amount");
+                        ->isFloatingNumberLessThanOrEqual(Item::cents($loan->getFloat('amount'))->getFactor(), "Sorry, you can't apply with an amount greater than the loan amount");
 
-                    if ($availableRaise != null) {
-                        $amountValidator->isFloatingNumberLessThanOrEqual($availableRaise, "Sorry, you're raising more than what's left to be raised for this loan");
-                    }
+//                    if ($availableRaise != null) {
+//                        $amountValidator->isFloatingNumberLessThanOrEqual($availableRaise, "Sorry, you're raising more than what's left to be raised for this loan");
+//                    }
 
                     $validator->validate('note', true)->isNotEmpty('Please enter a valid note')
                         ->hasMinWord(10, "Please write something meaningful of at least %s words.");
@@ -96,7 +100,7 @@ class LoanApplication extends Manager implements Api
                     $application = $this->db()->insert('loan_applications', [
                         'uuid' => Str::uuidv4(),
                         'note' => $input['note'],
-                        'amount' => (float)$input['amount'],
+                        'amount' => Num::item($input['amount'])->getCents(),
                         'loan_id' => $input['loan_id'],
                         'user_id' => $this->user('id')
                     ]);
@@ -234,7 +238,8 @@ class LoanApplication extends Manager implements Api
 
             $this->refreshWallet();
 
-            $amount = Num::to_word($application->loan->amount);
+            $amount = Item::cents($application->loan->amount)->getFactor();
+            $amount = Num::to_word($amount);
 
             if ($application->loan->loan_type == \model\Loan::LOAN_TYPE_OFFER) {
                 $message = "You have successfully given {$application->applicant->firstname} a loan of {$amount} NGN.";

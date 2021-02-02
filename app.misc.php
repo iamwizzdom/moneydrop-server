@@ -17,6 +17,7 @@ const PAYSTACK_RESOLVE_CARD_URL = 'https://api.paystack.co/decision/bin';
 const PAYSTACK_TRANSFER_RECIPIENT_URL = 'https://api.paystack.co/transferrecipient';
 const PAYSTACK_TRANSFER_URL = 'https://api.paystack.co/transfer';
 
-const PAYSTACK_KEY = 'sk_test_8d5f40d2aaca8d452582e98771f19cbd508d6483';
+const PAYSTACK_API_KEY = 'sk_test_8d5f40d2aaca8d452582e98771f19cbd508d6483';
+const FIREBASE_API_KEY = 'AAAAkp1mBRM:APA91bHbiFw512qrXqjnQ-tKzX_snEL9aK2sGycg6NWQEbJrNza73_lGkfVFnqmou6Uy-I6jV_TKnwtZ2wm8xIdmunl8aLxKNdIVOMydS6ZhLGjLwzdTSPI1UfWZM3eoJh5EuXfqsQia';
 
 const PAGINATION_PER_PAGE = 30;

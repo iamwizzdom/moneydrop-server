@@ -23,6 +23,7 @@ use que\http\request\Request;
 use que\support\Arr;
 use que\support\Str;
 use que\utility\hash\Hash;
+use que\utility\money\Item;
 use utility\paystack\exception\PaystackException;
 use utility\paystack\Paystack;
 
@@ -92,7 +93,7 @@ class Card extends Manager implements Api
                                 'title' => 'Log Successful',
                                 'message' => "Transaction reference logged successfully",
                                 'response' => []
-                            ], HTTP::OK);
+                            ]);
 
                         case 'verify':
 
@@ -130,20 +131,38 @@ class Card extends Manager implements Api
                                 'type' => TRANSACTION_TOP_UP,
                                 'direction' => "b2w",
                                 'gateway_reference' => $data['reference'],
-                                'amount' => $data['amount'] / 100,
+                                'amount' => $data['amount'],
                                 'currency' => $data['currency'],
                                 'status' => APPROVAL_SUCCESSFUL,
                                 'narration' => "Card add top-up transaction"
                             ]);
 
-                            if (!$authorization['reusable']) return $this->http()->output()->json([
-                                'status' => true,
-                                'code' => HTTP::OK,
-                                'title' => 'Verification Successful',
-                                'message' => "Sorry, this card is not reusable, you may want to try another card instead. " .
-                                    "However, we have topped up your wallet with {$data['amount']} {$data['currency']} which was debited from the card.",
-                                'response' => []
-                            ], HTTP::OK);
+                            if (!$trans->isSuccessful()) {
+
+                                throw $this->baseException(
+                                    "Sorry, we couldn't add this card at this time because top up on your wallet failed.",
+                                    "Verification Failed", HTTP::EXPECTATION_FAILED);
+                            }
+
+                            $amount = Item::cents($data['amount'])->getFactor(true);
+
+                            if (!$authorization['reusable']) {
+
+                                throw $this->baseException("Sorry, this card is not reusable, you may want to try another card instead. " .
+                                    "However, we have topped up your wallet with {$amount} {$data['currency']} which was debited from the card being added.",
+                                    "Verification Failed", HTTP::EXPECTATION_FAILED);
+
+                            }
+
+                            $cards = $this->db()->count('cards', 'id')
+                                ->where('user_id', $this->user('id'))
+                                ->where('is_active', true)->exec();
+
+                            if ($cards->getQueryResponse() > 4) {
+                                throw $this->baseException("Sorry, you can't have more than 4 cards. However, your wallet has been " .
+                                    "topped up with {$amount} {$data['currency']} which was debited from the card being added.",
+                                    "Verification Failed", HTTP::EXPECTATION_FAILED);
+                            }
 
                             $card = db()->insert('cards', [
                                 'uuid' => Str::uuidv4(),
@@ -155,14 +174,11 @@ class Card extends Manager implements Api
                             ]);
 
                             if (!$card->isSuccessful()) {
-                                return $this->http()->output()->json([
-                                    'status' => true,
-                                    'code' => HTTP::OK,
-                                    'title' => 'Verification Successful',
-                                    'message' => "Sorry, we couldn't add this card at this time, please let's try this again later. " .
-                                        "However, we have topped up your wallet with {$data['amount']} {$data['currency']} which was debited from the card.",
-                                    'response' => []
-                                ], HTTP::OK);
+
+                                throw $this->baseException(
+                                    "Sorry, we couldn't add this card at this time, please let's try this again later. " .
+                                    "However, we have topped up your wallet with {$data['amount']} {$data['currency']} which was debited from the card.",
+                                    "Verification Failed", HTTP::EXPECTATION_FAILED);
                             }
 
                             $trans->getFirstWithModel()?->update(['card_id' => $card->getFirstWithModel()->getValue('uuid')]);
@@ -196,7 +212,7 @@ class Card extends Manager implements Api
                             'title' => 'Card Successful',
                             'message' => !empty($cards) ? "Cards retrieved successfully." : "No Card found.",
                             'response' => $this->getAllMyCards() ?: []
-                        ], HTTP::OK);
+                        ]);
                     }
 
                     $card = $this->db()->find('cards', $this->user('id'), 'user_id',
@@ -221,7 +237,7 @@ class Card extends Manager implements Api
                         'title' => 'Card Successful',
                         'message' => "Card retrieved successfully.",
                         'response' => $card->getFirstWithModel()
-                    ], HTTP::OK);
+                    ]);
 
                 case 'remove':
 

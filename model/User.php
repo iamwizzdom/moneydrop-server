@@ -14,10 +14,12 @@ use que\database\model\Model;
 class User extends Model
 {
     protected string $modelKey = 'userModel';
+    protected array $hidden = ['password', 'pn_token'];
     protected array $fillable = ['uuid', 'firstname', 'middlename', 'lastname', 'phone', 'email', 'password', 'bvn',
         'picture', 'dob', 'gender', 'address', 'country_id', 'state_id', 'status', 'is_active'];
     protected array $appends = ['verified', 'country', 'state', 'rating'];
-    protected array $casts = ['gender,country_id,state_id,status' => 'int', 'address,country,state,bvn' => 'string'];
+    protected array $casts = ['gender,country_id,state_id,status' => 'int',
+        'address,country,state,bvn,pn_token,picture' => 'string', 'is_active' => 'bool'];
 
     public function getCountry() {
         return converter()->convertCountry($this->getInt('country_id'), 'countryName');

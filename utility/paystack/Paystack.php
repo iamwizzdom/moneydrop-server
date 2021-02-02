@@ -6,6 +6,7 @@ namespace utility\paystack;
 
 use que\http\curl\CurlRequest;
 use que\http\curl\CurlResponse;
+use que\support\Num;
 use que\support\Str;
 use que\utility\random\UUID;
 use utility\Card;
@@ -29,18 +30,20 @@ trait Paystack
 
         if ($amount <= 0) throw new PaystackException("Please set a valid amount to pay.");
 
+        $amount = Num::item($amount)->getCents();
+
         $curl = CurlRequest::getInstance();
 
         $curl->setUrl(PAYSTACK_INIT_TRANS_URL);
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_KEY,
+            'Authorization: Bearer ' . PAYSTACK_API_KEY,
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
 
         $post = [
             'email' => user('email'),
-            'amount' => ($amount * 100),
+            'amount' => $amount,
             'currency' => $currency
         ];
 
@@ -92,7 +95,7 @@ trait Paystack
 
         $curl->setUrl(PAYSTACK_VERIFY_INIT_TRANS_URL . "/{$reference}");
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_KEY,
+            'Authorization: Bearer ' . PAYSTACK_API_KEY,
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -115,11 +118,13 @@ trait Paystack
 
         if ($amount <= 0) throw new PaystackException("Please set a valid amount to pay.");
 
+        $amount = Num::item($amount)->getCents();
+
         $curl = CurlRequest::getInstance();
 
         $curl->setUrl(PAYSTACK_CHARGE_CARD_URL);
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_KEY,
+            'Authorization: Bearer ' . PAYSTACK_API_KEY,
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -130,7 +135,7 @@ trait Paystack
 
         $post = [
             'email' => user('email'),
-            'amount' => ($amount * 100),
+            'amount' => $amount,
             'currency' => $currency,
             'authorization_code' => $authCode
         ];
@@ -143,7 +148,8 @@ trait Paystack
 
         if ($response->isSuccessful()) {
 
-            $data = $response->getResponseArray()['data'] ?? [];
+            $res = $response->getResponseArray();
+            $data = $res['data'] ?? [];
 
             if (!empty($data)) {
 
@@ -168,11 +174,13 @@ trait Paystack
 
                 if ($trans->isSuccessful() && $verify->isSuccessful()) {
 
-                    $data = $verify->getResponseArray()['data'] ?? [];
-
-                    $trans->getFirstWithModel()?->update([
-                        'status' => ($data['status'] ?? 'failed') == 'success' ? APPROVAL_SUCCESSFUL : APPROVAL_FAILED
-                    ]);
+                    $veri = $verify->getResponseArray();
+                    $data = $veri['data'] ?? [];
+                    $success = (($data['status'] ?? 'failed') == 'success');
+                    $fields = ['status' => $success ? APPROVAL_SUCCESSFUL : APPROVAL_FAILED];
+                    if (!$success) $fields['narration'] = $veri['message'];
+                    $trans->getFirstWithModel()?->update($fields);
+                    if (!$success) throw new PaystackException($veri['message']);
                 }
             }
         }
@@ -193,7 +201,7 @@ trait Paystack
 
         $curl->setUrl(PAYSTACK_RESOLVE_BVN_URL . "/{$bvn}");
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_KEY,
+            'Authorization: Bearer ' . PAYSTACK_API_KEY,
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -236,7 +244,7 @@ trait Paystack
         $curl->setUrl(PAYSTACK_MATCH_BVN_URL);
         $curl->setPosts($post);
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_KEY,
+            'Authorization: Bearer ' . PAYSTACK_API_KEY,
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -265,7 +273,7 @@ trait Paystack
         $curl->setUrl(PAYSTACK_RESOLVE_ACCOUNT_URL . "?{$query}");
 
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_KEY,
+            'Authorization: Bearer ' . PAYSTACK_API_KEY,
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -287,7 +295,7 @@ trait Paystack
 
         $curl->setUrl(PAYSTACK_RESOLVE_CARD_URL . "/{$cardBin}");
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_KEY,
+            'Authorization: Bearer ' . PAYSTACK_API_KEY,
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -321,7 +329,7 @@ trait Paystack
             'currency' => $currency
         ]);
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_KEY,
+            'Authorization: Bearer ' . PAYSTACK_API_KEY,
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -347,6 +355,8 @@ trait Paystack
         if (empty($recipient)) throw new PaystackException("Please set a valid recipient.");
         if (empty($reference) || !UUID::is_valid($reference)) throw new PaystackException("Please set a valid reference.");
 
+        $amount = Num::item($amount)->getCents();
+
         $curl = CurlRequest::getInstance();
 
         $curl->setUrl(PAYSTACK_TRANSFER_URL);
@@ -360,7 +370,7 @@ trait Paystack
         if ($reason) $post['reason'] = $reason;
         $curl->setPosts($post);
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_KEY,
+            'Authorization: Bearer ' . PAYSTACK_API_KEY,
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -369,7 +379,8 @@ trait Paystack
 
         if ($response->isSuccessful()) {
 
-            $data = $response->getResponseArray()['data'] ?? [];
+            $res = $response->getResponseArray();
+            $data = $res['data'] ?? [];
 
             if (!empty($data)) {
 
@@ -384,7 +395,7 @@ trait Paystack
                     'amount' => $amount,
                     'currency' => $currency,
                     'status' => APPROVAL_PENDING,
-                    'narration' => 'Wallet cash-out transaction'
+                    'narration' => 'wallet cash-out transaction'
                 ];
 
                 if ($reason) $trans['narration'] = $reason;
@@ -393,9 +404,11 @@ trait Paystack
 
                 if ($trans->isSuccessful()) {
 
-                    $trans->getFirstWithModel()?->update([
-                        'status' => ($data['status'] ?? 'failed') == 'success' ? APPROVAL_PROCESSING : APPROVAL_FAILED
-                    ]);
+                    $success = (($data['status'] ?? 'failed') == 'success');
+                    $fields = ['status' => $success ? APPROVAL_SUCCESSFUL : APPROVAL_FAILED];
+                    if (!$success) $fields['narration'] = $res['message'];
+                    $trans->getFirstWithModel()?->update($fields);
+                    if (!$success) throw new PaystackException($res['message']);
                 }
             }
         }

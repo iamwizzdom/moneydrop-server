@@ -6,6 +6,7 @@ namespace observers;
 
 use model\Loan;
 use model\LoanRepayment;
+use model\Notification;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
 use que\database\observer\Observer;
@@ -60,6 +61,12 @@ class LoanRepaymentObserver extends Observer
             ]);
 
             if (!$trans->isSuccessful()) $this->getSignal()->undoOperation($trans->getQueryError() ?: "Sorry we couldn't transact repayment at this time. Let's try it again later.");
+            else {
+
+                Notification::create("Loan Repayment",
+                    "{$model->payer->firstname} has made a repayment of {$model->amount} NGN on your loan",
+                    "loanRepaymentTransaction", $model->application->loan->user->id, $model->application, $model->payer->picture);
+            }
 
         } elseif ($model->application->loan->loan_type == Loan::LOAN_TYPE_REQUEST) {
 
@@ -79,6 +86,12 @@ class LoanRepaymentObserver extends Observer
             ]);
 
             if (!$trans->isSuccessful()) $this->getSignal()->undoOperation($trans->getQueryError() ?: "Sorry we couldn't transact repayment at this time. Let's try it again later.");
+            else {
+
+                Notification::create("Loan Repayment",
+                    "{$model->payer->firstname} has made a repayment of {$model->amount} NGN on your loan",
+                    "loanRepaymentTransaction", $model->application->applicant->id, $model->application, $model->payer->picture);
+            }
 
         }
     }

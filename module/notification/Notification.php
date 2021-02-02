@@ -9,6 +9,7 @@ use que\http\output\response\Html;
 use que\http\output\response\Json;
 use que\http\output\response\Jsonp;
 use que\http\output\response\Plain;
+use que\template\Pagination;
 
 class Notification extends \que\common\manager\Manager implements \que\common\structure\Api
 {
@@ -19,40 +20,23 @@ class Notification extends \que\common\manager\Manager implements \que\common\st
     public function process(Input $input)
     {
         // TODO: Implement process() method.
+        $notifications = $this->db()->select('*')->table('notifications')
+            ->where('user_id', $this->user('id'))->orderBy('desc', 'id')
+            ->paginate(PAGINATION_PER_PAGE);
+
+        $notifications->setModelKey('notificationModel');
+
+        $pagination = Pagination::getInstance();
+
         return [
             'pagination' => [
-                'page' => 1,
-                'totalRecords' => 1,
-                'totalPages' => 1,
-                'nextPage' => '#',
-                'previousPage' => '#'
+                'page' => $pagination->getPaginator("default")->getPage(),
+                'totalRecords' => $pagination->getTotalRecords("default"),
+                'totalPages' => $pagination->getTotalPages("default"),
+                'nextPage' => $pagination->getNextPage("default", true),
+                'previousPage' => $pagination->getPreviousPage("default", true)
             ],
-            'notifications' => [
-                [
-                    'id' => 1,
-                    'uuid' => '4cfb8a36-05fa-4912-b4f0-a833e3e119e4',
-                    'notice' => "Welcome to moneydrop. Money is now made easy to access.",
-                    'date_time' => date(DATE_FORMAT_MYSQL)
-                ],
-                [
-                    'id' => 2,
-                    'uuid' => '4cfb8a36-05fa-4912-b4f0-a833e3e119e4',
-                    'notice' => "Welcome to moneydrop. Money is now made easy to access.",
-                    'date_time' => date(DATE_FORMAT_MYSQL)
-                ],
-                [
-                    'id' => 3,
-                    'uuid' => '4cfb8a36-05fa-4912-b4f0-a833e3e119e4',
-                    'notice' => "Welcome to moneydrop. Money is now made easy to access.",
-                    'date_time' => date(DATE_FORMAT_MYSQL)
-                ],
-                [
-                    'id' => 4,
-                    'uuid' => '4cfb8a36-05fa-4912-b4f0-a833e3e119e4',
-                    'notice' => "Welcome to moneydrop. Money is now made easy to access.",
-                    'date_time' => date(DATE_FORMAT_MYSQL)
-                ],
-            ]
+            'notifications' => $notifications->getAllWithModel() ?: []
         ];
     }
 }

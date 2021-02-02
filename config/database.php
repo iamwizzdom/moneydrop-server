@@ -9,6 +9,7 @@
 use model\Card;
 use model\LoanApplication;
 use model\LoanRepayment;
+use model\Notification;
 use model\Review;
 use model\User;
 use model\Loan;
@@ -17,6 +18,7 @@ use model\Wallet;
 use observers\LoanApplicationObserver;
 use observers\LoanObserver;
 use observers\LoanRepaymentObserver;
+use observers\NotificationObserver;
 use observers\TransactionObserver;
 use observers\UserObserver;
 use observers\WalletObserver;
@@ -90,6 +92,7 @@ return [
         'loanApplicationModel' => LoanApplication::class,
         'loanRepaymentModel' => LoanRepayment::class,
         'reviewModel' => Review::class,
+        'notificationModel' => Notification::class
     ],
 
     /*
@@ -108,6 +111,7 @@ return [
         'loans' => LoanObserver::class,
         'loan_applications' => LoanApplicationObserver::class,
         'loan_repayments' => LoanRepaymentObserver::class,
+        'notifications' => NotificationObserver::class,
     ],
 
     /*

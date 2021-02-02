@@ -11,7 +11,9 @@ use que\database\model\ModelCollection;
 use que\database\observer\Observer;
 use que\mail\Mail;
 use que\mail\Mailer;
+use que\support\Num;
 use que\user\XUser;
+use que\utility\money\Item;
 
 class WalletObserver extends Observer
 {
@@ -105,18 +107,20 @@ class WalletObserver extends Observer
 
             try {
 
-                $isCredit = $model->validate('available_balance')
-                    ->isFloatingNumberGreaterThan($oldModel->getFloat('available_balance'));
+                $balance = $model->getFloat('available_balance');
+                $oldBalance = $oldModel->getFloat('available_balance');
 
-                if ($isCredit) {
-                    $amount = $model->getFloat('available_balance') - $oldModel->getFloat('available_balance');
-                } else {
-                    $amount = $oldModel->getFloat('available_balance') - $model->getFloat('available_balance');
+                if (($isCredit = ($balance > $oldBalance))) $amount = ($balance - $oldBalance);
+                else {
+                    $amount = ($oldBalance - $balance);
                     if ($amount == 0) {
                         $c_amount = $oldModel->getFloat('balance') - $model->getFloat('balance');
                         if ($c_amount > 0) $amount = $c_amount;
                     }
                 }
+
+                $amount = Item::cents($amount)->getFactor(true);
+                $balance = Item::cents($balance)->getFactor(true);
 
                 $mailer = Mailer::getInstance();
 
@@ -129,8 +133,8 @@ class WalletObserver extends Observer
                     'title' => "Wallet " . ($isCredit ? "Credited" : "Debited"),
                     'name' => $name,
                     'action' => ($isCredit ? "credited" : "debited"),
-                    'amount' => number_format($amount, 2),
-                    'balance' => number_format($model->getFloat('available_balance'), 2),
+                    'amount' => $amount,
+                    'balance' => $balance,
                     'currency' => 'NGN',
                     'app_name' => config('template.app.header.name')
                 ]);

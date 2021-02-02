@@ -66,7 +66,7 @@ class Update extends Manager implements Api
                         'response' => [
                             'user' => $this->user()->getUserArray()
                         ]
-                    ], HTTP::OK);
+                    ]);
 
                 case 'name':
 
@@ -94,7 +94,7 @@ class Update extends Manager implements Api
                         'response' => [
                             'user' => $this->user()->getUserArray()
                         ]
-                    ], HTTP::OK);
+                    ]);
 
                 case 'phone':
 
@@ -119,7 +119,7 @@ class Update extends Manager implements Api
                         'response' => [
                             'user' => $this->user()->getUserArray()
                         ]
-                    ], HTTP::OK);
+                    ]);
 
                 case 'email':
 
@@ -146,7 +146,7 @@ class Update extends Manager implements Api
                         'response' => [
                             'user' => $this->user()->getUserArray()
                         ]
-                    ], HTTP::OK);
+                    ]);
 
                 case 'dob':
 
@@ -177,7 +177,7 @@ class Update extends Manager implements Api
                         'response' => [
                             'user' => $this->user()->getUserArray()
                         ]
-                    ], HTTP::OK);
+                    ]);
 
                 case 'bvn':
 
@@ -242,7 +242,7 @@ class Update extends Manager implements Api
                         'response' => [
                             'user' => $this->user()->getUserArray()
                         ]
-                    ], HTTP::OK);
+                    ]);
 
                 case 'password':
 
@@ -269,7 +269,26 @@ class Update extends Manager implements Api
                         'response' => [
                             'user' => $this->user()->getUserArray()
                         ]
-                    ], HTTP::OK);
+                    ]);
+
+                case 'pn_token':
+
+                    $validator->validate('pn_token')->isNotEmpty("Please enter a valid token");
+
+                    if ($validator->hasError()) throw $this->baseException(
+                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+                    if (!$this->user()->update(['pn_token' => $validator->getValue('pn_token')]))
+                        throw $this->baseException("Failed to update token at this time, please try again later.",
+                        "Update Failed", HTTP::EXPECTATION_FAILED);
+
+                    return $this->http()->output()->json([
+                        'status' => true,
+                        'code' => HTTP::OK,
+                        'title' => 'Update Successful',
+                        'message' => "Token saved successfully.",
+                        'response' => []
+                    ]);
 
                 default:
                     throw $this->baseException(
