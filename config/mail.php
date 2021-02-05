@@ -23,8 +23,8 @@ return [
     'smtp' => [
         'host' => 'email-smtp.us-east-1.amazonaws.com',
         'port' => '465',
-        'username' => 'AKIAJ2XY3LGDMBDCRVEA',
-        'password' => 'AjJWW2dmDNb6tnbamvDPfWN4+XY2HoWJK66txBM6yZFN',
+        'username' => '',
+        'password' => '',
         'transport' => 'ssl',
         'timeout' => 120,
         'debug' => '',
