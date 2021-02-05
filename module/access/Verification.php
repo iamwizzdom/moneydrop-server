@@ -12,6 +12,7 @@ use que\common\structure\Api;
 use que\database\interfaces\Builder;
 use que\http\HTTP;
 use que\http\input\Input;
+use que\utility\hash\Hash;
 
 class Verification extends Manager implements Api
 {
@@ -68,7 +69,7 @@ class Verification extends Manager implements Api
 
                             $insert = $this->db()->insert('verifications', [
                                 'data' => $validator->getValue('email'),
-                                'code' => $otp,
+                                'code' => Hash::sha($otp),
                                 'type' => self::VERIFICATION_TYPE_EMAIL,
                                 'expiration' => date('Y-m-d H:i:s', APP_TIME + TIMEOUT_TEN_MIN),
                                 'is_verified' => false,
@@ -126,7 +127,7 @@ class Verification extends Manager implements Api
                             $validator->validate('email')->isEmail("Please enter a valid email address")->toLower()
                                 ->isFoundInDB('verifications', 'data', "That email has not requested for verification yet.");
 
-                            $condition = $validator->validate('code')->isNumber('Please enter a valid verification code')
+                            $condition = $validator->validate('code')->isNumber('Please enter a valid verification code')->hash()
                                 ->isFoundInDB('verifications', 'code', "That verification code does not exist");
 
                             if ($validator->hasError()) throw $this->baseException(
