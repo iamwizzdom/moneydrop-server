@@ -118,7 +118,7 @@ class Verification extends Manager implements Api
                                 'message' => "Verify your email with the OTP we sent to {$validator->getValue('email')}",
                                 'expire' => strtotime($model->getValue('expiration')) - APP_TIME,
                                 'email' => $model->getValue('data')
-                            ], HTTP::OK);
+                            ]);
 
                             break;
                         case self::VERIFICATION_ACTION_VERIFY:

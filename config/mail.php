@@ -17,14 +17,14 @@ return [
     |
     */
     'address' => [
-        'reply' => 'obinnawisdom95@gmail.com',
-        'default' => 'obinnawisdom95@gmail.com'
+        'reply' => '',
+        'default' => ''
     ],
     'smtp' => [
         'host' => 'smtp.gmail.com',
         'port' => '465',
-        'username' => 'wisdomemenike70@gmail.com',
-        'password' => 'Godzpower@123',
+        'username' => '',
+        'password' => '',
         'transport' => 'ssl',
         'timeout' => 100,
         'debug' => '',
