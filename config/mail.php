@@ -17,14 +17,14 @@ return [
     |
     */
     'address' => [
-        'reply' => '',
-        'default' => ''
+        'reply' => 'moneydrop@helmscode.com.ng',
+        'default' => 'moneydrop@helmscode.com.ng'
     ],
     'smtp' => [
-        'host' => 'smtp.gmail.com',
+        'host' => 'email-smtp.us-east-1.amazonaws.com',
         'port' => '465',
-        'username' => '',
-        'password' => '',
+        'username' => 'AKIAJ2XY3LGDMBDCRVEA',
+        'password' => 'AjJWW2dmDNb6tnbamvDPfWN4+XY2HoWJK66txBM6yZFN',
         'transport' => 'ssl',
         'timeout' => 120,
         'debug' => '',
