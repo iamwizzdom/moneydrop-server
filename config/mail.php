@@ -26,7 +26,7 @@ return [
         'username' => '',
         'password' => '',
         'transport' => 'ssl',
-        'timeout' => 100,
+        'timeout' => 120,
         'debug' => '',
         'options' => [
 
