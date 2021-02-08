@@ -91,6 +91,7 @@ class Verification extends Manager implements Api
                                     'title' => 'Email Confirmation',
                                     'otp' => $otp,
                                     'year' => APP_YEAR,
+                                    'logo' => base_url(config('template.app.header.logo.small.origin')),
                                     'expire' => get_date('h:i a M jS, Y', $insert->getFirstWithModel()->getValue('expiration'))
                                 ]);
                                 $mail->setHtmlPath('email/html/otp.tpl');
