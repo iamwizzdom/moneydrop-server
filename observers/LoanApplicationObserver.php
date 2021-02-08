@@ -77,7 +77,9 @@ class LoanApplicationObserver extends Observer
                 'type' => $model->loan->type,
                 'amount' => $amount,
                 'applicant' => "{$model->applicant->firstname} {$model->applicant->lastname}",
-                'app_name' => config('template.app.header.name')
+                'app_name' => config('template.app.header.name'),
+                'year' => APP_YEAR,
+                'logo' => base_url(config('template.app.header.logo.small.origin')),
             ]);
             $mail->setHtmlPath('email/html/loan-application.tpl');
             $mail->setBodyPath('email/text/loan-application.txt');

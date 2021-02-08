@@ -90,6 +90,7 @@ class Verification extends Manager implements Api
                                 $mail->setData([
                                     'title' => 'Email Confirmation',
                                     'otp' => $otp,
+                                    'year' => APP_YEAR,
                                     'expire' => get_date('h:i a M jS, Y', $insert->getFirstWithModel()->getValue('expiration'))
                                 ]);
                                 $mail->setHtmlPath('email/html/otp.tpl');
@@ -183,6 +184,8 @@ class Verification extends Manager implements Api
                                     'type' => $verify->getValue('type'),
                                     'data' => $verify->getValue('data'),
                                     'app_name' => $app_name,
+                                    'year' => APP_YEAR,
+                                    'logo' => base_url(config('template.app.header.logo.small.origin')),
                                 ]);
                                 $mail->setHtmlPath('email/html/verified.tpl');
                                 $mail->setBodyPath('email/text/verified.txt');

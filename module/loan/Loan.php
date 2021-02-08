@@ -114,6 +114,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
 
                     $loans = $this->db()->select("*")->table('loans')
                         ->where('status', STATE_SUCCESSFUL, '!=')
+                        ->where('status', STATE_REVOKED, '!=')
                         ->where('is_active', true)
                         ->where('loan_type', $type == "offers" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST)
                         ->orderBy('desc', 'id')->paginate(PAGINATION_PER_PAGE);
@@ -169,6 +170,66 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
                 'error' => (object)$validator->getErrors()
+            ], $e->getCode());
+        }
+    }
+
+    public function revoke(Input $input) {
+
+        try {
+
+            $input['loan_id'] = Request::getUriParam('id');
+
+            $validator = $input->validate('loan_id');
+
+            if (!$validator->isUUID()) throw $this->baseException(
+                "Please enter a valid loan ID", "Revoke Failed", HTTP::EXPECTATION_FAILED);
+
+            if (!$validator->isFoundInDB('loans', 'uuid')) throw $this->baseException(
+                "Sorry, that loan ID does not exist", "Revoke Failed", HTTP::EXPECTATION_FAILED);
+
+            $loan = $this->db()->find('loans', $input['loan_id'], 'uuid');
+            $loan->setModelKey('loanModel');
+            $loan = $loan->getFirstWithModel();
+
+            if ($loan?->getInt('status') == STATE_REVOKED)
+                throw $this->baseException("This loan has already been revoked.", "Revoke Failed", HTTP::UNAUTHORIZED);
+
+            if (!$loan?->getBool('is_active'))
+                throw $this->baseException("Sorry, you can't revoke an inactive loan.", "Revoke Failed", HTTP::UNAUTHORIZED);
+
+            if ($loan?->getInt('user_id') != $this->user('id'))
+                throw $this->baseException("Sorry, you can't revoke a loan that's not yours.", "Revoke Failed", HTTP::UNAUTHORIZED);
+
+            if ($loan?->getInt('status') == STATE_SUCCESSFUL || $loan?->getBool('is_granted') == true)
+                throw $this->baseException("Sorry, you can't revoke a loan that's been granted. {$loan['id']}", "Revoke Failed", HTTP::UNAUTHORIZED);
+
+            $revoke = $loan?->update(['status' => STATE_REVOKED]);
+
+            if (!$revoke?->isSuccessful()) throw $this->baseException(
+                "Failed to revoke this loan at this time. Let's that again later", "Revoke Failed", HTTP::EXPECTATION_FAILED);
+
+
+            return $this->http()->output()->json([
+                'status' => true,
+                'code' => HTTP::OK,
+                'title' => 'Revoke Successful',
+                'message' => "Loan revoked successfully.",
+                'response' => [
+                    'loan' => $loan,
+                    'balance' => $this->getBalance(),
+                    'available_balance' => $this->getAvailableBalance()
+                ]
+            ]);
+
+        } catch (BaseException $e) {
+
+            return $this->http()->output()->json([
+                'status' => $e->getStatus(),
+                'code' => $e->getCode(),
+                'title' => $e->getTitle(),
+                'message' => $e->getMessage(),
+                'error' => (object) []
             ], $e->getCode());
         }
     }

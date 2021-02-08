@@ -151,6 +151,14 @@ Route::register()->groupApi('api/v1', function ($prefix) {
                 $entry->setModule(\loan\Loan::class);
             },
             function (RouteEntry $entry) {
+                $entry->allowPostRequest();
+                $entry->forbidCSRF(false);
+                $entry->setMiddleware('user.auth');
+                $entry->setUri('/{id:uuid}/revoke');
+                $entry->setModuleMethod('revoke');
+                $entry->setModule(\loan\Loan::class);
+            },
+            function (RouteEntry $entry) {
                 $entry->allowPostRequest()->allowGetRequest();
                 $entry->forbidCSRF(false);
                 $entry->setMiddleware('user.auth');

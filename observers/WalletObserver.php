@@ -44,7 +44,9 @@ class WalletObserver extends Observer
             $mail->setData([
                 'title' => 'Wallet Created',
                 'name' => $name,
-                'app_name' => config('template.app.header.name')
+                'year' => APP_YEAR,
+                'app_name' => config('template.app.header.name'),
+                'logo' => base_url(config('template.app.header.logo.small.origin')),
             ]);
             $mail->setHtmlPath('email/html/wallet-created.tpl');
             $mail->setBodyPath('email/text/wallet-created.txt');
@@ -136,6 +138,8 @@ class WalletObserver extends Observer
                     'amount' => $amount,
                     'balance' => $balance,
                     'currency' => 'NGN',
+                    'year' => APP_YEAR,
+                    'logo' => base_url(config('template.app.header.logo.small.origin')),
                     'app_name' => config('template.app.header.name')
                 ]);
                 $mail->setHtmlPath('email/html/wallet-updated.tpl');

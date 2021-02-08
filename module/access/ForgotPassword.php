@@ -77,6 +77,8 @@ class ForgotPassword extends Manager implements Api
                 $mail->setData([
                     'title' => 'Forgot Password',
                     'otp' => $code,
+                    'year' => APP_YEAR,
+                    'logo' => base_url(config('template.app.header.logo.small.origin')),
                     'expire' => date("h:i a M jS, Y", (APP_TIME + TIMEOUT_TEN_MIN))
                 ]);
                 $mail->setHtmlPath('email/html/forgot-password-otp.tpl');

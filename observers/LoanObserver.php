@@ -88,6 +88,17 @@ class LoanObserver extends Observer
 
             if (!$newModel instanceof Loan) $newModel = Loan::cast($newModel);
 
+            $oldModel = $oldModels->find(function (Model $m) use ($newModel) {
+                return $newModel->validate('id')->isEqual($m->getValue('id'));
+            });
+
+            if (($newModel->getInt('status') != STATE_SUCCESSFUL || !$newModel->getBool('is_active')) &&
+                $oldModel->getInt('status') == STATE_SUCCESSFUL) {
+
+                $this->getSignal()->undoOperation("You can't invalidate an already successful/granted loan.");
+                return;
+            }
+
             if ($newModel->getInt('status') == STATE_SUCCESSFUL) {
 
                 $application = db()->find('loan_applications', $newModel->getValue('uuid'), 'loan_id', function (Builder $builder) {
@@ -110,12 +121,12 @@ class LoanObserver extends Observer
 
                         if ($transModel->getFloat('amount') == $newModel->amount) {
 
-                            $status = $transModel->update(['type' => TRANSACTION_TRANSFER,
+                            $update = $transModel->update(['type' => TRANSACTION_TRANSFER,
                                 'from_wallet_id' => $application->loan->user->wallet->id,
                                 'to_wallet_id' => $application->applicant->wallet->id,
                                 'status' => APPROVAL_SUCCESSFUL]);
 
-                            if (!$status?->isSuccessful()) $this->getSignal()->undoOperation($status?->getQueryError() ?: "Unable to transact at this time");
+                            if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to transact at this time");
 
                         } else {
                             $this->getSignal()->undoOperation("The amount found for the transaction on this loan does not match the loan amount.");
@@ -136,12 +147,12 @@ class LoanObserver extends Observer
 
                         if ($transModel->getFloat('amount') == $newModel->amount) {
 
-                            $status = $transModel->update(['type' => TRANSACTION_TRANSFER,
+                            $update = $transModel->update(['type' => TRANSACTION_TRANSFER,
                                 'from_wallet_id' => $application->applicant->wallet->id,
                                 'to_wallet_id' => $application->loan->user->wallet->id,
                                 'status' => APPROVAL_SUCCESSFUL]);
 
-                            if (!$status?->isSuccessful()) $this->getSignal()->undoOperation($status?->getQueryError() ?: "Unable to transact at this time");
+                            if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to transact at this time");
 
                         } else {
                             $this->getSignal()->undoOperation("The amount found for the transaction on this loan application does not match the loan amount.");
@@ -152,6 +163,44 @@ class LoanObserver extends Observer
                     }
 
                 }
+            } elseif ($newModel->getInt('status') == STATE_REVOKED) {
+
+                if ($newModel->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
+
+                    $trans = db()->find('transactions', $newModel->getValue('uuid'), 'gateway_reference');
+
+                    if ($trans->isSuccessful()) {
+
+                        $transModel = $trans->getFirstWithModel();
+
+                        $update = $transModel->update(['status' => APPROVAL_REVERSED]);
+
+                        if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to transact at this time");
+
+                    } else {
+                        $this->getSignal()->undoOperation("No transaction was found for this loan.");
+                    }
+
+
+                } elseif ($newModel->getInt('loan_type') == Loan::LOAN_TYPE_REQUEST) {
+
+                    $application = db()->find('loan_applications', $newModel->getValue('uuid'), 'loan_id',
+                        function (Builder $builder) {
+                        $builder->where('is_active', true);
+                    });
+
+                    if ($application->isSuccessful()) {
+
+                        $applications = $application->getAllWithModel();
+
+                        $update = $applications->update(['status' => LoanApplication::REJECTED]);
+
+                        if (!$update) $this->getSignal()->undoOperation("Unable to transact at this time");
+
+                    }
+
+                }
+
             }
         });
 

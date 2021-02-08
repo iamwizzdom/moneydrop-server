@@ -45,7 +45,9 @@ class UserObserver extends Observer
             $mail->setData([
                 'title' => 'Successful Registration',
                 'name' => $name,
-                'app_name' => config('template.app.header.name')
+                'app_name' => config('template.app.header.name'),
+                'year' => APP_YEAR,
+                'logo' => base_url(config('template.app.header.logo.small.origin')),
             ]);
             $mail->setHtmlPath('email/html/successful-registration-notice.tpl');
             $mail->setBodyPath('email/text/successful-registration-notice.txt');
@@ -117,7 +119,9 @@ class UserObserver extends Observer
                     $mail->setData([
                         'title' => 'Password Reset',
                         'name' => $name,
-                        'app_name' => config('template.app.header.name')
+                        'app_name' => config('template.app.header.name'),
+                        'year' => APP_YEAR,
+                        'logo' => base_url(config('template.app.header.logo.small.origin')),
                     ]);
                     $mail->setHtmlPath('email/html/reset-password.tpl');
                     $mail->setBodyPath('email/text/reset-password.txt');

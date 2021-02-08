@@ -28,7 +28,7 @@ return [
                 'small' => [
                     'white' => '',
                     'dark' => '',
-                    'origin' => ''
+                    'origin' => 'storage/system/logo.png'
                 ],
                 'large' => [
                     'white' => '',

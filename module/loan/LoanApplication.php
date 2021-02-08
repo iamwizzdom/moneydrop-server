@@ -43,7 +43,7 @@ class LoanApplication extends Manager implements Api
 
                     $input['loan_id'] = Request::getUriParam('id');
 
-                    $loanValidator = $validator->validate('loan_id')->isUUID('Please enter a valid loan ID')
+                    $validator->validate('loan_id')->isUUID('Please enter a valid loan ID')
                         ->isFoundInDB('loans', 'uuid', "Sorry, either that loan does not exist or it's not eligible for applications yet.",
                             function (Builder $builder) {
                                 $builder->where('status', STATE_AWAITING);
@@ -57,6 +57,9 @@ class LoanApplication extends Manager implements Api
                                 $builder->where('status', \model\LoanApplication::GRANTED);
                                 $builder->where('is_active', true);
                             });
+
+                    if ($validator->hasError()) throw $this->baseException(
+                        "The inputted data is invalid", "Loan Failed", HTTP::UNPROCESSABLE_ENTITY);
 
                     $loan = $this->db()->find('loans', $input['loan_id'], 'uuid')->getFirstWithModel();
 
@@ -182,7 +185,8 @@ class LoanApplication extends Manager implements Api
         }
     }
 
-    public function grantApplication(Input $input) {
+    public function grantApplication(Input $input)
+    {
 
         $validator = $this->validator($input);
 
@@ -202,8 +206,7 @@ class LoanApplication extends Manager implements Api
                 ->isFoundInDB('loans', 'uuid', "Sorry, you can't grant a loan that does not belong to you.",
                     function (Builder $builder) {
                         $builder->where('user_id', $this->user('id'));
-                        $builder->where('is_active', true);
-                    });
+                });
 
             $validator->validate('application_id')->isUUID('Please enter a valid application ID');
 
@@ -213,8 +216,7 @@ class LoanApplication extends Manager implements Api
             $application = $this->db()->find('loan_applications', $input['application_id'], 'uuid');
 
             if (!$application->isSuccessful()) throw $this->baseException(
-                "Sorry we could not find that loan application.",
-                "Loan Failed", HTTP::EXPECTATION_FAILED);
+                "Sorry we could not find that loan application.", "Loan Failed", HTTP::EXPECTATION_FAILED);
 
             $application->setModelKey('loanApplicationModel');
             $application = $application->getFirstWithModel();
@@ -222,8 +224,8 @@ class LoanApplication extends Manager implements Api
             if ($application->validate('is_active')->isNotEqual(true)) throw $this->baseException(
                 "Sorry, it seems that application has been cancelled.", "Loan Failed", HTTP::EXPECTATION_FAILED);
 
-            if ($application->validate('status')->isEqual(\model\LoanApplication::GRANTED))
-                throw $this->baseException("You already granted this loan to an applicant.", "Loan Failed", HTTP::EXPECTATION_FAILED);
+            if ($application->has_granted) throw $this->baseException(
+                "You already granted this loan to an applicant.", "Loan Failed", HTTP::EXPECTATION_FAILED);
 
             $application->load('loan');
 
@@ -277,7 +279,8 @@ class LoanApplication extends Manager implements Api
         }
     }
 
-    public function cancelApplication(Input $input) {
+    public function cancelApplication(Input $input)
+    {
 
         $validator = $this->validator($input);
 
