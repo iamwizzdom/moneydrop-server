@@ -35,7 +35,10 @@ class Verification extends Manager implements Api
                     switch ($input['route.params.action']) {
                         case self::VERIFICATION_ACTION_REQUEST:
 
-                            $condition = $validator->validate('email')->isEmail("Please enter a valid email address")->toLower();
+                            $condition = $validator->validate('email')
+                                ->isEmail("Please enter a valid email address")
+                                ->isUniqueInDB('users', 'email', "That email is already taken.")
+                                ->toLower();
 
                             if ($validator->hasError()) throw $this->baseException(
                                 "The inputted data is invalid", "Verification failed", HTTP::UNPROCESSABLE_ENTITY);
