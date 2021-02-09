@@ -238,10 +238,10 @@
                     <div class="col-sm-5">
                         <div class="app_images pr-4 p-3">
                             <a href="{$header.app_links.android.url}" class="col1">
-                                <img src="{base_url($header.app_links.android.icon)}" alt="Play store" >
+                                <img src="{base_url($header.app_links.android.icon)}" class="img-fluid" alt="Play store" >
                             </a>
                             <a href="{$header.app_links.ios.url}" class="col2">
-                                <img src="{base_url($header.app_links.ios.icon)}" alt="App store" >
+                                <img src="{base_url($header.app_links.ios.icon)}" class="img-fluid" alt="App store" >
                             </a>
                         </div>
                     </div>
