@@ -193,22 +193,23 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
             $loan = $loan->getFirstWithModel();
 
             if ($loan?->getInt('status') == STATE_REVOKED)
-                throw $this->baseException("This loan has already been revoked.", "Revoke Failed", HTTP::UNAUTHORIZED);
+                throw $this->baseException("This loan has already been revoked.", "Revoke Failed", HTTP::CONFLICT);
 
             if (!$loan?->getBool('is_active'))
-                throw $this->baseException("Sorry, you can't revoke an inactive loan.", "Revoke Failed", HTTP::UNAUTHORIZED);
+                throw $this->baseException("Sorry, you can't revoke an inactive loan.", "Revoke Failed", HTTP::FORBIDDEN);
 
             if ($loan?->getInt('user_id') != $this->user('id'))
                 throw $this->baseException("Sorry, you can't revoke a loan that's not yours.", "Revoke Failed", HTTP::UNAUTHORIZED);
 
             if ($loan?->getInt('status') == STATE_SUCCESSFUL || $loan?->getBool('is_granted') == true)
-                throw $this->baseException("Sorry, you can't revoke a loan that's been granted. {$loan['id']}", "Revoke Failed", HTTP::UNAUTHORIZED);
+                throw $this->baseException("Sorry, you can't revoke a loan that's been granted.", "Revoke Failed", HTTP::NOT_ACCEPTABLE);
 
             $revoke = $loan?->update(['status' => STATE_REVOKED]);
 
             if (!$revoke?->isSuccessful()) throw $this->baseException(
                 "Failed to revoke this loan at this time. Let's that again later", "Revoke Failed", HTTP::EXPECTATION_FAILED);
 
+            $this->refreshWallet();
 
             return $this->http()->output()->json([
                 'status' => true,

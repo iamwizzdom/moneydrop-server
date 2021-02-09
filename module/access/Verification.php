@@ -102,13 +102,11 @@ class Verification extends Manager implements Api
 
                                 $mailer->addMail($mail);
                                 $mailer->prepare('verify');
-                                if (!$mailer->dispatch('verify'))
-                                    throw new QueException($mailer->getError('verify'));
+                                if (!$mailer->dispatch('verify')) throw new QueException($mailer->getError('verify'));
 
                             } catch (QueException $e) {
                                 $this->db()->transRollBack();
-                                throw $this->baseException($e->getMessage(),
-                                    "Verification failed", HTTP::EXPECTATION_FAILED, false);
+                                throw $this->baseException($e->getMessage(), "Verification failed", HTTP::EXPECTATION_FAILED, false);
                             }
 
                             $this->db()->transComplete();
