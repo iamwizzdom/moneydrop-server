@@ -36,7 +36,7 @@
             padding: 0px !important;
             position: relative;
         }
-        footer.footer {
+        div.footer {
             background: #e04805;
             margin: 22px auto !important;
             min-height: 200px;
@@ -51,68 +51,68 @@
             margin: auto;
             width: 60%;
         }
-        footer.footer ul li {
+        div.footer ul li {
             display: inline-block !important;
         }
-        footer.footer ul li a {
+        div.footer ul li a {
             color: #fff !important;
         }
-        footer.footer ul.footer_link {
+        div.footer ul.footer_link {
             padding: 12px;
             margin: 1em auto;
         }
-        footer.footer ul.footer_link li {
+        div.footer ul.footer_link li {
             padding: 9px;
         }
-        footer.footer ul.social_icns {
+        div.footer ul.social_icns {
             padding: 12px;
             margin: 1em auto;
         }
-        footer.footer ul.social_icns li {
+        div.footer ul.social_icns li {
             /*text-align: right !important;*/
             padding: 15px;
         }
-        footer.footer ul.icons_app {
+        div.footer ul.icons_app {
             padding: 12px;
             margin: auto;
             width: 100% !important;
         }
-        footer.footer ul.icons_app li {
+        div.footer ul.icons_app li {
             /*text-align: right !important;*/
             padding: 6px;
             display: inline-block !important;
         }
-        footer.footer ul.icons_app li a img {
+        div.footer ul.icons_app li a img {
             width: 40%;
             display: inline-block !important;
         }
-        footer.footer .text-center {
+        div.footer .text-center {
             color: #fff !important;
             font-weight: 600;
             margin: 2em auto;
         }
-        footer.footer .app_images {
+        div.footer .app_images {
             width: 100%;
             margin: 1.5em auto;
             padding:  !important;
             position: relative;
         }
 
-        footer.footer .app_images .col1 {
+        div.footer .app_images .col1 {
             width: 45%;
             float: right;
         }
 
-        footer.footer .app_images .col2 {
+        div.footer .app_images .col2 {
             width: 45%;
             float: right;
         }
 
-        footer.footer .app_images .col1 img {
+        div.footer .app_images .col1 img {
             width: 90%;
             float: left;
         }
-        footer.footer .app_images .col2 img {
+        div.footer .app_images .col2 img {
             width: 90%; float: right;
         }
 
@@ -159,26 +159,26 @@
                 margin: auto !important;
                 width: 85% !important;
             }
-            footer.footer .app_images .col1 {
+            div.footer .app_images .col1 {
                 width: 45%;
                 float: left;
                 padding-left: 9px;
             }
 
-            footer.footer .app_images .col2 {
+            div.footer .app_images .col2 {
                 width: 45%;
                 float: right;
                 padding-right: 9px;
             }
-            footer.footer .app_images {
+            div.footer .app_images {
                 width: 100%;
                 margin: auto;
                 /*padding: 12px !important;*/
             }
-            footer.footer {
+            div.footer {
                 text-align: center !important;
             }
-            footer.footer ul.social_icns li a {
+            div.footer ul.social_icns li a {
                 padding: 12px;
                 /*  float: left !important;*/
                 text-align: center !important;
@@ -227,7 +227,7 @@
             <div class="clearfix"></div>
         </div>
 
-        <footer class="footer">
+        <div class="footer">
             <div class="container">
                 <div class="row">
                     <div class="col-sm-7">
@@ -254,7 +254,7 @@
                     <p style="color: #fff;">&copy; {$header.name} {$header.year}</p>
                 </div>
             </div>
-        </footer>
+        </div>
     </div>
 </div>
 </body>

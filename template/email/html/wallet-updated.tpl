@@ -33,7 +33,7 @@
             padding: 0px !important;
             position: relative;
         }
-        footer.footer {
+        div.footer {
             background: #e04805;
             padding: 2em;
             margin: 22px auto;
@@ -45,28 +45,28 @@
             margin: auto;
             width: 65%;
         }
-        footer.footer ul li {
+        div.footer ul li {
             display: inline-block;
             padding: 9px;
         }
-        footer.footer ul li a {
+        div.footer ul li a {
             text-align: right !important;
             color: #fff !important;
         }
-        footer.footer ul.footer_link {
+        div.footer ul.footer_link {
             width: 100% !important;
             margin: 5px auto;
             text-align: left;
         }
-        footer.footer ul.footer_link li {
+        div.footer ul.footer_link li {
             display: inline-block;
             padding: 6px;
         }
-        footer.footer ul.footer_link li a {
+        div.footer ul.footer_link li a {
             text-align: center !important;
             color: #fff !important;
         }
-        footer.footer .text-center {
+        div.footer .text-center {
             color: #fff;
             font-weight: 600;
             margin: 2em auto;
@@ -104,7 +104,7 @@
                 margin: auto !important;
                 width: 85% !important;
             }
-            footer.footer {
+            div.footer {
                 text-align: center;
             }
             ul.social_icns li a {
@@ -146,7 +146,7 @@
             <p>Thanks for choosing {$data.app_name}</p>
         </div>
 
-        <footer class="footer mb-0">
+        <div class="footer mb-0">
             <div class="container">
                 <div class="row">
                     <div class="col-md-6 col-12">
@@ -170,7 +170,7 @@
                     <p>&copy; MoneyDrop {$data.year}</p>
                 </div>
             </div>
-        </footer>
+        </div>
     </div>
 </div>
 </body>
