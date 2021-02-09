@@ -36,6 +36,36 @@ return [
                     'origin' => ''
                 ]
             ],
+            'social' => [
+                'twitter' => [
+                    'handle' => 'MoneyDropNG',
+                    'url' => '#'
+                ],
+                'instagram' => [
+                    'handle' => 'MoneyDropNG',
+                    'url' => '#'
+                ],
+                'facebook' => [
+                    'handle' => 'MoneyDropNG',
+                    'url' => '#'
+                ],
+            ],
+            'app_links' => [
+                'ios' => [
+                    'url' => '#',
+                    'icon' => 'storage/system/app-store.png'
+                ],
+                'android' => [
+                    'url' => '#',
+                    'icon' => 'storage/system/play-store.png'
+                ]
+            ],
+            'link' => [
+                'faq' => '#',
+                'terms' => '#',
+                'privacy' => '#'
+            ],
+            'year' => APP_YEAR,
 
             /*
              | Allowed SEO robots
