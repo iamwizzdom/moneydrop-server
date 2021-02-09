@@ -97,6 +97,8 @@ class ForgotPassword extends Manager implements Api
                     "Forgot password Error", HTTP::EXPECTATION_FAILED, false);
             }
 
+            $this->db()->transComplete();
+
             return $this->http()->output()->json([
                 'status' => true,
                 'code' => HTTP::OK,
