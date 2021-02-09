@@ -195,11 +195,9 @@
         <div class="container">
             <div class="row pl-5 p-3">
                 <div class="col-md-4">
-                    <img src="{base_url($header.logo.small.origin)}" class="img-fluid" style="margin-top: 2em; margin-bottom: 1em;" alt="MoneyDrop Logo">
+                    <img src="{base_url($header.logo.small.origin)}" class="img-fluid" style="margin-top: 2em; margin-bottom: 1em;" alt="MoneyDrop">
                 </div>
-                <div class="col-md-8">
-                    <!-- this is empty -->
-                </div>
+                <div class="col-md-8"></div>
             </div>
             <div class="border"></div>
             <div class="text pl-5 p-3">
@@ -240,10 +238,10 @@
                     <div class="col-sm-5">
                         <div class="app_images pr-4 p-3">
                             <a href="{$header.app_links.android.url}" class="col1">
-                                <img src="{base_url($header.app_links.android.icon)}" class="Play store" >
+                                <img src="{base_url($header.app_links.android.icon)}" alt="Play store" >
                             </a>
                             <a href="{$header.app_links.ios.url}" class="col2">
-                                <img src="{base_url($header.app_links.ios.icon)}" class="App store" >
+                                <img src="{base_url($header.app_links.ios.icon)}" alt="App store" >
                             </a>
                         </div>
                     </div>
