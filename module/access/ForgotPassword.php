@@ -56,6 +56,8 @@ class ForgotPassword extends Manager implements Api
                 ->where('is_active', true)
                 ->columns(['is_active' => false])->exec();
 
+            $this->db()->transStart();
+
             $response = $this->db()->insert('password_resets', [
                 'user_id' => $user->getValue('id'),
                 'code' => Hash::sha(($code = mt_rand(1111, 9999))),
@@ -90,6 +92,7 @@ class ForgotPassword extends Manager implements Api
                     throw new QueException($mailer->getError('forgot'));
 
             } catch (QueException $e) {
+                $this->db()->transRollBack();
                 throw $this->baseException($e->getMessage(),
                     "Forgot password Error", HTTP::EXPECTATION_FAILED, false);
             }
@@ -99,7 +102,7 @@ class ForgotPassword extends Manager implements Api
                 'code' => HTTP::OK,
                 'title' => 'Password OTP Sent',
                 'message' => "An OTP has been sent successfully to your email, use it to reset your password."
-            ], HTTP::OK);
+            ]);
 
         } catch (BaseException $e) {
             return $this->http()->output()->json([
