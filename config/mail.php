@@ -29,6 +29,7 @@ return [
         'timeout' => 120,
         'debug' => '',
         'options' => [
+
             'ssl' => [
                 'verify_peer' => false,
                 'verify_peer_name' => false,

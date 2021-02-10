@@ -184,6 +184,11 @@ return [
             'engine' => null,
 
             /*
+             * Database timezone
+             */
+            'timezone'  => '+00:00',
+
+            /*
              | Set for PDO::MYSQL SSL connection
              | For more info see: https://www.php.net/manual/en/ref.pdo-mysql.php
              */
@@ -233,7 +238,12 @@ return [
              | Set to [bool](true) to shutdown Que and output all MySQL/SQL errors,
              | otherwise [bool](false) to output only FATAL errors
              */
-            'debug' => false
+            'debug' => !LIVE,
+
+            /*
+             * Array of more PDO config options
+             */
+            'options' => []
         ]
 
     ],
