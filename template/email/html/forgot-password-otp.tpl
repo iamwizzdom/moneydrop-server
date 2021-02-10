@@ -190,7 +190,7 @@
         <div class="container">
             <div class="row pl-5 p-3">
                 <div class="col-md-4">
-                    <img src="{$header.logo.small.origin}" class="img-fluid" style="margin-top: 2em; margin-bottom: 1em;" alt="MoneyDrop Logo">
+                    <img src="{base_url($header.logo.small.origin)}" class="img-fluid" style="margin-top: 2em; margin-bottom: 1em;" alt="MoneyDrop Logo">
                 </div>
                 <div class="col-md-8">
                     <!-- this is empty -->
@@ -237,10 +237,10 @@
                     <div class="col-sm-5">
                         <div class="app_images pr-4 p-1">
                             <a href="{$header.app_links.android.url}" class="col1 p-3">
-                                <img src="{$header.app_links.android.icon}" class="img-fluid" >
+                                <img src="{base_url($header.app_links.android.icon)}" class="img-fluid" >
                             </a>
                             <a href="{$header.app_links.ios.url}" class="col2 p-3">
-                                <img src="{$header.app_links.ios.icon}" class="img-fluid">
+                                <img src="{base_url($header.app_links.ios.icon)}" class="img-fluid">
                             </a>
                         </div>
                     </div>
