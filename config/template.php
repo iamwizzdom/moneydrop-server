@@ -23,10 +23,10 @@ return [
             'name' => 'MoneyDrop',
             'desc' => '',
             'fav_icon' => '',
-            'icon' => '',
+            'icon' => 'storage/system/logo.png',
             'logo' => [
                 'small' => [
-                    'white' => '',
+                    'white' => 'storage/system/logo-white.png',
                     'dark' => '',
                     'origin' => 'storage/system/logo.png'
                 ],

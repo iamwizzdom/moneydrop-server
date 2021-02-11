@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8"/>
     <title>{$data.title}</title>
-    <meta name="description" content=""/>
+    <meta name="description" content="{$header.desc}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
     <!-- endbuild -->
 </head>
@@ -145,8 +145,8 @@
                                                                 <a href="{base_url()}"
                                                                    style="font-family:'Sailec','Google Sans',sans-serif;color:#233858;text-decoration:underline"
                                                                    target="_blank" data-saferedirecturl=""><img
-                                                                            src="{base_url($header.logo.small.origin)}" width="64" height="24"
-                                                                            alt="website"
+                                                                            src="{base_url($header.logo.small.white)}" width="64" height="24"
+                                                                            alt="{$header.name}"
                                                                             style="width:auto;height:24px;max-width:200px"
                                                                             class="CToWUd">
                                                                 </a>
@@ -189,9 +189,9 @@
                                                 align="left" valign="top">
 
                                                 <p>
-                                                    <a href="{$header.social.twitter.url}" title="{$header.social.twitter.handle}" target="_blank"> <img alt="twitter" src="{base_url($header.social.twitter.icon)}" width="20"> </a>
-                                                    <a href="{$header.social.instagram.url}" title="{$header.social.instagram.handle}" target="_blank"> <img alt="instagram" src="{base_url($header.social.instagram.icon)}" width="20"> </a>
-                                                    <a href="{$header.social.facebook.url}" title="{$header.social.facebook.handle}" target="_blank"> <img alt="facebook" src="{base_url($header.social.facebook.icon)}" width="20"> </a>
+                                                    <a style="color: transparent !important; margin-right: 5px" href="{$header.social.twitter.url}" title="{$header.social.twitter.handle}" target="_blank"> <img alt="twitter" src="{base_url($header.social.twitter.icon)}" width="16"> </a>
+                                                    <a style="color: transparent !important; margin-right: 5px" href="{$header.social.instagram.url}" title="{$header.social.instagram.handle}" target="_blank"> <img alt="instagram" src="{base_url($header.social.instagram.icon)}" width="16"> </a>
+                                                    <a style="color: transparent !important;" href="{$header.social.facebook.url}" title="{$header.social.facebook.handle}" target="_blank"> <img alt="facebook" src="{base_url($header.social.facebook.icon)}" width="16"> </a>
                                                 </p> <br>
                                                 <p style=""> &copy; {$header.year}</p>
                                             </td>
@@ -209,8 +209,8 @@
                                                 style="font-size:15px;color:#FFF;width:100%;min-width:100%;padding-left:8px;padding-right:8px;vertical-align:top;text-align:left"
                                                 align="left" valign="top">
                                                 <p>
-                                                    <a href="{$header.app_links.android.url}" target="_blank"> <img alt="android" src="{base_url($header.app_links.android.icon)}" width="80"> </a>
-                                                    <a href="{$header.app_links.ios.url}" target="_blank"> <img alt="ios" src="{base_url($header.app_links.ios.icon)}" width="80"> </a>
+                                                    <a style="color: transparent !important; margin-right: 15px" href="{$header.app_links.android.url}" target="_blank"> <img alt="android" src="{base_url($header.app_links.android.icon)}" width="80"> </a>
+                                                    <a style="color: transparent !important;" href="{$header.app_links.ios.url}" target="_blank"> <img alt="ios" src="{base_url($header.app_links.ios.icon)}" width="80"> </a>
                                                 </p>
                                             </td>
                                         </tr>
