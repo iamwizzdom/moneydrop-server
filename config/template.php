@@ -39,15 +39,18 @@ return [
             'social' => [
                 'twitter' => [
                     'handle' => 'MoneyDropNG',
-                    'url' => '#'
+                    'url' => '#',
+                    'icon' => 'storage/system/social/twitter.png'
                 ],
                 'instagram' => [
                     'handle' => 'MoneyDropNG',
-                    'url' => '#'
+                    'url' => '#',
+                    'icon' => 'storage/system/social/instagram.png'
                 ],
                 'facebook' => [
                     'handle' => 'MoneyDropNG',
-                    'url' => '#'
+                    'url' => '#',
+                    'icon' => 'storage/system/social/facebook.png'
                 ],
             ],
             'app_links' => [

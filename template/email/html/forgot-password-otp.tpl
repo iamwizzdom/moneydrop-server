@@ -1,258 +1,233 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+    <meta charset="utf-8"/>
     <title>{$data.title}</title>
-    <style type="text/css">
-        @import url("https://fonts.google.com/specimen/Poppins?selection.family=Open+Sans");
-        @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap");
-        @import url("https://fonts.googleapis.com/css?family=Roboto&display=swap");
-        @import url("https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.2/animate.min.css");
-        @import url("https://fonts.googleapis.com/css?family=Cantarell|Lato|Montserrat:800|Noto+Sans+HK:900&display=swap");
-        @import url("https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css");
-        @import url("https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css");
-        body {
-            padding: 0;
-            background: #F5F5F5;
-            font-family: 'Poppins', sans-serif;
-        }
-        p {
-            color: #989898;
-        }
-        a {
-            color: #6F2302;
-            font-weight: 500;
-        }
-        a:hover {
-            color: #591C02;
-            text-decoration: none;
-        }
-        .wrapper {
-            width: 100%;
-            margin: 0px;
-            padding: 0px !important;
-            position: relative;
-        }
-        div.footer {
-            background: #e04805;
-            margin: 22px auto !important;
-            min-height: 200px;
-            text-align: left;
-            font-size: 18px;
-            color: #fff !important;
-            /*padding: 14px 0;*/
-        }
-        .content {
-            background: #fff;
-            padding: 0;
-            margin: auto;
-            width: 60%;
-        }
-        div.footer ul li {
-            display: inline-block !important;
-        }
-        div.footer ul li a {
-            color: #fff !important;
-        }
-        div.footer ul.footer_link {
-            padding: 12px;
-            margin: 1em auto;
-        }
-        div.footer ul.footer_link li {
-            padding: 9px;
-        }
-        div.footer ul.social_icns {
-            padding: 12px;
-            margin: 1em auto;
-        }
-        div.footer ul.social_icns li {
-            /*text-align: right !important;*/
-            padding: 15px;
-        }
-        div.footer ul.icons_app {
-            padding: 12px;
-            margin: auto;
-            width: 100% !important;
-        }
-        div.footer ul.icons_app li {
-            /*text-align: right !important;*/
-            padding: 6px;
-            display: inline-block !important;
-        }
-        div.footer ul.icons_app li a img {
-            width: 40%;
-            display: inline-block !important;
-        }
-        div.footer .text-center {
-            color: #fff !important;
-            font-weight: 600;
-            margin: 2em auto;
-        }
-        div.footer .app_images {
-            width: 100%;
-            margin: 1.5em auto;
-            padding:  !important;
-            position: relative;
-        }
-
-        div.footer .app_images .col1 {
-            width: 45%;
-            float: right;
-        }
-
-        div.footer .app_images .col2 {
-            width: 45%;
-            float: right;
-        }
-
-        div.footer .app_images .col1 img {
-            width: 90%;
-            float: left;
-        }
-        div.footer .app_images .col2 img {
-            width: 90%; float: right;
-        }
-
-        .border {
-            width: 92%;
-            margin: auto;
-            border-top: 0.001em dotted rgba(248,248,248, 0.25) !important;
-        }
-        .text {
-            width: 100%;
-            position: relative;
-            line-height: 35px;
-            font-family: 'Poppins', sans-serif;
-        }
-        .text p {
-            line-height: 25px;
-            color: #989898;
-        }
-        .text h3 {
-            color: #591C02;
-            font-family: 'Roboto';
-            font-weight: 600;
-        }
-        .text h5 {
-            color: #591C02;
-            font-family: 'Roboto';
-            font-weight: 600;
-        }
-        button.btn {
-            font-weight: 500;
-            font-size: 16px;
-        }
-        span.OTP {
-            font-size: 45px;
-            letter-spacing: 12px;
-            font-weight: 900;
-            color: #6F2302;
-        }
-        @media (max-width: 640px) {
-            .content {
-                background: #fff;
-                padding: 0;
-                margin: auto !important;
-                width: 85% !important;
-            }
-            div.footer .app_images .col1 {
-                width: 45%;
-                float: left;
-                padding-left: 9px;
-            }
-
-            div.footer .app_images .col2 {
-                width: 45%;
-                float: right;
-                padding-right: 9px;
-            }
-            div.footer .app_images {
-                width: 100%;
-                margin: auto;
-                padding: 12px !important;
-            }
-            div.footer {
-                text-align: center !important;
-            }
-            div.footer ul.social_icns li a {
-                padding: 12px;
-                /*  float: left !important;*/
-                text-align: center !important;
-            }
-        }
-        /*.wrapper {
-          width: 100%;
-        }*/
-    </style>
+    <meta name="description" content=""/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+    <!-- endbuild -->
 </head>
+
 <body>
-<div class="wrapper">
-    <div class="content">
-        <div class="container">
-            <div class="row pl-5 p-3">
-                <div class="col-md-4">
-                    <img src="{base_url($header.logo.small.origin)}" class="img-fluid" style="margin-top: 2em; margin-bottom: 1em;" alt="MoneyDrop Logo">
-                </div>
-                <div class="col-md-8">
-                    <!-- this is empty -->
-                </div>
-            </div>
-            <div class="border"></div>
-            <div class="text pl-5 p-3">
-                <!-- Edit this Name and put the registered username -->
-                <h3 class="mt-5">Hello there,</h3>
-                <p>Please reset your password using the OTP below:</p>
-                <span class="OTP">{$data.otp}</span>
+<div>
+    <div>
+        <div style="font-family:'Sailec','Google Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Open Sans','Helvetica Neue',sans-serif;color:#233858;margin:0">
 
-            </div>
-            <br>
-            <div class="row-gutters pl-5 p-3">
-                <!-- click that takes users to a how it works page for moneydrop -->
-                <p>Note: <em>This OTP will expire at {$data.expire}</em></p>
-            </div>
-            <div class="border"></div>
-            <div class="row-gutters pl-5 p-3">
-                <p>If you have further questions, kindly visit our <a href="{$header.link.faq}">FAQ Page</a>, or tweet at us <a href="{$header.social.twitter.url}">{$header.social.twitter.handle}</a></p>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
 
-                </div>
-                <div class="col-md-6">
+            <div style="font-family:'Sailec','Google Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Open Sans','Helvetica Neue',sans-serif;background-color:#f1f3f5;color:#233858">
+                <div style="max-width:600px;display:block;background-color:white;margin:0 auto;border:1px solid rgba(35,56,88,0.11)">
+                    <table role="presentation" class="m_-9028974814449565739email_table" width="100%" border="0"
+                           cellspacing="0" cellpadding="0" style="width:100%;min-width:100%">
+                        <tbody>
+                        <tr>
+                            <td style="font-size:0!important;line-height:100%;text-align:center;padding-left:16px;padding-right:16px;padding-top:36px"
+                                align="center">
 
+                                <div style="font-size:0;display:inline-block;width:100%;min-width:0!important;vertical-align:top;max-width:580px;margin:0 auto">
+                                    <table role="presentation" class="m_-9028974814449565739column" width="100%"
+                                           border="0" cellspacing="0" cellpadding="0" style="width:100%;min-width:100%">
+                                        <tbody>
+                                        <tr>
+                                            <td style="width:100%;min-width:100%;padding-left:32px;padding-right:32px;vertical-align:top;text-align:left"
+                                                align="left" valign="top">
+                                                <a href="{base_url()}"><img src="{base_url($header.logo.small.origin)}" width="128" height="128"
+                                                                 style="width:auto;height:64px;max-width:200px" alt="{$header.name}"
+                                                                 class="CToWUd"></a>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                    <table role="presentation" class="m_-9028974814449565739hr_rl" align="center"
+                                           width="90%" border="0" cellspacing="0" cellpadding="0"
+                                           style="display:table;margin-left:auto;margin-right:auto">
+                                        <tbody>
+                                        <tr>
+                                            <td style="font-size:0;line-height:1px;min-height:1px;overflow:hidden;height:2px;background-color:transparent!important;padding-bottom:24px;border-bottom-width:1px;border-bottom-color:rgba(60,60,60,0.07);border-bottom-style:solid"
+                                                bgcolor="transparent !important"></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"
+                           style="width:100%;min-width:100%">
+                        <tbody>
+                        <tr>
+                            <td style="font-size:0!important;line-height:100%;text-align:center;padding-left:8px;padding-right:8px"
+                                align="center">
+
+                                <div style="font-size:0;display:inline-block;width:100%;min-width:0!important;vertical-align:top;max-width:580px;margin:0 auto">
+                                    <table role="presentation"
+                                           class="m_-9028974814449565739column m_-9028974814449565739jumbotron_b"
+                                           width="100%" border="0" cellspacing="0" cellpadding="0"
+                                           style="width:100%;min-width:100%;border-radius:6px;border:2px solid transparent">
+                                        <tbody>
+                                        <tr>
+                                            <td class="m_-9028974814449565739column_cell m_-9028974814449565739tl m_-9028974814449565739content-area m_-9028974814449565739jumbotron_cell"
+                                                style="width:100%;min-width:100%;padding-left:32px;padding-right:32px;vertical-align:top;padding-top:32px;border-radius:3px;text-align:left;background:no-repeat 50%;border:0"
+                                                align="left" valign="top">
+                                                <h1 style="color:#233858;font-size:28px;line-height:44px;font-weight:600;max-width:90%!important;font-family:'BR Firma CW','Google Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Open Sans','Helvetica Neue',sans-serif!important;margin:32px 0 14px;padding:0">Hello there,</h1>
+                                                <p style="font-size:15px;font-family:'Sailec','Google Sans',sans-serif;line-height:1.7;color:#4b535e;margin-top:0;margin-bottom:18px">Please reset your password using the OTP below.</p>
+                                                <p style="font-size:45px;letter-spacing:2px;font-weight:900;font-family:'Sailec','Google Sans',sans-serif;line-height:1.7;color:#6F2302;margin-top:0;margin-bottom:18px">{$data.otp}</p>
+
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"
+                           style="width:100%;min-width:100%">
+                        <tbody>
+                        <tr>
+                            <td style="font-size:0!important;line-height:100%;text-align:center;padding-left:8px;padding-right:8px"
+                                align="center">
+                                <div style="font-size:0;display:inline-block;width:100%;min-width:0!important;vertical-align:top;max-width:580px;margin:0 auto">
+                                    <table role="presentation"
+                                           class="m_-9028974814449565739column m_-9028974814449565739jumbotron_b"
+                                           width="100%" border="0" cellspacing="0" cellpadding="0"
+                                           style="width:100%;min-width:100%;border-radius:6px;border:2px solid transparent">
+                                        <tbody>
+                                        <tr>
+                                            <td style="width:100%;min-width:100%;padding-left:32px;padding-right:32px;vertical-align:top;padding-top:32px;border-radius:3px;text-align:left;background:no-repeat 50%;border:0"
+                                                align="left" valign="top">
+                                                <p style="font-size:12px;font-family:'Sailec','Google Sans',sans-serif;line-height:1.7;color:rgba(35,56,88,0.59);margin-top:20px;margin-bottom:20px;padding-top:20px;border-top-width:1px;border-top-color:rgba(60,60,60,0.07);border-top-style:solid">
+                                                <p style="font-size:15px;font-family:'Sailec','Google Sans',sans-serif;line-height:1.7;color:#4b535e;margin-top:0;margin-bottom:18px">Note: <em>This OTP will expire at {$data.expire}</em></p>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+
+                    <table role="presentation" class="" width="100%" border="0" cellspacing="0" cellpadding="0"
+                           style="width:100%;min-width:100%">
+                        <tbody>
+                        <tr>
+                            <td class=""
+                                style="background-color:#E04805;height:320px;margin-top:20px;display:block;font-size:0!important;line-height:100%;text-align:center;padding-left:8px;padding-right:8px"
+                                align="center" bgcolor="#0067f5">
+
+                                <div class=""
+                                     style="font-size:0;display:inline-block;width:100%;min-width:0!important;vertical-align:top;max-width:580px;margin:0 auto">
+                                    <table role="presentation" class="m_-9028974814449565739column" width="100%"
+                                           border="0" cellspacing="0" cellpadding="0" style="width:100%;min-width:100%">
+                                        <tbody>
+                                        <tr>
+                                            <td class=""
+                                                style="width:100%;min-width:100%;padding-left:32px;padding-right:32px;vertical-align:top"
+                                                valign="top">
+                                                <div style="font-size:0;display:inline-block;width:50%;min-width:0!important;vertical-align:top;float:left">
+                                                    <table role="presentation" width="100%" border="0" cellspacing="0"
+                                                           cellpadding="0"
+                                                           style="width:100%;min-width:100%;padding-top:32px">
+                                                        <tbody>
+                                                        <tr>
+                                                            <td style="font-size:15px;color:#233858;width:100%;min-width:100%;padding-left:8px;padding-right:8px;vertical-align:top;line-height:100%;text-align:left"
+                                                                align="left" valign="top">
+                                                                <a href="{base_url()}"
+                                                                   style="font-family:'Sailec','Google Sans',sans-serif;color:#233858;text-decoration:underline"
+                                                                   target="_blank" data-saferedirecturl=""><img
+                                                                            src="{base_url($header.logo.small.origin)}" width="64" height="24"
+                                                                            alt="website"
+                                                                            style="width:auto;height:24px;max-width:200px"
+                                                                            class="CToWUd">
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <table role="presentation" class="" align="center" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                                style="display:table;margin-left:auto;margin-right:auto;padding-top:32px">
+                                        <tbody>
+                                        <tr>
+                                            <td class=""
+                                                style="font-size:15px;color:#233858;line-height:1px;min-height:1px;overflow:hidden;height:2px;background-color:transparent!important;border-bottom-width:1px;border-bottom-color:rgba(255,255,255,0.07);border-bottom-style:solid"
+                                                bgcolor="transparent !important">&nbsp;
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <table role="presentation" class="" width="100%" border="0" cellspacing="0" cellpadding="0"
+                           style="width:100%;min-width:100%">
+                        <tbody>
+                        <tr>
+                            <td class=""
+                                style="width:100%;min-width:100%;padding-left:32px;padding-right:32px;vertical-align:top"
+                                valign="top">
+                                <div class=""
+                                     style="font-size:0;display:inline-block;width:50%;min-width:0!important;vertical-align:top;float:left;">
+                                    <table role="presentation" class="" width="100%" border="0" cellspacing="0"
+                                           cellpadding="0" style="width:100%;min-width:100%;padding-top:32px">
+                                        <tbody>
+                                        <tr>
+                                            <td class=""
+                                                style="font-size:15px;color:#FFF;width:100%;min-width:100%;padding-left:8px;padding-right:8px;vertical-align:top;text-align:left"
+                                                align="left" valign="top">
+
+                                                <p>
+                                                    <a href="{$header.social.twitter.url}" title="{$header.social.twitter.handle}" target="_blank"> <img alt="twitter" src="{base_url($header.social.twitter.icon)}" width="20"> </a>
+                                                    <a href="{$header.social.instagram.url}" title="{$header.social.instagram.handle}" target="_blank"> <img alt="instagram" src="{base_url($header.social.instagram.icon)}" width="20"> </a>
+                                                    <a href="{$header.social.facebook.url}" title="{$header.social.facebook.handle}" target="_blank"> <img alt="facebook" src="{base_url($header.social.facebook.icon)}" width="20"> </a>
+                                                </p> <br>
+                                                <p style=""> &copy; {$header.year}</p>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class=""
+                                     style="font-size:0;display:inline-block;width:50%;min-width:0!important;vertical-align:top;float:right;">
+                                    <table role="presentation" class="" width="100%" border="0" cellspacing="0"
+                                           cellpadding="0" style="width:100%;min-width:100%;padding-top:32px">
+                                        <tbody>
+                                        <tr>
+                                            <td class=""
+                                                style="font-size:15px;color:#FFF;width:100%;min-width:100%;padding-left:8px;padding-right:8px;vertical-align:top;text-align:left"
+                                                align="left" valign="top">
+                                                <p>
+                                                    <a href="{$header.app_links.android.url}" target="_blank"> <img alt="android" src="{base_url($header.app_links.android.icon)}" width="80"> </a>
+                                                    <a href="{$header.app_links.ios.url}" target="_blank"> <img alt="ios" src="{base_url($header.app_links.ios.icon)}" width="80"> </a>
+                                                </p>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
+
+                </td>
+                </tr>
+                </tbody>
+                </table>
             </div>
-            <div class="clearfix"></div>
         </div>
-
-        <div class="footer">
-            <div class="container">
-                <div class="row">
-                    <div class="col-sm-7">
-                        <ul class="social_icns pl-4 p-3" style="width: 100%; margin-left: 6px;">
-                            <li><a href="{$header.social.facebook.url}"><span class="fa fa-facebook"></span></a></li>
-                            <li><a href="{$header.social.twitter.url}"><span class="fa fa-twitter"></span></a></li>
-                            <li><a href="{$header.social.instagram.url}"><span class="fa fa-instagram"></span></a></li>
-                        </ul>
-                    </div>
-                    <div class="col-sm-5">
-                        <div class="app_images pr-4 p-1">
-                            <a href="{$header.app_links.android.url}" class="col1 p-3">
-                                <img src="{base_url($header.app_links.android.icon)}" class="img-fluid" >
-                            </a>
-                            <a href="{$header.app_links.ios.url}" class="col2 p-3">
-                                <img src="{base_url($header.app_links.ios.icon)}" class="img-fluid">
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="text-center">
-                    <p style="color: #fff;">&copy; {$header.name} {$header.year}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 </body>
 </html>
