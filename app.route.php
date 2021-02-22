@@ -213,6 +213,22 @@ Route::register()->groupApi('api/v1', function ($prefix) {
             $entry->setUri('/history');
             $entry->setModule(History::class);
         },
+        function (RouteEntry $entry) {
+            $entry->allowPostRequest();
+            $entry->forbidCSRF(false);
+            $entry->setMiddleware('user.auth');
+            $entry->setUri('/review/{id:uuid}/edit');
+            $entry->setModule(Review::class);
+            $entry->setModuleMethod('editReview');
+        },
+        function (RouteEntry $entry) {
+            $entry->allowDeleteRequest();
+            $entry->forbidCSRF(false);
+            $entry->setMiddleware('user.auth');
+            $entry->setUri('/review/{id:uuid}/delete');
+            $entry->setModule(Review::class);
+            $entry->setModuleMethod('deleteReview');
+        },
     ];
 
 });

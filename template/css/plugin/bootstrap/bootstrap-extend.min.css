@@ -4828,7 +4828,8 @@ a .badge-pill:focus,a .badge-pill:hover {
     width: 1%
 }
 
-.alert.m-alert--icon .m-alert__icon.m-alert__icon--top {
+.alert.
+--icon .m-alert__icon.m-alert__icon--top {
     vertical-align: top;
     padding-top: 1.85rem
 }

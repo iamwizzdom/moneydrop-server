@@ -22,7 +22,7 @@ class LoanApplication extends Model
     protected array $copy = ['created_at' => 'date', 'date' => 'date_short', 'due_date' => 'due_date_short'];
     protected array $casts = ['amount_payable' => 'double', 'repaid_amount' => 'double', 'status' => 'int', 'is_repaid' => 'bool', 'is_active' => 'bool',
         'due_date_short' => "date:jS M 'y", 'date' => 'date:d/m/y', 'date_short' => 'date:jS M'];
-    protected array $appends = ['repaid_amount', 'amount_payable', 'status_readable', 'applicant', 'has_granted', 'is_repaid', 'date_granted'];
+    protected array $appends = ['repaid_amount', 'amount_payable', 'status_readable', 'applicant', 'has_granted', 'is_repaid', 'is_reviewed', 'date_granted'];
 
     public function getArray(bool $onlyFillable = false): array
     {
@@ -82,6 +82,12 @@ class LoanApplication extends Model
 
     public function isRepaid() {
         return $this->getFloat('repaid_amount') >= $this->getFloat('amount_payable');
+    }
+
+    public function isReviewed() {
+        return $this->validate('uuid')->isFoundInDB('reviews', 'application_id', function (Builder $builder) {
+            $builder->where('is_active', true);
+        });
     }
 
     public function getRepaidAmount() {

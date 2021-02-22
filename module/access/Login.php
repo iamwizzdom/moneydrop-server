@@ -46,11 +46,13 @@ class Login extends Manager implements Api
             $validator->validate('pn_token')->isNotEmpty("Please enter a valid token");
 
             if ($validator->hasError()) throw $this->baseException(
-                "The inputted data is invalid", "Login Failed", HTTP::UNPROCESSABLE_ENTITY, false);
+                "The inputted data is invalid", "Login Failed", HTTP::UNPROCESSABLE_ENTITY, false
+            );
 
             $user = $this->db()->select('*')->table('users')
                 ->where('email', $validator->getValue('email'))
-                ->where('password', $validator->getValue('password'))->exec();
+                ->where('password', $validator->getValue('password'))
+                ->exec();
 
             if (!$user->isSuccessful()) throw $this->baseException(
                 'Email and password do not match', 'Invalid Credentials', HTTP::UNAUTHORIZED, false);
@@ -83,7 +85,7 @@ class Login extends Manager implements Api
                     'cards' => $this->getAllMyCards() ?: [],
                     'banks' => BanksEnum::getBanks(),
                 ]
-            ], HTTP::OK);
+            ]);
 
         } catch (BaseException $e) {
             return $this->http()->output()->json([
@@ -91,7 +93,7 @@ class Login extends Manager implements Api
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'error' => (object)$validator->getErrors()
+                'error' => (object) $validator->getErrors()
             ], $e->getCode());
         }
     }

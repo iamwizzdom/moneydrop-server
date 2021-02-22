@@ -52,9 +52,9 @@ class Review extends Manager implements Api
 
             $application = $application->getFirstWithModel();
 
-            if (!$application->is_repaid) throw $this->baseException(
-                "Sorry, you can only review this loan recipient after the loan has been repaid completely",
-                "Review Failed", HTTP::UNAUTHORIZED);
+//            if (!$application->is_repaid) throw $this->baseException(
+//                "Sorry, you can only review this loan recipient after the loan has been repaid completely",
+//                "Review Failed", HTTP::UNAUTHORIZED);
 
             $application->load('loan');
 
@@ -109,6 +109,7 @@ class Review extends Manager implements Api
 
         $reviews = $this->db()->select('*')->table('reviews')
             ->where('user_id', Request::getUriParam('id'))
+            ->where('is_active', true)
             ->orderBy('desc', 'id')
             ->paginate(PAGINATION_PER_PAGE);
 
@@ -133,5 +134,104 @@ class Review extends Manager implements Api
             ],
             'reviews' => $reviews ?: []
         ]);
+    }
+
+    public function editReview(Input $input) {
+
+        $validator = $this->validator($input);
+
+        try {
+
+            $input['review_id'] = Request::getUriParam('id');
+
+            $validator->validate('review_id')->isUUID("Please pass a valid review ID");
+            $validator->validate('review')->isNotEmpty("Please a valid review")
+                ->hasMinWord(10, "Please write a meaningful review of at least %s words");
+
+            if ($validator->hasError()) throw $this->baseException(
+                "The inputted data is invalid", "Review Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+            $review = $this->db()->find('reviews', $input['review_id'], 'uuid', function (Builder $builder) {
+                $builder->where('is_active', true);
+            });
+
+            $review->setModelKey('reviewModel');
+
+            if (!$review->isSuccessful()) throw $this->baseException(
+                "Sorry that review either has been deleted or does not exist", "Review Failed", HTTP::NOT_FOUND);
+
+            $review = $review->getFirstWithModel();
+            $review?->load('application.loan')->load('user')->load('reviewer');
+
+            if ($review->getValue('reviewed_by') != $this->user('id')) throw $this->baseException(
+                "Sorry, you can only modify your own review.", "Review Failed", HTTP::UNAUTHORIZED);
+
+            if (!$review->update(['review' => $input['review']])->isSuccessful()) throw $this->baseException(
+                "Sorry, we couldn't update this review at this time, please try again later.", "Review Failed", HTTP::EXPECTATION_FAILED);
+
+            return $this->http()->output()->json([
+                'status' => true,
+                'code' => HTTP::OK,
+                'title' => 'Review Successful',
+                'message' => "Your review has been updated successfully",
+                'response' => [
+                    'review' => $review
+                ]
+            ]);
+
+        } catch (BaseException $e) {
+            return $this->http()->output()->json([
+                'status' => $e->getStatus(),
+                'code' => $e->getCode(),
+                'title' => $e->getTitle(),
+                'message' => $e->getMessage(),
+                'error' => (object)$validator->getErrors()
+            ], $e->getCode());
+        }
+    }
+
+    public function deleteReview(Input $input) {
+
+        $validator = $this->validator($input);
+
+        try {
+
+            $input['review_id'] = Request::getUriParam('id');
+
+            if (!$input->validate('review_id')->isUUID()) throw $this->baseException(
+                "Please pass a valid review ID", "Review Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+            $review = $this->db()->find('reviews', $input['review_id'], 'uuid', function (Builder $builder) {
+                $builder->where('is_active', true);
+            });
+
+            if (!$review->isSuccessful()) throw $this->baseException(
+                "Sorry that review either has been deleted or does not exist", "Review Failed", HTTP::NOT_FOUND);
+
+            $review = $review->getFirstWithModel();
+
+            if ($review->getValue('reviewed_by') != $this->user('id')) throw $this->baseException(
+                "Sorry, you can only delete your own review.", "Review Failed", HTTP::UNAUTHORIZED);
+
+            if (!$review->update(['is_active' => false])->isSuccessful()) throw $this->baseException(
+                "Sorry, we couldn't delete this review at this time, please try again later.", "Review Failed", HTTP::EXPECTATION_FAILED);
+
+            return $this->http()->output()->json([
+                'status' => true,
+                'code' => HTTP::OK,
+                'title' => 'Review Successful',
+                'message' => "Your review has been deleted successfully",
+                'response' => []
+            ]);
+
+        } catch (BaseException $e) {
+            return $this->http()->output()->json([
+                'status' => $e->getStatus(),
+                'code' => $e->getCode(),
+                'title' => $e->getTitle(),
+                'message' => $e->getMessage(),
+                'error' => (object)$validator->getErrors()
+            ], $e->getCode());
+        }
     }
 }
