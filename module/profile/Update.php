@@ -148,6 +148,50 @@ class Update extends Manager implements Api
                         ]
                     ]);
 
+                case 'gender':
+
+                    $validator->validate('gender')->isNumber("Please select a valid gender")
+                        ->isEqualToAny([GENDER_MALE, GENDER_FEMALE], "Sorry, you have not selected a valid gender");
+
+                    if ($validator->hasError()) throw $this->baseException(
+                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+                    if (!$this->user()->update($validator->getValidated())) throw $this->baseException(
+                        "Failed to update email at this time, please try again later.",
+                        "Update Failed", HTTP::EXPECTATION_FAILED);
+
+                    return $this->http()->output()->json([
+                        'status' => true,
+                        'code' => HTTP::OK,
+                        'title' => 'Update Successful',
+                        'message' => "Gender updated successfully.",
+                        'response' => [
+                            'user' => $this->user()->getUserArray()
+                        ]
+                    ]);
+
+                case 'address':
+
+                    $validator->validate('address')->isNotEmpty("Please enter a address")
+                        ->hasMinWord(5, "Your address should have a minimum of %s words");
+
+                    if ($validator->hasError()) throw $this->baseException(
+                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+                    if (!$this->user()->update($validator->getValidated())) throw $this->baseException(
+                        "Failed to update email at this time, please try again later.",
+                        "Update Failed", HTTP::EXPECTATION_FAILED);
+
+                    return $this->http()->output()->json([
+                        'status' => true,
+                        'code' => HTTP::OK,
+                        'title' => 'Update Successful',
+                        'message' => "Address updated successfully.",
+                        'response' => [
+                            'user' => $this->user()->getUserArray()
+                        ]
+                    ]);
+
                 case 'dob':
 
                     $validator->validate('dob')->isDate("Please enter a valid date of birth", 'Y-m-d')
