@@ -1,0 +1,5 @@
+Hello there.
+Please verify your phone using the OTP below:
+{$data.otp}
+------------------------------------------
+Note: This OTP will expire at {$data.expire}

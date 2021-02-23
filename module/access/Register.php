@@ -95,7 +95,7 @@ class Register extends Manager implements Api
                 'response' => [
                     'user' => $user
                 ],
-                'error' => (object) []
+                'errors' => (object) []
             ], HTTP::CREATED);
 
         } catch (BaseException $e) {
@@ -105,7 +105,7 @@ class Register extends Manager implements Api
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'error' => (object) $validator->getErrors()
+                'errors' => (object) $validator->getErrors()
             ], $e->getCode());
         }
     }

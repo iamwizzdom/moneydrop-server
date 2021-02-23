@@ -119,7 +119,7 @@
     <div class="content">
         <div class="row pl-5 p-3">
             <div class="col-md-2">
-                <img src="{$data.logo}" class="img-fluid" style="margin-top: 2em; margin-bottom: 1em;" alt="MoneyDrop Logo">
+                <img src="{base_url($header.logo.small.origin)}" class="img-fluid" style="margin-top: 2em; margin-bottom: 1em;" alt="MoneyDrop Logo">
             </div>
             <div class="col-md-8">
 
@@ -141,7 +141,7 @@
         <div class="border"></div>
         <div class="row-gutters pl-5 p-3">
             <!-- click that takes users to a how it works page for afrihow -->
-            <p>Thanks for choosing {$data.app_name}</p>
+            <p>Thanks for choosing {$header.name}</p>
         </div>
 
         <div class="footer mb-0">
@@ -165,7 +165,7 @@
             </div>
             <div class="row">
                 <div class="text-center">
-                    <p>&copy; MoneyDrop {$data.year}</p>
+                    <p>&copy; {$header.name} {$header.year}</p>
                 </div>
             </div>
         </div>

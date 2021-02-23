@@ -46,7 +46,7 @@ class ForgotPassword extends Manager implements Api
                     'code' => HTTP::CONFLICT,
                     'title' => 'Password OTP Sent',
                     'message' => "An OTP has already been sent to your email.",
-                    'error' => (object)[]
+                    'errors' => (object)[]
                 ], HTTP::CONFLICT);
 
             }
@@ -112,7 +112,7 @@ class ForgotPassword extends Manager implements Api
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'error' => (object)$validator->getErrors()
+                'errors' => (object)$validator->getErrors()
             ], $e->getCode());
         }
     }

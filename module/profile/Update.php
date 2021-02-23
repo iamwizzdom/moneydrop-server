@@ -121,32 +121,32 @@ class Update extends Manager implements Api
                         ]
                     ]);
 
-                case 'email':
-
-                    $validator->validate('email')->isEmail("Please enter a valid email address")->toLower()
-                        ->isNotEqual($this->user('email'), "That's already your email.")
-                        ->isFoundInDB('verifications', 'data', "That email has not been verified.",
-                            function (Builder $builder) {
-                                $builder->where('is_verified', true);
-                                $builder->where('is_active', true);
-                            })->isUniqueInDB("users", "email", "That email address already exist", $this->user('id'));
-
-                    if ($validator->hasError()) throw $this->baseException(
-                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
-
-                    if (!$this->user()->update($validator->getValidated())) throw $this->baseException(
-                        "Failed to update email at this time, please try again later.",
-                        "Update Failed", HTTP::EXPECTATION_FAILED);
-
-                    return $this->http()->output()->json([
-                        'status' => true,
-                        'code' => HTTP::OK,
-                        'title' => 'Update Successful',
-                        'message' => "Email address updated successfully.",
-                        'response' => [
-                            'user' => $this->user()->getUserArray()
-                        ]
-                    ]);
+//                case 'email':
+//
+//                    $validator->validate('email')->isEmail("Please enter a valid email address")->toLower()
+//                        ->isNotEqual($this->user('email'), "That's already your email.")
+//                        ->isFoundInDB('verifications', 'data', "That email has not been verified.",
+//                            function (Builder $builder) {
+//                                $builder->where('is_verified', true);
+//                                $builder->where('is_active', true);
+//                            })->isUniqueInDB("users", "email", "That email address already exist", $this->user('id'));
+//
+//                    if ($validator->hasError()) throw $this->baseException(
+//                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+//
+//                    if (!$this->user()->update($validator->getValidated())) throw $this->baseException(
+//                        "Failed to update email at this time, please try again later.",
+//                        "Update Failed", HTTP::EXPECTATION_FAILED);
+//
+//                    return $this->http()->output()->json([
+//                        'status' => true,
+//                        'code' => HTTP::OK,
+//                        'title' => 'Update Successful',
+//                        'message' => "Email address updated successfully.",
+//                        'response' => [
+//                            'user' => $this->user()->getUserArray()
+//                        ]
+//                    ]);
 
                 case 'gender':
 
@@ -345,7 +345,7 @@ class Update extends Manager implements Api
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'error' => (object) $validator->getErrors()
+                'errors' => (object) $validator->getErrors()
             ], $e->getCode());
         }
     }

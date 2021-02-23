@@ -81,7 +81,7 @@ class Rate extends Manager implements Api
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'error' => (object) []
+                'errors' => (object) []
             ], $e->getCode());
         }
     }

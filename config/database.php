@@ -21,6 +21,7 @@ use observers\LoanRepaymentObserver;
 use observers\NotificationObserver;
 use observers\TransactionObserver;
 use observers\UserObserver;
+use observers\VerificationObserver;
 use observers\WalletObserver;
 use que\database\drivers\mysql\MySqlDriver;
 use que\database\model\CentralModel;
@@ -112,6 +113,7 @@ return [
         'loan_applications' => LoanApplicationObserver::class,
         'loan_repayments' => LoanRepaymentObserver::class,
         'notifications' => NotificationObserver::class,
+        'verifications' => VerificationObserver::class,
     ],
 
     /*

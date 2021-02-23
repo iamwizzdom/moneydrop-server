@@ -167,7 +167,7 @@
             </div>
             <div class="row">
                 <div class="text-center">
-                    <p>&copy; MoneyDrop {$data.year}</p>
+                    <p>&copy; MoneyDrop {$header.year}</p>
                 </div>
             </div>
         </div>

@@ -180,7 +180,7 @@ class LoanApplication extends Manager implements Api
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'error' => (object)$validator->getErrors()
+                'errors' => (object)$validator->getErrors()
             ], $e->getCode());
         }
     }
@@ -274,7 +274,7 @@ class LoanApplication extends Manager implements Api
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'error' => (object)$validator->getErrors()
+                'errors' => (object)$validator->getErrors()
             ], $e->getCode());
         }
     }
@@ -351,7 +351,7 @@ class LoanApplication extends Manager implements Api
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'error' => (object)$validator->getErrors()
+                'errors' => (object)$validator->getErrors()
             ], $e->getCode());
         }
     }

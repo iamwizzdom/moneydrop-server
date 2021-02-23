@@ -56,7 +56,7 @@ class Verification extends Manager implements Api
                             $insert = $this->db()->select('*')->table('verifications')
                                 ->where('data', $validator->getValue('email'))
                                 ->where('type', self::VERIFICATION_TYPE_EMAIL)
-                                ->where('is_active', true)->exec();
+                                ->where('is_active', true)->orderBy('desc', 'id')->exec();
 
                             if ($insert->isSuccessful()) {
 
@@ -66,13 +66,11 @@ class Verification extends Manager implements Api
 
                             }
 
-                            $otp = mt_rand(1111, 9999);
-
                             $this->db()->transStart();
 
                             $insert = $this->db()->insert('verifications', [
                                 'data' => $validator->getValue('email'),
-                                'code' => Hash::sha($otp),
+                                'code' => mt_rand(11111, 99999),
                                 'type' => self::VERIFICATION_TYPE_EMAIL,
                                 'expiration' => date('Y-m-d H:i:s', APP_TIME + TIMEOUT_TEN_MIN),
                                 'is_verified' => false,
@@ -80,34 +78,8 @@ class Verification extends Manager implements Api
                             ]);
 
                             if (!$insert->isSuccessful()) throw $this->baseException(
-                                "Sorry, we couldn't verify your email at this time, please try again later.",
+                                $insert->getQueryError() ?: "Sorry, we couldn't verify your email at this time, please try again later.",
                                 "Verification failed", HTTP::EXPECTATION_FAILED);
-
-                            try {
-
-                                $mailer = $this->mailer();
-
-                                $mail = $this->mail('verify');
-                                $mail->addRecipient($validator->getValue('email'));
-                                $mail->setSubject(config('template.app.header.name') . " Email Verification");
-                                $mail->setData([
-                                    'title' => 'Email Confirmation',
-                                    'otp' => $otp,
-                                    'year' => APP_YEAR,
-                                    'logo' => base_url(config('template.app.header.logo.small.origin')),
-                                    'expire' => get_date('h:i a M jS, Y', $insert->getFirstWithModel()->getValue('expiration'))
-                                ]);
-                                $mail->setHtmlPath('email/html/otp.tpl');
-                                $mail->setBodyPath('email/text/otp.txt');
-
-                                $mailer->addMail($mail);
-                                $mailer->prepare('verify');
-                                if (!$mailer->dispatch('verify')) throw new QueException($mailer->getError('verify'));
-
-                            } catch (QueException $e) {
-                                $this->db()->transRollBack();
-                                throw $this->baseException($e->getMessage(), "Verification failed", HTTP::EXPECTATION_FAILED, false);
-                            }
 
                             $this->db()->transComplete();
 
@@ -123,14 +95,15 @@ class Verification extends Manager implements Api
                                 'expire' => strtotime($model->getValue('expiration')) - APP_TIME,
                                 'email' => $model->getValue('data')
                             ]);
-
-                            break;
                         case self::VERIFICATION_ACTION_VERIFY:
 
-                            $validator->validate('email')->isEmail("Please enter a valid email address")->toLower()
+                            $validator->validate('old_email', true)->isEmail("Please enter a valid email address")->toLower()
+                                ->isFoundInDB('users', 'email', "That email is not associated with any account.");
+
+                            $condition = $validator->validate('email')->isEmail("Please enter a valid email address")->toLower()
                                 ->isFoundInDB('verifications', 'data', "That email has not requested for verification yet.");
 
-                            $condition = $validator->validate('code')->isNumber('Please enter a valid verification code')->hash()
+                            $validator->validate('code')->isNumber('Please enter a valid verification code')->hash()
                                 ->isFoundInDB('verifications', 'code', "That verification code does not exist");
 
                             if ($validator->hasError()) throw $this->baseException(
@@ -170,37 +143,29 @@ class Verification extends Manager implements Api
 
                             $verified = $verify->update(['is_verified' => true]);
 
-                            if (!$verified?->isSuccessful()) throw $this->baseException(
-                                "Sorry, we could not verify that email at this time, please try again later.",
-                                "Verification failed", HTTP::EXPECTATION_FAILED);
-
-                            try {
-
-                                $mailer = $this->mailer();
-
-                                $mail = $this->mail('verified');
-                                $mail->addRecipient($validator->getValue('email'));
-                                $mail->setSubject(($app_name = config('template.app.header.name')) . " Email Verified");
-                                $mail->setData([
-                                    'title' => 'Email Verified',
-                                    'type' => $verify->getValue('type'),
-                                    'data' => $verify->getValue('data'),
-                                    'app_name' => $app_name,
-                                    'year' => APP_YEAR,
-                                    'logo' => base_url(config('template.app.header.logo.small.origin')),
-                                ]);
-                                $mail->setHtmlPath('email/html/verified.tpl');
-                                $mail->setBodyPath('email/text/verified.txt');
-
-                                $mailer->addMail($mail);
-                                $mailer->prepare('verified');
-                                if (!$mailer->dispatch('verified'))
-                                    throw new QueException($mailer->getError('verified'));
-
-                            } catch (QueException $e) {
+                            if (!$verified?->isSuccessful()) {
                                 $this->db()->transRollBack();
-                                throw $this->baseException($e->getMessage(),
-                                    "Verification failed", HTTP::EXPECTATION_FAILED, false);
+                                throw $this->baseException($verified->getQueryError() ?: "Sorry, we could not verify that email at this time, please try again later.",
+                                    "Verification failed", HTTP::EXPECTATION_FAILED);
+                            }
+
+                            if ($input->_isset('old_email')) {
+
+                                $user = $this->db()->find('users', $input['old_email'], 'email');
+
+                                if (!$user->isSuccessful()) {
+                                    $this->db()->transRollBack();
+                                    throw $this->baseException($user->getQueryError() ?: "Sorry, we could not verify that email at this time, please try again later.",
+                                        "Verification failed", HTTP::EXPECTATION_FAILED);
+                                }
+
+                                $user = $user->getFirstWithModel();
+
+                                if (!($update = $user?->update(['email' => $input['email']]))->isSuccessful()) {
+                                    $this->db()->transRollBack();
+                                    throw $this->baseException($update->getQueryError() ?: "Sorry, we could not verify that email at this time, please try again later.",
+                                        "Verification failed", HTTP::EXPECTATION_FAILED);
+                                }
                             }
 
                             $this->db()->transComplete();
@@ -209,27 +174,169 @@ class Verification extends Manager implements Api
                                 'status' => true,
                                 'code' => HTTP::OK,
                                 'title' => 'Verification Successful',
-                                'message' => "Congratulation, your {$validator->getValue('email')} has been verified successfully",
-                            ], HTTP::OK);
+                                'message' => "Congratulation, your email has been verified successfully",
+                            ]);
 
-                            break;
                         default:
                             throw $this->baseException("Please select a valid validation action",
                                 "Invalid validation action", HTTP::EXPECTATION_FAILED);
-                            break;
                     }
 
-                    break;
                 case self::VERIFICATION_TYPE_PHONE:
 
-                    throw $this->baseException("Sorry, we're not yet validating phone numbers",
-                        "Unavailable validation", HTTP::EXPECTATION_FAILED);
+                    switch ($input['route.params.action']) {
+                        case self::VERIFICATION_ACTION_REQUEST:
 
-                    break;
+                            $condition = $validator->validate('phone')
+                                ->isPhoneNumber("Please enter a valid phone number")
+                                ->isUniqueInDB('users', 'phone', "That phone number is already taken.")
+                                ->toLower();
+
+                            if ($validator->hasError()) throw $this->baseException(
+                                "The inputted data is invalid", "Verification failed", HTTP::UNPROCESSABLE_ENTITY);
+
+                            $condition->isNotFoundInDB('verifications', 'data',
+                                'That phone number has already been verified.', function (Builder $builder) {
+                                    $builder->where('type', self::VERIFICATION_TYPE_PHONE);
+                                    $builder->where('is_verified', true);
+                                    $builder->where('is_active', true);
+                                });
+
+                            if ($validator->hasError()) throw $this->baseException(
+                                current($validator->getError('phone')), "Verified", HTTP::CONFLICT);
+
+                            $insert = $this->db()->select('*')->table('verifications')
+                                ->where('data', $validator->getValue('phone'))
+                                ->where('type', self::VERIFICATION_TYPE_PHONE)
+                                ->where('is_active', true)->orderBy('desc', 'id')->exec();
+
+                            if ($insert->isSuccessful()) {
+
+                                if (($model = $insert->getFirstWithModel())->validate('expiration')->isDateLessThan(
+                                    DateTime::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', APP_TIME)),
+                                    'Y-m-d H:i:s')) $model->update(['is_active' => false]); else goto RESPOND_;
+
+                            }
+
+                            $this->db()->transStart();
+
+                            $insert = $this->db()->insert('verifications', [
+                                'data' => $validator->getValue('phone'),
+                                'code' => mt_rand(11111, 99999),
+                                'type' => self::VERIFICATION_TYPE_PHONE,
+                                'expiration' => date('Y-m-d H:i:s', APP_TIME + TIMEOUT_TEN_MIN),
+                                'is_verified' => false,
+                                'is_active' => true
+                            ]);
+
+                            if (!$insert->isSuccessful()) throw $this->baseException(
+                                $insert->getQueryError() ?: "Sorry, we couldn't verify your phone number at this time, please try again later.",
+                                "Verification failed", HTTP::EXPECTATION_FAILED);
+
+                            $this->db()->transComplete();
+
+                            RESPOND_:
+
+                            $model = $insert->getFirstWithModel();
+
+                            return $this->http()->output()->json([
+                                'status' => true,
+                                'code' => HTTP::OK,
+                                'title' => 'Verification OTP Sent',
+                                'message' => "Verify your phone number with the OTP we sent to {$validator->getValue('phone')}",
+                                'expire' => strtotime($model->getValue('expiration')) - APP_TIME,
+                                'email' => $model->getValue('data')
+                            ]);
+                        case self::VERIFICATION_ACTION_VERIFY:
+
+                            $validator->validate('old_email', true)->isPhoneNumber("Please enter a valid phone number")->toLower()
+                                ->isFoundInDB('users', 'phone', "That phone number is not associated with any account.");
+
+                            $condition = $validator->validate('phone')->isPhoneNumber("Please enter a valid phone number")->toLower()
+                                ->isFoundInDB('verifications', 'data', "That phone number has not requested for verification yet.");
+
+                            $validator->validate('code')->isNumber('Please enter a valid verification code')->hash()
+                                ->isFoundInDB('verifications', 'code', "That verification code does not exist");
+
+                            if ($validator->hasError()) throw $this->baseException(
+                                "The inputted data is invalid", "Verification failed", HTTP::UNPROCESSABLE_ENTITY);
+
+                            $condition->isNotFoundInDB('verifications', 'data', 'That phone number has already been verified.',
+                                function (Builder $builder) {
+                                    $builder->where('type', self::VERIFICATION_TYPE_PHONE);
+                                    $builder->where('is_verified', true);
+                                });
+
+                            if ($validator->hasError()) throw $this->baseException(
+                                "The inputted data already exist", "Verified", HTTP::CONFLICT);
+
+                            $verify = $this->db()->select()->table('verifications')
+                                ->where('data', $validator->getValue('phone'))
+                                ->where('code', $validator->getValue('code'))
+                                ->where('type', self::VERIFICATION_TYPE_PHONE)
+                                ->where('is_active', true)
+                                ->exec();
+
+                            if (!$verify->isSuccessful()) throw $this->baseException(
+                                "No active verification request was found for that phone with the specified code.", "Verification failed", HTTP::NOT_FOUND);
+
+                            $verify = $verify->getFirstWithModel();
+
+                            if ($verify->validate('expiration')->isDateLessThan(
+                                DateTime::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', APP_TIME)))) {
+
+                                $verify->update(['is_active' => false]);
+
+                                throw $this->baseException(
+                                    "That verification code has expired.", "Verification failed", HTTP::EXPECTATION_FAILED);
+                            }
+
+                            $this->db()->transStart();
+
+                            $verified = $verify->update(['is_verified' => true]);
+
+                            if (!$verified?->isSuccessful()) {
+                                $this->db()->transRollBack();
+                                throw $this->baseException($verified->getQueryError() ?: "Sorry, we could not verify that phone at this time, please try again later.",
+                                    "Verification failed", HTTP::EXPECTATION_FAILED);
+                            }
+
+                            if ($input->_isset('old_phone')) {
+
+                                $user = $this->db()->find('users', $input['old_phone'], 'phone');
+
+                                if (!$user->isSuccessful()) {
+                                    $this->db()->transRollBack();
+                                    throw $this->baseException($user->getQueryError() ?: "Sorry, we could not verify that phone at this time, please try again later.",
+                                        "Verification failed", HTTP::EXPECTATION_FAILED);
+                                }
+
+                                $user = $user->getFirstWithModel();
+
+                                if (!($update = $user?->update(['phone' => $input['phone']]))->isSuccessful()) {
+                                    $this->db()->transRollBack();
+                                    throw $this->baseException($update->getQueryError() ?: "Sorry, we could not verify that phone at this time, please try again later.",
+                                        "Verification failed", HTTP::EXPECTATION_FAILED);
+                                }
+                            }
+
+                            $this->db()->transComplete();
+
+                            return $this->http()->output()->json([
+                                'status' => true,
+                                'code' => HTTP::OK,
+                                'title' => 'Verification Successful',
+                                'message' => "Congratulation, your phone number has been verified successfully",
+                            ]);
+
+                        default:
+                            throw $this->baseException("Please select a valid validation action",
+                                "Invalid validation action", HTTP::EXPECTATION_FAILED);
+                    }
+
                 default:
                     throw $this->baseException("Please select a valid validation type",
                         "Invalid validation type", HTTP::EXPECTATION_FAILED);
-                    break;
             }
         } catch (BaseException $e) {
 
@@ -238,7 +345,7 @@ class Verification extends Manager implements Api
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'error' => (object) $validator->getErrors()
+                'errors' => (object) $validator->getErrors()
             ], $e->getCode());
         }
     }

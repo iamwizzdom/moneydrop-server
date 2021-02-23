@@ -119,7 +119,7 @@
     <div class="content">
         <div class="row pl-5 p-3">
             <div class="col-md-2">
-                <img src="{$data.logo}" class="img-fluid" style="margin-top: 2em; margin-bottom: 1em;" alt="MoneyDrop Logo">
+                <img src="{base_url($header.logo.small.origin)}" class="img-fluid" style="margin-top: 2em; margin-bottom: 1em;" alt="MoneyDrop Logo">
             </div>
             <div class="col-md-8">
 
@@ -167,7 +167,7 @@
             </div>
             <div class="row">
                 <div class="text-center">
-                    <p>&copy; MoneyDrop {$data.year}</p>
+                    <p>&copy; {$header.name} {$header.year}</p>
                 </div>
             </div>
         </div>

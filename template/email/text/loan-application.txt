@@ -1,4 +1,4 @@
 Hello {$data.name}.
 One {$data.applicant} has applied for you loan {$data.type} of {$data.amount} NGN.
 ------------------------------------------
-Thanks for choosing {$data.app_name}
+Thanks for choosing {$header.name}

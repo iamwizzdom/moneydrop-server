@@ -169,7 +169,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'error' => (object)$validator->getErrors()
+                'errors' => (object)$validator->getErrors()
             ], $e->getCode());
         }
     }
@@ -230,7 +230,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'error' => (object) []
+                'errors' => (object) []
             ], $e->getCode());
         }
     }

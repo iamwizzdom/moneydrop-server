@@ -1,4 +1,4 @@
 Hello {$data.name}.
-Your {$data.app_name} account has been created successfully.
+Your {$header.name} account has been created successfully.
 ------------------------------------------
-Thanks for choosing {$data.app_name}.
+Thanks for choosing {$header.name}.
