@@ -96,30 +96,30 @@ class Update extends Manager implements Api
                         ]
                     ]);
 
-                case 'phone':
-
-                    $validator->validate('phone')->isPhoneNumber("Please enter a valid phone number")
-                        ->startsWithAny(['+234', '234'], "Sorry, we only support nigerian phone numbers for now.")
-                        ->hasMinLength(13, "Enter your phone number with your country code, and it must be at least %s digits long")
-                        ->isNotEqual($this->user('phone'), "That's already your phone number.")
-                        ->isUniqueInDB("users", "phone", "That phone number already exist", $this->user('id'));
-
-                    if ($validator->hasError()) throw $this->baseException(
-                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
-
-                    if (!$this->user()->update($validator->getValidated())) throw $this->baseException(
-                        "Failed to update phone number at this time, please try again later.",
-                        "Update Failed", HTTP::EXPECTATION_FAILED);
-
-                    return $this->http()->output()->json([
-                        'status' => true,
-                        'code' => HTTP::OK,
-                        'title' => 'Update Successful',
-                        'message' => "Phone number updated successfully.",
-                        'response' => [
-                            'user' => $this->user()->getUserArray()
-                        ]
-                    ]);
+//                case 'phone':
+//
+//                    $validator->validate('phone')->isPhoneNumber("Please enter a valid phone number")
+//                        ->startsWithAny(['+234', '234'], "Sorry, we only support nigerian phone numbers for now.")
+//                        ->hasMinLength(13, "Enter your phone number with your country code, and it must be at least %s digits long")
+//                        ->isNotEqual($this->user('phone'), "That's already your phone number.")
+//                        ->isUniqueInDB("users", "phone", "That phone number already exist", $this->user('id'));
+//
+//                    if ($validator->hasError()) throw $this->baseException(
+//                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+//
+//                    if (!$this->user()->update($validator->getValidated())) throw $this->baseException(
+//                        "Failed to update phone number at this time, please try again later.",
+//                        "Update Failed", HTTP::EXPECTATION_FAILED);
+//
+//                    return $this->http()->output()->json([
+//                        'status' => true,
+//                        'code' => HTTP::OK,
+//                        'title' => 'Update Successful',
+//                        'message' => "Phone number updated successfully.",
+//                        'response' => [
+//                            'user' => $this->user()->getUserArray()
+//                        ]
+//                    ]);
 
 //                case 'email':
 //
@@ -151,7 +151,8 @@ class Update extends Manager implements Api
                 case 'gender':
 
                     $validator->validate('gender')->isNumber("Please select a valid gender")
-                        ->isEqualToAny([GENDER_MALE, GENDER_FEMALE], "Sorry, you have not selected a valid gender");
+                        ->isEqualToAny([GENDER_MALE, GENDER_FEMALE], "Sorry, you have not selected a valid gender")
+                    ->isNotEqual($this->user()->getInt('gender'), "That's already your gender");
 
                     if ($validator->hasError()) throw $this->baseException(
                         "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);

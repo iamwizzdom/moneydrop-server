@@ -9,6 +9,7 @@ use access\Register;
 use access\Verification;
 use loan\Repayment;
 use module\home\Dashboard;
+use module\profile\Profile;
 use module\profile\Rate;
 use module\review\Review;
 use notification\Notification;
@@ -23,7 +24,7 @@ use que\route\RouteEntry;
 
 require 'app.settings.php';
 
-Route::register()->groupApi('api/v1', function ($prefix) {
+Route::register()->groupApi('api/app/v1', function ($prefix) {
 
     Route::register()->groupApi("{$prefix}/auth", function ($prefix) {
 
@@ -65,6 +66,13 @@ Route::register()->groupApi('api/v1', function ($prefix) {
     Route::register()->groupApi("{$prefix}/user", function ($prefix) {
 
         return [
+            function (RouteEntry $entry) {
+                $entry->allowGetRequest();
+                $entry->forbidCSRF(false);
+                $entry->setMiddleware('user.auth');
+                $entry->setUri('/profile/info');
+                $entry->setModule(Profile::class);
+            },
             function (RouteEntry $entry) {
                 $entry->allowPostRequest();
                 $entry->forbidCSRF(false);

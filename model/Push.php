@@ -21,11 +21,6 @@ class Push
     // in background when push is recevied
     private bool $is_background = false;
 
-    function __construct()
-    {
-
-    }
-
     public function setTitle(string $title)
     {
         $this->title = $title;

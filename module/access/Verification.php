@@ -91,7 +91,7 @@ class Verification extends Manager implements Api
                                 'status' => true,
                                 'code' => HTTP::OK,
                                 'title' => 'Verification OTP Sent',
-                                'message' => "Verify your email with the OTP we sent to {$validator->getValue('email')}",
+                                'message' => "Verify your email with the OTP we sent you",
                                 'expire' => strtotime($model->getValue('expiration')) - APP_TIME,
                                 'email' => $model->getValue('data')
                             ]);
@@ -243,7 +243,7 @@ class Verification extends Manager implements Api
                                 'status' => true,
                                 'code' => HTTP::OK,
                                 'title' => 'Verification OTP Sent',
-                                'message' => "Verify your phone number with the OTP we sent to {$validator->getValue('phone')}",
+                                'message' => "Verify your phone number with the OTP we sent you",
                                 'expire' => strtotime($model->getValue('expiration')) - APP_TIME,
                                 'email' => $model->getValue('data')
                             ]);

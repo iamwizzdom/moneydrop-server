@@ -42,3 +42,19 @@ DirectoryIndex ^(.*)$ app.route.php
     RewriteRule ^ app.route.php [L]
 
 </IfModule>
+
+# Do the regex check against the URI here, if match, set the "require_auth" var
+
+SetEnvIf Request_URI ^/api/app/v1/(.*) auth=1
+
+AuthName "Application area, please login"
+AuthType Basic
+AuthUserFile C:\xampp\htdocs\personal\moneydrop\.htpasswd
+
+# first, allow everybody
+Order Allow,Deny
+Satisfy any
+Allow from all
+Require valid-user
+# then, deny only if required
+Deny from env=auth

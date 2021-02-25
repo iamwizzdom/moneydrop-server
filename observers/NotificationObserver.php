@@ -3,8 +3,6 @@
 
 namespace observers;
 
-
-use model\Notification;
 use model\Push;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
