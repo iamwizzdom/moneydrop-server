@@ -44,11 +44,11 @@ class UserMiddleware extends Middleware
         $code = HTTP::EXPIRED_AUTHENTICATION;
 
         try {
-            JWT::toUser(headers('JWT_AUTH') ?: '', "userModel");
+            JWT::toUser(headers('Auth-Token') ?: '', "userModel");
         } catch (QueRuntimeException $e) {
             $hasAccess = false;
-            $message = $e->getMessage();
             $code = $e->getHttpCode();
+            $message = $e->getMessage();
         } catch (Exception $e) {
             $hasAccess = false;
             $message = $e->getMessage();

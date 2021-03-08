@@ -35,6 +35,15 @@ class Loan extends Model
     const MIN_LOAN_AMOUNT = 5000;
 
     /**
+     * Loan status
+     */
+    const STATUS_PENDING = STATE_PENDING;
+    const STATUS_AWAITING = STATE_AWAITING;
+    const STATUS_GRANTED = STATE_SUCCESSFUL;
+    const STATUS_COMPLETED = STATE_COMPLETED;
+    const STATUS_REVOKED = STATE_REVOKED;
+
+    /**
      * Loan types
      */
     const LOAN_TYPE_OFFER = -7;
@@ -107,11 +116,11 @@ class Loan extends Model
     }
 
     public function getStatusReadable() {
-        return converter()->convertEnvConst($this->getValue('status'), "STATE_");
+        return converter()->convertClassConst($this->getValue('status'), $this, "STATUS_");
     }
 
     public function isMine() {
-        return user()->getInt('id') == $this->getInt('user_id');
+        return $this->getInt('user_id') == user()->getInt('id');
     }
 
     public function getInterestTypeReadable() {

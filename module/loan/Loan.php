@@ -39,7 +39,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                 case "offer":
 
                     $validator->validate('amount')->if(function (Condition $condition) use ($type) {
-                        return $type == 'request' || $this->getAvailableBalance() > (float) $condition->getValue();
+                        return $type == 'request' || $this->getAvailableBalance() > (float)$condition->getValue();
                     }, "Sorry, you don't have up to {$input['amount']} NGN in your wallet")->isNumeric('Please enter a valid amount')
                         ->isNumberGreaterThanOrEqual(\model\Loan::MIN_LOAN_AMOUNT, "Sorry, you must {$type} at least %s NGN");
 
@@ -74,12 +74,23 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                         $builder->where('interest', \input('interest'));
                         $builder->where('interest_type', \input('interest_type'));
                         $builder->where('loan_type', $type == "offer" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST);
-                        $builder->where('status', STATE_PENDING);
+                        $builder->where('status', \model\Loan::STATUS_PENDING);
                         $builder->where('is_active', true);
                     });
 
                     if ($check->isSuccessful()) throw $this->baseException(
                         "You already {$type}ed that exact loan and it's still pending.", "Loan Failed", HTTP::CONFLICT);
+
+                    $check = $this->db()->check('loans', function (Builder $builder) use ($type, $amount) {
+                        $builder->where('user_id', $this->user('id'));
+                        $builder->where('loan_type', \model\Loan::LOAN_TYPE_REQUEST);
+                        $builder->where('status', \model\Loan::STATUS_COMPLETED, '!=');
+                        $builder->where('status', \model\Loan::STATUS_REVOKED, '!=');
+                        $builder->where('is_active', true);
+                    });
+
+                    if ($check->isSuccessful()) throw $this->baseException(
+                        "You cannot {$type} a loan when you have an uncompleted loan request.", "Loan Failed", HTTP::FORBIDDEN);
 
                     $data = $validator->getValidated();
                     $data['amount'] = $amount;
@@ -87,7 +98,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                     $loan = $this->db()->insert('loans', array_merge([
                         'uuid' => Str::uuidv4(),
                         'user_id' => user('id'),
-                        'status' => STATE_AWAITING,
+                        'status' => \model\Loan::STATUS_PENDING,
                         'loan_type' => $type == "offer" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST
                     ], $data));
 
@@ -113,8 +124,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                 case "requests":
 
                     $loans = $this->db()->select("*")->table('loans')
-                        ->where('status', STATE_SUCCESSFUL, '!=')
-                        ->where('status', STATE_REVOKED, '!=')
+                        ->where('status', \model\Loan::STATUS_AWAITING)
                         ->where('is_active', true)
                         ->where('loan_type', $type == "offers" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST)
                         ->orderBy('desc', 'id')->paginate(PAGINATION_PER_PAGE);
@@ -174,7 +184,8 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
         }
     }
 
-    public function revoke(Input $input) {
+    public function revoke(Input $input)
+    {
 
         try {
 
@@ -192,7 +203,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
             $loan->setModelKey('loanModel');
             $loan = $loan->getFirstWithModel();
 
-            if ($loan?->getInt('status') == STATE_REVOKED)
+            if ($loan?->getInt('status') == \model\Loan::STATUS_REVOKED)
                 throw $this->baseException("This loan has already been revoked.", "Revoke Failed", HTTP::CONFLICT);
 
             if (!$loan?->getBool('is_active'))
@@ -201,13 +212,16 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
             if ($loan?->getInt('user_id') != $this->user('id'))
                 throw $this->baseException("Sorry, you can't revoke a loan that's not yours.", "Revoke Failed", HTTP::UNAUTHORIZED);
 
-            if ($loan?->getInt('status') == STATE_SUCCESSFUL || $loan?->getBool('is_granted') == true)
+            if ($loan?->getInt('status') == \model\Loan::STATUS_GRANTED || $loan?->getBool('is_granted') == true)
                 throw $this->baseException("Sorry, you can't revoke a loan that's been granted.", "Revoke Failed", HTTP::NOT_ACCEPTABLE);
 
-            $revoke = $loan?->update(['status' => STATE_REVOKED]);
+            if ($loan?->getInt('status') == \model\Loan::STATUS_COMPLETED || $loan?->getBool('is_granted') == true)
+                throw $this->baseException("Sorry, you can't revoke a loan that's been granted/completed.", "Revoke Failed", HTTP::NOT_ACCEPTABLE);
+
+            $revoke = $loan?->update(['status' => \model\Loan::STATUS_REVOKED]);
 
             if (!$revoke?->isSuccessful()) throw $this->baseException(
-                "Failed to revoke this loan at this time. Let's that again later", "Revoke Failed", HTTP::EXPECTATION_FAILED);
+                $revoke->getQueryError() ?: "Failed to revoke this loan at this time. Let's that again later", "Revoke Failed", HTTP::EXPECTATION_FAILED);
 
             $this->refreshWallet();
 
@@ -230,7 +244,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'errors' => (object) []
+                'errors' => (object)[]
             ], $e->getCode());
         }
     }

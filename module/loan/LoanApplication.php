@@ -46,7 +46,7 @@ class LoanApplication extends Manager implements Api
                     $validator->validate('loan_id')->isUUID('Please enter a valid loan ID')
                         ->isFoundInDB('loans', 'uuid', "Sorry, either that loan does not exist or it's not eligible for applications yet.",
                             function (Builder $builder) {
-                                $builder->where('status', STATE_AWAITING);
+                                $builder->where('status', \model\Loan::STATUS_AWAITING);
                                 $builder->where('is_active', true);
                             })->isNotFoundInDB('loan_applications', 'loan_id', 'You already applied for this loan',
                             function (Builder $builder) {
@@ -200,7 +200,7 @@ class LoanApplication extends Manager implements Api
             $validator->validate('loan_id')->isUUID('Please enter a valid loan ID')
                 ->isFoundInDB('loans', 'uuid', "Sorry, it seems that loan does not exist or is no longer eligible for granting.",
                     function (Builder $builder) {
-                        $builder->where('status', STATE_AWAITING);
+                        $builder->where('status', \model\Loan::STATUS_AWAITING);
                         $builder->where('is_active', true);
                     })
                 ->isFoundInDB('loans', 'uuid', "Sorry, you can't grant a loan that does not belong to you.",
@@ -249,7 +249,7 @@ class LoanApplication extends Manager implements Api
                 $message = "You have successfully received a loan of {$amount} NGN from {$application->applicant->firstname}.";
             }
 
-            $this->db()->findAll('loan_applications', 'loan_id', $application->getValue('loan_id'),
+            $this->db()->findAll('loan_applications', $application->getValue('loan_id'), 'loan_id',
                 function (Builder $builder) {
                     $builder->where('status', \model\LoanApplication::GRANTED, '!=');
                     $builder->where('is_active', true);
@@ -292,9 +292,9 @@ class LoanApplication extends Manager implements Api
             $input['application_id'] = $params['_id'];
 
             $validator->validate('loan_id')->isUUID('Please enter a valid loan ID')
-                ->isFoundInDB('loans', 'uuid', "Sorry, it seems that loan does not exist or has already been granted to some else.",
+                ->isFoundInDB('loans', 'uuid', "Sorry, it seems that loan does not exist or has already been granted to some.",
                     function (Builder $builder) {
-                        $builder->where('status', STATE_AWAITING);
+                        $builder->where('status', \model\Loan::STATUS_AWAITING);
                         $builder->where('is_active', true);
                     });
 

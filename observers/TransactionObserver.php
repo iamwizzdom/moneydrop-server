@@ -36,6 +36,7 @@ class TransactionObserver extends Observer
     {
         // TODO: Implement onCreating() method.
         if (!$model instanceof Transaction) $model = Transaction::cast($model);
+
         if ($model->getInt('type') == TRANSACTION_TRANSFER) {
             $model->load('to_wallet')->to_wallet->load('user');
             if ($model->to_wallet) $model->set('narration', "Transfer to {$model->to_wallet->user->firstname} {$model->to_wallet->user->lastname}");
@@ -60,6 +61,8 @@ class TransactionObserver extends Observer
             $this->getSignal()->undoOperation($e->getMessage());
             return;
         }
+
+        if (!$model instanceof Transaction) $model = Transaction::cast($model);
 
         if ($model->getInt('status') == APPROVAL_SUCCESSFUL) {
 

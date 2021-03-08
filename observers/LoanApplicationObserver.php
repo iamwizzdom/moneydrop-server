@@ -140,7 +140,7 @@ class LoanApplicationObserver extends Observer
             if ($newModel->loan->getInt('loan_type') == Loan::LOAN_TYPE_REQUEST) {
 
                 if ($newModel->getInt('status') == LoanApplication::GRANTED) {
-                    $update = $newModel->loan->update(['status' => STATE_SUCCESSFUL]);
+                    $update = $newModel->loan->update(['status' => Loan::STATUS_GRANTED]);
                     if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to grant loan at this time");
                     else {
                         $newModel->loan->load('user');
@@ -161,7 +161,7 @@ class LoanApplicationObserver extends Observer
 
             } elseif ($newModel->loan->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
                 if ($newModel->getInt('status') == LoanApplication::GRANTED) {
-                    $update = $newModel->loan->update(['status' => STATE_SUCCESSFUL]);
+                    $update = $newModel->loan->update(['status' => Loan::STATUS_GRANTED]);
                     if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to grant loan at this time");
                     else {
 

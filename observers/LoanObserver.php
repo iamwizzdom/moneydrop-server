@@ -92,14 +92,18 @@ class LoanObserver extends Observer
                 return $newModel->validate('id')->isEqual($m->getValue('id'));
             });
 
-            if (($newModel->getInt('status') != STATE_SUCCESSFUL || !$newModel->getBool('is_active')) &&
-                $oldModel->getInt('status') == STATE_SUCCESSFUL) {
+            if ($oldModel->getInt('status') == Loan::STATUS_GRANTED) {
 
-                $this->getSignal()->undoOperation("You can't invalidate an already successful/granted loan.");
-                return;
+                if ((($newModel->getInt('status') != Loan::STATUS_GRANTED &&
+                        $newModel->getInt('status') != Loan::STATUS_COMPLETED) || !$newModel->getBool('is_active'))) {
+
+                    $this->getSignal()->undoOperation("You can't invalidate an already successful/granted loan.");
+                    return;
+                }
+
             }
 
-            if ($newModel->getInt('status') == STATE_SUCCESSFUL) {
+            if ($newModel->getInt('status') == Loan::STATUS_GRANTED) {
 
                 $application = db()->find('loan_applications', $newModel->getValue('uuid'), 'loan_id', function (Builder $builder) {
                     $builder->where('status', LoanApplication::GRANTED);
@@ -163,7 +167,7 @@ class LoanObserver extends Observer
                     }
 
                 }
-            } elseif ($newModel->getInt('status') == STATE_REVOKED) {
+            } elseif ($newModel->getInt('status') == Loan::STATUS_REVOKED) {
 
                 if ($newModel->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
 

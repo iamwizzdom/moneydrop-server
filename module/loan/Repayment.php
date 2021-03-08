@@ -19,6 +19,7 @@ use que\http\request\Request;
 use que\support\Num;
 use que\support\Str;
 use que\template\Pagination;
+use que\utility\money\Item;
 use utility\Wallet;
 
 class Repayment extends Manager implements Api
@@ -62,10 +63,10 @@ class Repayment extends Manager implements Api
                 $application->loan->loan_type == \model\Loan::LOAN_TYPE_REQUEST && $application->loan->user_id != $this->user('id'))
                 throw $this->baseException("Sorry, you can't pay for a loan you did not receive.", "Repayment Failed", HTTP::NOT_ACCEPTABLE);
 
-            $amountUnpaid = $application->amount_payable - $application->repaid_amount;
+            $amountUnpaid = Item::cents(($application->amount_payable - $application->repaid_amount))->getFactor();
 
             $validator->validate('amount')->isFloatingNumber("Please enter a valid amount")
-                ->isFloatingNumberGreaterThan(1, "Amount must be at least %s NGN")
+                ->isFloatingNumberGreaterThan(.1, "Amount must be at least %s NGN")
                 ->isFloatingNumberLessThanOrEqual($amountUnpaid, "You can't pay more than the %s NGN left unpaid");
 
             if ($validator->hasError()) throw $this->baseException(

@@ -11,6 +11,7 @@ use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
 use que\database\observer\Observer;
 use que\support\Str;
+use que\utility\money\Item;
 
 class LoanRepaymentObserver extends Observer
 {
@@ -57,15 +58,28 @@ class LoanRepaymentObserver extends Observer
                 'direction' => 'w2w',
                 'amount' => $model->getFloat('amount'),
                 'creditor_fee' => $percentage,
-                'status' => APPROVAL_SUCCESSFUL
+                'status' => APPROVAL_SUCCESSFUL,
+                'narration' => "Loan repayment transfer to {$model->application->loan->user->firstname} {$model->application->loan->user->lastname}"
             ]);
 
             if (!$trans->isSuccessful()) $this->getSignal()->undoOperation($trans->getQueryError() ?: "Sorry we couldn't transact repayment at this time. Let's try it again later.");
             else {
 
-                Notification::create("Loan Repayment",
-                    "{$model->payer->firstname} has made a repayment of {$model->amount} NGN on your loan",
-                    "loanRepaymentTransaction", $model->application->loan->user->id, $model->application, $model->payer->picture);
+                if ($model->application->is_repaid) {
+
+                    $model->application->loan->update(['status' => Loan::STATUS_COMPLETED]);
+
+                    $amount = Item::cents($model->amount)->getFactor(true);
+                    Notification::create("Loan Repayment",
+                        "{$model->payer->firstname} has made a repayment of {$amount} NGN on your loan, which has now completed their repayment.",
+                        "loanRepaymentTransaction", $model->application->loan->user->id, $model->application, $model->payer->picture);
+
+                } else {
+                    $amount = Item::cents($model->amount)->getFactor(true);
+                    Notification::create("Loan Repayment",
+                        "{$model->payer->firstname} has made a repayment of {$amount} NGN on your loan",
+                        "loanRepaymentTransaction", $model->application->loan->user->id, $model->application, $model->payer->picture);
+                }
             }
 
         } elseif ($model->application->loan->loan_type == Loan::LOAN_TYPE_REQUEST) {
@@ -82,15 +96,29 @@ class LoanRepaymentObserver extends Observer
                 'direction' => 'w2w',
                 'amount' => $model->getFloat('amount'),
                 'creditor_fee' => $percentage,
-                'status' => APPROVAL_SUCCESSFUL
+                'status' => APPROVAL_SUCCESSFUL,
+                'narration' => "Loan repayment transfer to {$model->application->applicant->firstname} {$model->application->applicant->lastname}"
             ]);
 
             if (!$trans->isSuccessful()) $this->getSignal()->undoOperation($trans->getQueryError() ?: "Sorry we couldn't transact repayment at this time. Let's try it again later.");
             else {
 
-                Notification::create("Loan Repayment",
-                    "{$model->payer->firstname} has made a repayment of {$model->amount} NGN on your loan",
-                    "loanRepaymentTransaction", $model->application->applicant->id, $model->application, $model->payer->picture);
+                if ($model->application->is_repaid) {
+
+                    $model->application->loan->update(['status' => Loan::STATUS_COMPLETED]);
+
+                    $amount = Item::cents($model->amount)->getFactor(true);
+                    Notification::create("Loan Repayment",
+                        "{$model->payer->firstname} has made a repayment of {$amount} NGN on your loan, which has now completed their repayment.",
+                        "loanRepaymentTransaction", $model->application->applicant->id, $model->application, $model->payer->picture);
+
+                } else {
+
+                    $amount = Item::cents($model->amount)->getFactor(true);
+                    Notification::create("Loan Repayment",
+                        "{$model->payer->firstname} has made a repayment of {$amount} NGN on your loan",
+                        "loanRepaymentTransaction", $model->application->applicant->id, $model->application, $model->payer->picture);
+                }
             }
 
         }
