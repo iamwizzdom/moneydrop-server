@@ -128,9 +128,9 @@ trait Wallet
         $availableBalance = (float) Num::item($this->getAvailableBalance())->getCents();
         $balance = (float) Num::item($this->getBalance())->getCents();
         if ($amount > $balance) throw new Exception("Insufficient fund");
-        $balance = ($balance - $amount);
+        if ($availableBalance > ($balance - $amount)) throw new Exception("Unable to unlock more funds than were locked");
         $availableBalance = ($availableBalance + $amount);
-        if ($this->updateBothBalance($balance, $availableBalance,true)) return $balance;
+        if ($this->updateAvailableBalance($availableBalance,true)) return $balance;
         return false;
     }
 
