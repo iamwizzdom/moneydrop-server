@@ -6,6 +6,7 @@ namespace observers;
 
 use model\Loan;
 use model\LoanApplication;
+use model\Notification;
 use model\Transaction;
 use que\database\interfaces\Builder;
 use que\database\interfaces\model\Model;
@@ -206,6 +207,10 @@ class LoanObserver extends Observer
 
                 }
 
+            } elseif ($newModel->getInt('status') == Loan::STATUS_AWAITING) {
+                Notification::create("Loan Approved",
+                    "Your loan {$newModel->loan_type_readable} has been approved",
+                    "loanDetails", $newModel->user_id, $newModel);
             }
         });
 

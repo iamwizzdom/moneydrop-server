@@ -188,7 +188,8 @@ return [
             /*
              * Database timezone
              */
-            'timezone'  => '+00:00',
+//            'timezone'  => '+00:00',
+            'timezone'  => null,
 
             /*
              | Set for PDO::MYSQL SSL connection

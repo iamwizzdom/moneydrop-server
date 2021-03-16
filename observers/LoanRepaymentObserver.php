@@ -60,7 +60,8 @@ class LoanRepaymentObserver extends Observer
             $profit = ($profit * ((1 / 4) * $tenure));
             if ($weeks > $tenure) $profit = ($profit * ((1 / 4) * ceil($weeks)));
         } else {
-            $profit = ($profit * ((1 / 4) * ceil($weeks)));
+            $tenure = $model->application->loan->absolute_tenure;
+            $profit = ($profit * ((1 / 4) * ($tenure < Loan::LOAN_TENURE_ONE_MONTH ? 4 : ceil($weeks))));
         }
 
         $percentage = (($model->getFloat('amount') / $model->application->amount_payable) * $profit);
