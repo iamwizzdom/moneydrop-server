@@ -6,6 +6,7 @@ namespace observers;
 
 use model\Loan;
 use model\LoanApplication;
+use model\Transaction;
 use que\database\interfaces\Builder;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
@@ -34,11 +35,11 @@ class LoanObserver extends Observer
             $trans = db()->insert('transactions', [
                 'uuid' => Str::uuidv4(),
                 'user_id' => $model->getInt('user_id'),
-                'type' => TRANSACTION_CHARGE,
+                'type' => Transaction::TRANS_TYPE_CHARGE,
                 'direction' => "w2s",
                 'gateway_reference' => $model->getValue('uuid'),
                 'amount' => $model->getFloat('amount'),
-                'status' => APPROVAL_PROCESSING,
+                'status' => Transaction::TRANS_STATUS_PROCESSING,
                 'narration' => "Loan offer charge transaction"
             ]);
 
@@ -106,7 +107,7 @@ class LoanObserver extends Observer
             if ($newModel->getInt('status') == Loan::STATUS_GRANTED) {
 
                 $application = db()->find('loan_applications', $newModel->getValue('uuid'), 'loan_id', function (Builder $builder) {
-                    $builder->where('status', LoanApplication::GRANTED);
+                    $builder->where('status', LoanApplication::STATUS_GRANTED);
                     $builder->where('is_active', true);
                 });
                 $application->setModelKey('loanApplicationModel');
@@ -125,10 +126,10 @@ class LoanObserver extends Observer
 
                         if ($transModel->getFloat('amount') == $newModel->amount) {
 
-                            $update = $transModel->update(['type' => TRANSACTION_TRANSFER,
+                            $update = $transModel->update(['type' => Transaction::TRANS_TYPE_TRANSFER,
                                 'from_wallet_id' => $application->loan->user->wallet->id,
                                 'to_wallet_id' => $application->applicant->wallet->id,
-                                'status' => APPROVAL_SUCCESSFUL]);
+                                'status' => Transaction::TRANS_STATUS_SUCCESSFUL]);
 
                             if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to transact at this time");
 
@@ -151,10 +152,10 @@ class LoanObserver extends Observer
 
                         if ($transModel->getFloat('amount') == $newModel->amount) {
 
-                            $update = $transModel->update(['type' => TRANSACTION_TRANSFER,
+                            $update = $transModel->update(['type' => Transaction::TRANS_TYPE_TRANSFER,
                                 'from_wallet_id' => $application->applicant->wallet->id,
                                 'to_wallet_id' => $application->loan->user->wallet->id,
-                                'status' => APPROVAL_SUCCESSFUL]);
+                                'status' => Transaction::TRANS_STATUS_SUCCESSFUL]);
 
                             if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to transact at this time");
 
@@ -177,7 +178,7 @@ class LoanObserver extends Observer
 
                         $transModel = $trans->getFirstWithModel();
 
-                        $update = $transModel->update(['status' => APPROVAL_REVERSED]);
+                        $update = $transModel->update(['status' => Transaction::TRANS_STATUS_REVERSED]);
 
                         if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to transact at this time");
 
@@ -197,7 +198,7 @@ class LoanObserver extends Observer
 
                         $applications = $application->getAllWithModel();
 
-                        $update = $applications->update(['status' => LoanApplication::REJECTED]);
+                        $update = $applications->update(['status' => LoanApplication::STATUS_REJECTED]);
 
                         if (!$update) $this->getSignal()->undoOperation("Unable to transact at this time");
 

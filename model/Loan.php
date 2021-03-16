@@ -159,7 +159,7 @@ class Loan extends Model
         $loan_id = $this->getValue('uuid');
         if (!isset(Loan::$granted[$loan_id])) {
             $application = db()->find('loan_applications', $loan_id, 'loan_id', function (Builder $builder) {
-                $builder->where('status', LoanApplication::GRANTED);
+                $builder->where('status', [LoanApplication::STATUS_GRANTED, LoanApplication::STATUS_REPAID]);
                 $builder->where('is_active', true);
             });
             Loan::$granted[$loan_id] = $application->isSuccessful();
@@ -170,7 +170,8 @@ class Loan extends Model
     public function getApprovedApplicant() {
         $applications = $this->hasMany('loan_applications', 'loan_id', 'uuid', 'loanApplicationModel');
         return $applications->find(function (\que\database\interfaces\model\Model $model) {
-            return $model->getBool('is_active') && $model->getInt('status') == LoanApplication::GRANTED;
+            return $model->getBool('is_active') && ($model->getInt('status') == LoanApplication::STATUS_GRANTED ||
+                    $model->getInt('status') == LoanApplication::STATUS_REPAID);
         });
     }
 

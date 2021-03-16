@@ -54,7 +54,7 @@ class LoanApplication extends Manager implements Api
                                 $builder->where('is_active', true);
                             })->isNotFoundInDB('loan_applications', 'loan_id', 'This loan is already granted to an applicant',
                             function (Builder $builder) {
-                                $builder->where('status', \model\LoanApplication::GRANTED);
+                                $builder->where('status', \model\LoanApplication::STATUS_GRANTED);
                                 $builder->where('is_active', true);
                             });
 
@@ -103,7 +103,7 @@ class LoanApplication extends Manager implements Api
                     $application = $this->db()->insert('loan_applications', [
                         'uuid' => Str::uuidv4(),
                         'note' => $input['note'],
-                        'amount' => Num::item($input['amount'])->getCents(),
+                        'amount' => Item::factor($input['amount'])->getCents(),
                         'loan_id' => $input['loan_id'],
                         'user_id' => $this->user('id')
                     ]);
@@ -153,7 +153,7 @@ class LoanApplication extends Manager implements Api
 
                     if ($applications) {
                         $applications->_set('has_granted', $applications->isTrueForAny(function (Model $model) {
-                            return $model->getInt('status') == \model\LoanApplication::GRANTED;
+                            return $model->getInt('status') == \model\LoanApplication::STATUS_GRANTED;
                         }));
                     }
 
@@ -230,8 +230,9 @@ class LoanApplication extends Manager implements Api
             $application->load('loan');
 
             $grant = $application->update([
-                'status' => \model\LoanApplication::GRANTED,
-                'due_date' => \model\Loan::getLoanDueDate($application->loan->tenure)
+                'status' => \model\LoanApplication::STATUS_GRANTED,
+                'granted_at' => date(DATE_FORMAT_MYSQL),
+                'due_at' => \model\Loan::getLoanDueDate($application->loan->tenure)
             ]);
 
             if (!$grant?->isSuccessful()) throw $this->baseException(
@@ -251,9 +252,9 @@ class LoanApplication extends Manager implements Api
 
             $this->db()->findAll('loan_applications', $application->getValue('loan_id'), 'loan_id',
                 function (Builder $builder) {
-                    $builder->where('status', \model\LoanApplication::GRANTED, '!=');
+                    $builder->where('status', \model\LoanApplication::STATUS_GRANTED, '!=');
                     $builder->where('is_active', true);
-                })->getAllWithModel()?->update(['status' => \model\LoanApplication::REJECTED]);
+                })->getAllWithModel()?->update(['status' => \model\LoanApplication::STATUS_REJECTED]);
 
             return $this->http()->output()->json([
                 'status' => true,
@@ -316,10 +317,13 @@ class LoanApplication extends Manager implements Api
                 "Sorry, it seems that application has already been cancelled.", "Loan Failed", HTTP::EXPECTATION_FAILED);
 
             if ($application->validate('user_id')->isNotEqual($this->user('id'))) throw $this->baseException(
-                "Sorry, you can't cancel an application that doesn't below to you.", "Loan Failed", HTTP::EXPECTATION_FAILED);
+                "Sorry, you can't cancel an application that doesn't belong to you.", "Loan Failed", HTTP::EXPECTATION_FAILED);
 
-            if ($application->validate('status')->isEqual(\model\LoanApplication::GRANTED)) throw $this->baseException(
+            if ($application->validate('status')->isEqual(\model\LoanApplication::STATUS_GRANTED)) throw $this->baseException(
                 "Sorry, you can't cancel an already granted application.", "Loan Failed", HTTP::EXPECTATION_FAILED);
+
+            if ($application->validate('status')->isEqual(\model\LoanApplication::STATUS_REPAID)) throw $this->baseException(
+                "Sorry, you can't cancel an already repaid application.", "Loan Failed", HTTP::EXPECTATION_FAILED);
 
             if ($validator->hasError()) throw $this->baseException(
                 "The inputted data is invalid", "Loan Failed", HTTP::UNPROCESSABLE_ENTITY);

@@ -5,8 +5,10 @@ namespace observers;
 
 
 use model\Loan;
+use model\LoanApplication;
 use model\LoanRepayment;
 use model\Notification;
+use model\Transaction;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
 use que\database\observer\Observer;
@@ -37,12 +39,19 @@ class LoanRepaymentObserver extends Observer
         $model->application->load('loan');
         $model->payer->load('wallet');
 
-        $profit = (($model->application->loan->amount / 100) * $model->application->loan->interest);
-        if ($model->application->loan->getInt('interest_type') == Loan::INTEREST_TYPE_NON_STATIC) {
-            $profit = ($profit * $model->application->loan->absolute_tenure);
+        $interest = $model->application->loan->interest;
+
+        if ($model->application->loan->getInt('interest_type') == Loan::INTEREST_TYPE_NON_STATIC &&
+            $model->application->validate('due_at')->isDateLessThan(new \DateTime('now'))) {
+            $interest += ($interest / 2);
         }
+
+        $profit = (float) Item::cents($model->application->loan->amount)->percentage($interest)->getCents();
+
+        $profit = ($profit * ((1 / 4) * (4 * $model->application->loan->absolute_tenure)));
+
         $percentage = (($model->getFloat('amount') / $model->application->amount_payable) * $profit);
-        $percentage = (($percentage / 100) * $model->application->loan->interest);
+        $percentage = (float) Item::cents($percentage)->percentage($interest)->getCents();
 
         if ($model->application->loan->loan_type == Loan::LOAN_TYPE_OFFER) {
 
@@ -51,14 +60,14 @@ class LoanRepaymentObserver extends Observer
             $trans = db()->insert('transactions', [
                 'uuid' => Str::uuidv4(),
                 'user_id' => $model->user_id,
-                'type' => TRANSACTION_TRANSFER,
+                'type' => Transaction::TRANS_TYPE_TRANSFER,
                 'to_wallet_id' => $model->application->loan->user->wallet->id,
                 'from_wallet_id' => $model->payer->wallet->id,
                 'gateway_reference' => $model->uuid,
                 'direction' => 'w2w',
                 'amount' => $model->getFloat('amount'),
                 'creditor_fee' => $percentage,
-                'status' => APPROVAL_SUCCESSFUL,
+                'status' => Transaction::TRANS_STATUS_SUCCESSFUL,
                 'narration' => "Loan repayment transfer to {$model->application->loan->user->firstname} {$model->application->loan->user->lastname}"
             ]);
 
@@ -68,6 +77,7 @@ class LoanRepaymentObserver extends Observer
                 if ($model->application->is_repaid) {
 
                     $model->application->loan->update(['status' => Loan::STATUS_COMPLETED]);
+                    $model->application->update(['status' => LoanApplication::STATUS_REPAID]);
 
                     $amount = Item::cents($model->amount)->getFactor(true);
                     Notification::create("Loan Repayment",
@@ -89,14 +99,14 @@ class LoanRepaymentObserver extends Observer
             $trans = db()->insert('transactions', [
                 'uuid' => Str::uuidv4(),
                 'user_id' => $model->user_id,
-                'type' => TRANSACTION_TRANSFER,
+                'type' => Transaction::TRANS_TYPE_TRANSFER,
                 'to_wallet_id' => $model->application->applicant->wallet->id,
                 'from_wallet_id' => $model->payer->wallet->id,
                 'gateway_reference' => $model->uuid,
                 'direction' => 'w2w',
                 'amount' => $model->getFloat('amount'),
                 'creditor_fee' => $percentage,
-                'status' => APPROVAL_SUCCESSFUL,
+                'status' => Transaction::TRANS_STATUS_SUCCESSFUL,
                 'narration' => "Loan repayment transfer to {$model->application->applicant->firstname} {$model->application->applicant->lastname}"
             ]);
 
@@ -106,6 +116,7 @@ class LoanRepaymentObserver extends Observer
                 if ($model->application->is_repaid) {
 
                     $model->application->loan->update(['status' => Loan::STATUS_COMPLETED]);
+                    $model->application->update(['status' => LoanApplication::STATUS_REPAID]);
 
                     $amount = Item::cents($model->amount)->getFactor(true);
                     Notification::create("Loan Repayment",

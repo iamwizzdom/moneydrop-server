@@ -21,7 +21,6 @@ use que\http\output\response\Json;
 use que\http\output\response\Jsonp;
 use que\http\output\response\Plain;
 use que\http\request\Request;
-use que\support\Num;
 use que\support\Str;
 use que\utility\money\Item;
 use utility\paystack\exception\PaystackException;
@@ -127,11 +126,11 @@ class Wallet extends Manager implements Api
 
                     $validator->validate('amount')->isFloatingNumber('Please enter a valid amount')
                         ->isFloatingNumberGreaterThanOrEqual(self::MIN_CASH_OUT_AMOUNT,
-                            "Sorry, your top-up amount must be at least %s");
+                            "Sorry, your cash-out amount must be at least %s");
 
-                    $validator->validate('recipient')->isNotEmpty('Please enter a valid recipient')
+                    $validator->validate('recipient')->isNotEmpty('Please enter a valid bank account')
                         ->isFoundInDB('bank_accounts', 'recipient_code',
-                            'That recipient either does not exist or has been deactivated', function (Builder $builder) {
+                            'That bank account either does not exist or has been deactivated', function (Builder $builder) {
                                 $builder->where('user_id', $this->user('id'));
                                 $builder->where('is_active', true);
                             });
@@ -157,10 +156,10 @@ class Wallet extends Manager implements Api
 
                     $trans = $this->db()->find('transactions', $this->user('id'), 'user_id',
                         function (Builder $builder) use ($input) {
-                            $builder->where('amount', Num::item($input['amount'])->getCents());
+                            $builder->where('amount', Item::factor($input['amount'])->getCents());
                             $builder->where('recipient_code', $input['recipient']);
-                            $builder->where('type', TRANSACTION_WITHDRAWAL);
-                            $builder->where('status', APPROVAL_PROCESSING);
+                            $builder->where('type', \model\Transaction::TRANS_TYPE_WITHDRAWAL);
+                            $builder->where('status', \model\Transaction::TRANS_STATUS_PROCESSING);
                             $builder->orderBy('desc', 'id');
                         });
 

@@ -235,7 +235,9 @@ class Update extends Manager implements Api
                         "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
 
                     try {
-                        $bvnResolve = $this->resolve_bvn($validator->getValue('bvn'));
+                        $charge = \utility\Wallet::charge(LIVE ? \model\Transaction::BVN_RESOLVE_PREMIUM_FEE : \model\Transaction::BVN_RESOLVE_STANDARD_FEE, 500,"Resolve BVN charge");
+                        if ($charge->isSuccessful()) $bvnResolve = $this->resolve_bvn($validator->getValue('bvn'));
+                        else throw new PaystackException($charge->getQueryError());
                     } catch (PaystackException $e) {
                         throw $this->baseException($e->getMessage(), "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
                     }

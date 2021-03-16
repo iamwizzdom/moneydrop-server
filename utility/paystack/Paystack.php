@@ -4,10 +4,11 @@
 namespace utility\paystack;
 
 
+use model\Transaction;
 use que\http\curl\CurlRequest;
 use que\http\curl\CurlResponse;
-use que\support\Num;
 use que\support\Str;
+use que\utility\money\Item;
 use que\utility\random\UUID;
 use utility\Card;
 use utility\paystack\exception\PaystackException;
@@ -30,7 +31,7 @@ trait Paystack
 
         if ($amount <= 0) throw new PaystackException("Please set a valid amount to pay.");
 
-        $amount = Num::item($amount)->getCents();
+        $amount = Item::factor($amount)->getCents();
 
         $curl = CurlRequest::getInstance();
 
@@ -64,12 +65,12 @@ trait Paystack
                 $trans = [
                     'uuid' => Str::uuidv4(),
                     'user_id' => user('id'),
-                    'type' => TRANSACTION_TOP_UP,
+                    'type' => Transaction::TRANS_TYPE_TOP_UP,
                     'direction' => 'b2w',
                     'gateway_reference' => $data['reference'],
                     'amount' => $amount,
                     'currency' => $currency,
-                    'status' => APPROVAL_PENDING,
+                    'status' => Transaction::TRANS_STATUS_PENDING,
                     'narration' => 'Add card charge/top-up transaction'
                 ];
 
@@ -118,7 +119,7 @@ trait Paystack
 
         if ($amount <= 0) throw new PaystackException("Please set a valid amount to pay.");
 
-        $amount = Num::item($amount)->getCents();
+        $amount = Item::factor($amount)->getCents();
 
         $curl = CurlRequest::getInstance();
 
@@ -157,12 +158,12 @@ trait Paystack
                     'uuid' => Str::uuidv4(),
                     'user_id' => user('id'),
                     'card_id' => $cardUUID,
-                    'type' => TRANSACTION_TOP_UP,
+                    'type' => Transaction::TRANS_TYPE_TOP_UP,
                     'direction' => 'b2w',
                     'gateway_reference' => $data['reference'],
                     'amount' => $amount,
                     'currency' => $currency,
-                    'status' => APPROVAL_PENDING,
+                    'status' => Transaction::TRANS_STATUS_PENDING,
                     'narration' => "wallet top-up transaction"
                 ];
 
@@ -177,7 +178,7 @@ trait Paystack
                     $veri = $verify->getResponseArray();
                     $data = $veri['data'] ?? [];
                     $success = (($data['status'] ?? 'failed') == 'success');
-                    $fields = ['status' => $success ? APPROVAL_SUCCESSFUL : APPROVAL_FAILED];
+                    $fields = ['status' => $success ? Transaction::TRANS_STATUS_SUCCESSFUL : Transaction::TRANS_STATUS_FAILED];
                     if (!$success) $fields['narration'] = $veri['message'];
                     $trans->getFirstWithModel()?->update($fields);
                     if (!$success) throw new PaystackException($veri['message']);
@@ -355,7 +356,7 @@ trait Paystack
         if (empty($recipient)) throw new PaystackException("Please set a valid recipient.");
         if (empty($reference) || !UUID::is_valid($reference)) throw new PaystackException("Please set a valid reference.");
 
-        $amount = Num::item($amount)->getCents();
+        $amount = Item::factor($amount)->getCents();
 
         $curl = CurlRequest::getInstance();
 
@@ -384,17 +385,22 @@ trait Paystack
 
             if (!empty($data)) {
 
+                $fee = Transaction::TRANSFER_5K_FEE;
+                if ($amount > 500000 && $amount < 5000000) $fee = Transaction::TRANSFER_50K_FEE;
+                elseif ($amount >= 5000000) $fee = Transaction::TRANSFER_51K_FEE;
+
                 $trans = [
                     'uuid' => Str::uuidv4(),
                     'user_id' => user('id'),
-                    'type' => TRANSACTION_WITHDRAWAL,
+                    'type' => Transaction::TRANS_TYPE_WITHDRAWAL,
                     'direction' => "w2b",
                     'recipient_code' => $recipient,
                     'gateway_reference' => $data['reference'],
                     'transfer_code' => $data['transfer_code'],
                     'amount' => $amount,
+                    'fee' => $fee,
                     'currency' => $currency,
-                    'status' => APPROVAL_PENDING,
+                    'status' => Transaction::TRANS_STATUS_PENDING,
                     'narration' => 'wallet cash-out transaction'
                 ];
 
@@ -405,7 +411,7 @@ trait Paystack
                 if ($trans->isSuccessful()) {
 
                     $success = (($data['status'] ?? 'failed') == 'success');
-                    $fields = ['status' => $success ? APPROVAL_SUCCESSFUL : APPROVAL_FAILED];
+                    $fields = ['status' => $success ? Transaction::TRANS_STATUS_SUCCESSFUL : Transaction::TRANS_STATUS_FAILED];
                     if (!$success) $fields['narration'] = $res['message'];
                     $trans->getFirstWithModel()?->update($fields);
                     if (!$success) throw new PaystackException($res['message']);

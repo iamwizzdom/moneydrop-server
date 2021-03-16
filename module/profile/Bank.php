@@ -89,7 +89,9 @@ class Bank extends Manager implements Api
                     }
 
                     try {
-                        $match = $this->match_bvn($this->user('bvn'), $input['account_number'], $input['bank_code']);
+                        $charge = \utility\Wallet::charge(\model\Transaction::BVN_MATCH_FEE, 500, "Match BVN charge");
+                        if ($charge->isSuccessful()) $match = $this->match_bvn($this->user('bvn'), $input['account_number'], $input['bank_code']);
+                        else new PaystackException($charge->getQueryError());
                     } catch (PaystackException $e) {
                         throw $this->baseException($e->getMessage(), "Bank Failed", HTTP::EXPECTATION_FAILED);
                     }

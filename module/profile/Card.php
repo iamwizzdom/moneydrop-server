@@ -128,12 +128,12 @@ class Card extends Manager implements Api
                             $trans = db()->insert('transactions', [
                                 'uuid' => Str::uuidv4(),
                                 'user_id' => user('id'),
-                                'type' => TRANSACTION_TOP_UP,
+                                'type' => \model\Transaction::TRANS_TYPE_TOP_UP,
                                 'direction' => "b2w",
                                 'gateway_reference' => $data['reference'],
                                 'amount' => $data['amount'],
                                 'currency' => $data['currency'],
-                                'status' => APPROVAL_SUCCESSFUL,
+                                'status' => \model\Transaction::TRANS_STATUS_SUCCESSFUL,
                                 'narration' => "Card add top-up transaction"
                             ]);
 

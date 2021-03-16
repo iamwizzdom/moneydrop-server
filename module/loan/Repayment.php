@@ -39,8 +39,8 @@ class Repayment extends Manager implements Api
 
             $validator->validate('application_id')->isUUID("Please enter a valid application ID")
                 ->isFoundInDB("loan_applications", 'uuid',
-                    "That application ID doesn't not exist or has been deactivated", function (Builder $builder) {
-                    $builder->where('status', \model\LoanApplication::GRANTED);
+                    "That application doest not seem to be eligible for repayment", function (Builder $builder) {
+                    $builder->where('status', \model\LoanApplication::STATUS_GRANTED);
                     $builder->where('is_active', true);
                 });
 
@@ -75,7 +75,7 @@ class Repayment extends Manager implements Api
             $repay = $this->db()->insert('loan_repayments', [
                 'uuid' => Str::uuidv4(),
                 'application_id' => $input['application_id'],
-                'amount' => Num::item($input['amount'])->getCents(),
+                'amount' => Item::factor($input['amount'])->getCents(),
                 'user_id' => $this->user('id')
             ]);
 

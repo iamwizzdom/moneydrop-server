@@ -11,7 +11,6 @@ use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
 use que\database\observer\Observer;
 use que\database\observer\ObserverSignal;
-use que\support\Num;
 use que\support\Str;
 use que\utility\money\Item;
 use utility\Wallet;
@@ -37,7 +36,7 @@ class TransactionObserver extends Observer
         // TODO: Implement onCreating() method.
         if (!$model instanceof Transaction) $model = Transaction::cast($model);
 
-        if ($model->getInt('type') == TRANSACTION_TRANSFER) {
+        if ($model->getInt('type') == Transaction::TRANS_TYPE_TRANSFER) {
             $model->load('to_wallet')->to_wallet->load('user');
             if ($model->to_wallet) $model->set('narration', "Transfer to {$model->to_wallet->user->firstname} {$model->to_wallet->user->lastname}");
         }
@@ -64,10 +63,10 @@ class TransactionObserver extends Observer
 
         if (!$model instanceof Transaction) $model = Transaction::cast($model);
 
-        if ($model->getInt('status') == APPROVAL_SUCCESSFUL) {
+        if ($model->getInt('status') == Transaction::TRANS_STATUS_SUCCESSFUL) {
 
             switch ($model->getInt('type')) {
-                case TRANSACTION_TOP_UP:
+                case Transaction::TRANS_TYPE_TOP_UP:
                     try {
 
                         if ($wallet->creditWallet($amount = ($model->getFloat('amount') - $model->getFloat('fee'))) === false) {
@@ -84,7 +83,7 @@ class TransactionObserver extends Observer
                         $this->getSignal()->discontinueOperation($e->getMessage());
                     }
                     break;
-                case TRANSACTION_CHARGE:
+                case Transaction::TRANS_TYPE_CHARGE:
                     try {
 
                         if ($wallet->debitWallet($amount = ($model->getFloat('amount') + $model->getFloat('fee'))) === false) {
@@ -101,7 +100,7 @@ class TransactionObserver extends Observer
                         $this->getSignal()->undoOperation($e->getMessage());
                     }
                     break;
-                case TRANSACTION_WITHDRAWAL:
+                case Transaction::TRANS_TYPE_WITHDRAWAL:
                     try {
 
                         if ($wallet->debitWallet(($model->getFloat('amount') + $model->getFloat('fee'))) === false) {
@@ -112,7 +111,7 @@ class TransactionObserver extends Observer
                         $this->getSignal()->undoOperation($e->getMessage());
                     }
                     break;
-                case TRANSACTION_TRANSFER:
+                case Transaction::TRANS_TYPE_TRANSFER:
                     db()->transStart();
                     try {
 
@@ -135,13 +134,13 @@ class TransactionObserver extends Observer
                         $transfer = db()->insert('transactions', [
                             'uuid' => Str::uuidv4(),
                             'user_id' => $wallet->getWallet()->getInt('user_id'),
-                            'type' => TRANSACTION_TOP_UP,
+                            'type' => Transaction::TRANS_TYPE_TOP_UP,
                             'from_wallet_id' => $model->from_wallet_id,
                             'direction' => "w2w",
                             'gateway_reference' => $model->getValue('uuid'),
                             'amount' => $model->getFloat('amount'),
                             'fee' => $model->getFloat('creditor_fee'),
-                            'status' => APPROVAL_SUCCESSFUL,
+                            'status' => Transaction::TRANS_STATUS_SUCCESSFUL,
                             'narration' => "Money transfer from {$model->from_wallet->user->firstname} {$model->from_wallet->user->lastname}"
                         ]);
 
@@ -158,10 +157,10 @@ class TransactionObserver extends Observer
                     break;
             }
 
-        } elseif ($model->getInt('status') == APPROVAL_PROCESSING) {
+        } elseif ($model->getInt('status') == Transaction::TRANS_STATUS_PROCESSING) {
 
-            if ($model->getInt('type') == TRANSACTION_TRANSFER ||
-                $model->getInt('type') == TRANSACTION_CHARGE) {
+            if ($model->getInt('type') == Transaction::TRANS_TYPE_TRANSFER ||
+                $model->getInt('type') == Transaction::TRANS_TYPE_CHARGE) {
 
                 try {
 
@@ -216,7 +215,7 @@ class TransactionObserver extends Observer
         $newModels->map(function (Model $newModel) use ($oldModels) {
 
             if (!$newModel instanceof Transaction) $newModel = Transaction::cast($newModel);
-            if ($newModel->getInt('type') == TRANSACTION_TRANSFER) {
+            if ($newModel->getInt('type') == Transaction::TRANS_TYPE_TRANSFER) {
                 $newModel->load('to_wallet')->to_wallet->load('user');
                 if ($newModel->to_wallet) $newModel->set('narration', "Transfer to {$newModel->to_wallet->user->firstname} {$newModel->to_wallet->user->lastname}");
             }
@@ -241,8 +240,8 @@ class TransactionObserver extends Observer
             if (!$newModel instanceof Transaction) $newModel = Transaction::cast($newModel);
             if (!$oldModel instanceof Transaction) $oldModel = Transaction::cast($oldModel);
 
-            if ($oldModel->getInt('status') != APPROVAL_SUCCESSFUL &&
-                $newModel->getInt('status') == APPROVAL_REVERSED) {
+            if ($oldModel->getInt('status') != Transaction::TRANS_STATUS_SUCCESSFUL &&
+                $newModel->getInt('status') == Transaction::TRANS_STATUS_REVERSED) {
 
                 //Reverse Transaction
 
@@ -254,7 +253,7 @@ class TransactionObserver extends Observer
                 }
 
                 $i = $oldModel->getInt('type');
-                if ($i == TRANSACTION_TRANSFER || $i == TRANSACTION_CHARGE) {
+                if ($i == Transaction::TRANS_TYPE_TRANSFER || $i == Transaction::TRANS_TYPE_CHARGE) {
                     try {
 
                         if ($wallet->unlockFund($amount = ($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
@@ -270,7 +269,7 @@ class TransactionObserver extends Observer
                     } catch (Exception $e) {
                         $this->getSignal()->undoOperation($e->getMessage());
                     }
-                } elseif ($i == TRANSACTION_TOP_UP) {
+                } elseif ($i == Transaction::TRANS_TYPE_TOP_UP) {
                     try {
 
                         if ($wallet->debitWallet($amount = ($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
@@ -288,8 +287,8 @@ class TransactionObserver extends Observer
                     }
                 }
 
-            } elseif ($oldModel->getInt('status') == APPROVAL_REVERSED &&
-                $newModel->getInt('status') != APPROVAL_REVERSED) {
+            } elseif ($oldModel->getInt('status') == Transaction::TRANS_STATUS_REVERSED &&
+                $newModel->getInt('status') != Transaction::TRANS_STATUS_REVERSED) {
 
                 //Undo Transaction Reversal
 
@@ -300,11 +299,11 @@ class TransactionObserver extends Observer
                     return;
                 }
 
-                if ($newModel->getInt('type') == TRANSACTION_TRANSFER ||
-                    $newModel->getInt('type') == TRANSACTION_CHARGE) {
+                if ($newModel->getInt('type') == Transaction::TRANS_TYPE_TRANSFER ||
+                    $newModel->getInt('type') == Transaction::TRANS_TYPE_CHARGE) {
 
                     switch ($newModel->getInt('status')) {
-                        case APPROVAL_PROCESSING:
+                        case Transaction::TRANS_STATUS_PROCESSING:
                             try {
 
                                 if ($wallet->lockFund($amount = ($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
@@ -321,9 +320,9 @@ class TransactionObserver extends Observer
                                 $this->getSignal()->undoOperation($e->getMessage());
                             }
                             break;
-                        case APPROVAL_SUCCESSFUL:
+                        case Transaction::TRANS_STATUS_SUCCESSFUL:
 
-                            if ($newModel->getInt('type') == TRANSACTION_CHARGE) {
+                            if ($newModel->getInt('type') == Transaction::TRANS_TYPE_CHARGE) {
                                 try {
 
                                     if ($wallet->debitWallet($amount = ($oldModel->getFloat('amount') + $oldModel->getFloat('fee'))) === false) {
@@ -348,7 +347,7 @@ class TransactionObserver extends Observer
                             break;
                     }
 
-                } elseif ($newModel->getInt('type') == TRANSACTION_TOP_UP) {
+                } elseif ($newModel->getInt('type') == Transaction::TRANS_TYPE_TOP_UP) {
                     try {
 
                         if ($wallet->creditWallet($amount = ($oldModel->getFloat('amount') - $oldModel->getFloat('fee'))) === false) {
@@ -366,8 +365,8 @@ class TransactionObserver extends Observer
                     }
                 }
 
-            } elseif ($oldModel->getInt('status') == APPROVAL_PROCESSING &&
-                $newModel->getInt('status') == APPROVAL_SUCCESSFUL) {
+            } elseif ($oldModel->getInt('status') == Transaction::TRANS_STATUS_PROCESSING &&
+                $newModel->getInt('status') == Transaction::TRANS_STATUS_SUCCESSFUL) {
 
 
                 try {
@@ -377,8 +376,8 @@ class TransactionObserver extends Observer
                     return;
                 }
 
-                if ($newModel->getInt('type') == TRANSACTION_TRANSFER ||
-                    $newModel->getInt('type') == TRANSACTION_CHARGE) {
+                if ($newModel->getInt('type') == Transaction::TRANS_TYPE_TRANSFER ||
+                    $newModel->getInt('type') == Transaction::TRANS_TYPE_CHARGE) {
 
                     db()->transStart();
                     try {
@@ -393,7 +392,7 @@ class TransactionObserver extends Observer
                             "Your wallet was debited {$amount} NGN",
                             "transactionReceipt", $newModel->user_id, $newModel);
 
-                        if ($newModel->getInt('type') == TRANSACTION_TRANSFER) {
+                        if ($newModel->getInt('type') == Transaction::TRANS_TYPE_TRANSFER) {
 
                             $wallet = $walletBag->getWalletWithID($newModel->getInt('to_wallet_id'));
 
@@ -402,13 +401,13 @@ class TransactionObserver extends Observer
                             $transfer = db()->insert('transactions', [
                                 'uuid' => Str::uuidv4(),
                                 'user_id' => $wallet->getWallet()->getInt('user_id'),
-                                'type' => TRANSACTION_TOP_UP,
+                                'type' => Transaction::TRANS_TYPE_TOP_UP,
                                 'from_wallet_id' => $newModel->from_wallet_id,
                                 'direction' => "w2w",
                                 'gateway_reference' => $newModel->getValue('uuid'),
                                 'amount' => $newModel->getFloat('amount'),
                                 'fee' => $newModel->getFloat('creditor_fee'),
-                                'status' => APPROVAL_SUCCESSFUL,
+                                'status' => Transaction::TRANS_STATUS_SUCCESSFUL,
                                 'narration' => "Money transfer from {$newModel->from_wallet->user->firstname} {$newModel->from_wallet->user->lastname}"
                             ]);
 
@@ -422,7 +421,7 @@ class TransactionObserver extends Observer
                         $this->getSignal()->undoOperation($e->getMessage());
                     }
 
-                } elseif ($newModel->getInt('type') == TRANSACTION_TOP_UP) {
+                } elseif ($newModel->getInt('type') == Transaction::TRANS_TYPE_TOP_UP) {
                     try {
 
                         if ($wallet->creditWallet($amount = ($newModel->getFloat('amount') - $newModel->getFloat('fee'))) === false) {
@@ -440,11 +439,11 @@ class TransactionObserver extends Observer
                     }
                 }
 
-            } elseif ($oldModel->getInt('status') == APPROVAL_PENDING &&
-                $newModel->getInt('status') == APPROVAL_PROCESSING) {
+            } elseif ($oldModel->getInt('status') == Transaction::TRANS_STATUS_PENDING &&
+                $newModel->getInt('status') == Transaction::TRANS_STATUS_PROCESSING) {
 
-                if ($newModel->getInt('type') == TRANSACTION_TRANSFER ||
-                    $newModel->getInt('type') == TRANSACTION_CHARGE) {
+                if ($newModel->getInt('type') == Transaction::TRANS_TYPE_TRANSFER ||
+                    $newModel->getInt('type') == Transaction::TRANS_TYPE_CHARGE) {
 
                     try {
                         $wallet = $walletBag->getWalletWithUserID($newModel->getInt('user_id'));
@@ -470,8 +469,8 @@ class TransactionObserver extends Observer
                     }
 
                 }
-            } elseif ($oldModel->getInt('status') != APPROVAL_SUCCESSFUL &&
-                $newModel->getInt('status') == APPROVAL_SUCCESSFUL) {
+            } elseif ($oldModel->getInt('status') != Transaction::TRANS_STATUS_SUCCESSFUL &&
+                $newModel->getInt('status') == Transaction::TRANS_STATUS_SUCCESSFUL) {
 
                 $this->onCreated($newModel);
 

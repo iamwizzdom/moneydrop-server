@@ -46,7 +46,7 @@ class History extends Manager implements Api
 //                    ->where('loan_type', Loan::LOAN_TYPE_REQUEST)
                     ->where('is_active', true);
             })
-            ->where('status', LoanApplication::GRANTED)
+            ->where('status', [LoanApplication::STATUS_GRANTED, LoanApplication::STATUS_REPAID])
             ->where('is_active', true)
             ->endWhereGroup()
             ->orderBy('desc', 'id')

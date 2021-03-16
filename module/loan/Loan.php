@@ -15,9 +15,9 @@ use que\http\output\response\Jsonp;
 use que\http\output\response\Plain;
 use que\http\request\Request;
 use que\support\Arr;
-use que\support\Num;
 use que\support\Str;
 use que\template\Pagination;
+use que\utility\money\Item;
 use utility\Wallet;
 
 class Loan extends \que\common\manager\Manager implements \que\common\structure\Api
@@ -66,7 +66,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                     if ($validator->hasError()) throw $this->baseException(
                         "The inputted data is invalid", "Loan Failed", HTTP::UNPROCESSABLE_ENTITY);
 
-                    $amount = Num::item(\input('amount'))->getCents();
+                    $amount = Item::factor(\input('amount'))->getCents();
 
                     $check = $this->db()->check('loans', function (Builder $builder) use ($type, $amount) {
                         $builder->where('amount', $amount);
@@ -91,6 +91,19 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
 
                     if ($check->isSuccessful()) throw $this->baseException(
                         "You cannot {$type} a loan when you have an uncompleted loan request.", "Loan Failed", HTTP::FORBIDDEN);
+
+                    $check = $this->db()->select('*')->table('loan_applications as la')
+                        ->join('loans as l', 'la.loan_id', 'l.uuid')
+                        ->where('la.user_id', $this->user('id'))
+                        ->where('la.status', \model\LoanApplication::STATUS_GRANTED)
+                        ->where('l.loan_type', \model\Loan::LOAN_TYPE_OFFER)
+                        ->where('la.is_active', true)
+                        ->where('l.is_active', true)
+                        ->limit(1)
+                        ->exec();
+
+                    if ($check->isSuccessful()) throw $this->baseException(
+                        "You cannot {$type} a loan when you have an un-repaid loan offer.", "Loan Failed", HTTP::FORBIDDEN);
 
                     $data = $validator->getValidated();
                     $data['amount'] = $amount;
