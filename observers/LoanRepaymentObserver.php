@@ -4,6 +4,7 @@
 namespace observers;
 
 
+use DateTime;
 use model\Loan;
 use model\LoanApplication;
 use model\LoanRepayment;
@@ -41,14 +42,25 @@ class LoanRepaymentObserver extends Observer
 
         $interest = $model->application->loan->interest;
 
-        if ($model->application->loan->getInt('interest_type') == Loan::INTEREST_TYPE_NON_STATIC &&
-            $model->application->validate('due_at')->isDateLessThan(new \DateTime('now'))) {
+        $isDue = $model->application->validate('due_at')->isDateLessThan(new \DateTime('now'));
+
+        if ($model->application->loan->getInt('interest_type') == Loan::INTEREST_TYPE_NON_STATIC && $isDue) {
             $interest += ($interest / 2);
         }
 
+        $date = new DateTime($model->application->getValue('granted_at'));
+        $to = new DateTime('now');
+        $weeks = ($date->diff($to)->days / 7);
+
         $profit = (float) Item::cents($model->application->loan->amount)->percentage($interest)->getCents();
 
-        $profit = ($profit * ((1 / 4) * (4 * $model->application->loan->absolute_tenure)));
+        if ($model->application->loan->getInt('interest_type') == Loan::INTEREST_TYPE_STATIC) {
+            $tenure = $model->application->loan->absolute_tenure;
+            $profit = ($profit * ((1 / 4) * (4 * $tenure)));
+            if ($weeks > (4 * $tenure)) $profit = ((1 / 4) * ceil($weeks));
+        } else {
+            $profit = ($profit * ((1 / 4) * ceil($weeks)));
+        }
 
         $percentage = (($model->getFloat('amount') / $model->application->amount_payable) * $profit);
         $percentage = (float) Item::cents($percentage)->percentage(($interest * ((1 / 4) * (4 * $model->application->loan->absolute_tenure))))->getCents();
