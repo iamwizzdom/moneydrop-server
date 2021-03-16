@@ -51,7 +51,7 @@ class LoanRepaymentObserver extends Observer
         $profit = ($profit * ((1 / 4) * (4 * $model->application->loan->absolute_tenure)));
 
         $percentage = (($model->getFloat('amount') / $model->application->amount_payable) * $profit);
-        $percentage = (float) Item::cents($percentage)->percentage($interest)->getCents();
+        $percentage = (float) Item::cents($percentage)->percentage(($interest * ((1 / 4) * (4 * $model->application->loan->absolute_tenure))))->getCents();
 
         if ($model->application->loan->loan_type == Loan::LOAN_TYPE_OFFER) {
 

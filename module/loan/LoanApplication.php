@@ -245,8 +245,8 @@ class LoanApplication extends Manager implements Api
             }
 
             $this->db()->findAll('loan_applications', $application->getValue('loan_id'), 'loan_id',
-                function (Builder $builder) {
-                    $builder->where('status', \model\LoanApplication::STATUS_GRANTED, '!=');
+                function (Builder $builder) use ($application) {
+                    $builder->where('uuid', $application->uuid, '!=');
                     $builder->where('is_active', true);
                 })->getAllWithModel()?->update(['status' => \model\LoanApplication::STATUS_REJECTED]);
 
