@@ -151,12 +151,6 @@ class LoanApplication extends Manager implements Api
                     $applications = $applications->getAllWithModel();
                     $applications?->load('loan');
 
-                    if ($applications) {
-                        $applications->_set('has_granted', $applications->isTrueForAny(function (Model $model) {
-                            return $model->getInt('status') == \model\LoanApplication::STATUS_GRANTED;
-                        }));
-                    }
-
                     return [
                         'pagination' => [
                             'page' => $pagination->getPaginator("default")->getPage(),
