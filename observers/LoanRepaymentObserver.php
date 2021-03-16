@@ -48,22 +48,23 @@ class LoanRepaymentObserver extends Observer
             $interest += ($interest / 2);
         }
 
+        $profit = (float) Item::cents($model->application->loan->amount)->percentage($interest)->getCents();
+
         $date = new DateTime($model->application->getValue('granted_at'));
         $to = new DateTime('now');
         $weeks = ($date->diff($to)->days / 7);
 
-        $profit = (float) Item::cents($model->application->loan->amount)->percentage($interest)->getCents();
-
         if ($model->application->loan->getInt('interest_type') == Loan::INTEREST_TYPE_STATIC) {
             $tenure = $model->application->loan->absolute_tenure;
-            $profit = ($profit * ((1 / 4) * (4 * $tenure)));
-            if ($weeks > (4 * $tenure)) $profit = ((1 / 4) * ceil($weeks));
+            $tenure = ($tenure < Loan::LOAN_TENURE_ONE_MONTH ? $tenure : (4 * $tenure));
+            $profit = ($profit * ((1 / 4) * $tenure));
+            if ($weeks > $tenure) $profit = ($profit * ((1 / 4) * ceil($weeks)));
         } else {
             $profit = ($profit * ((1 / 4) * ceil($weeks)));
         }
 
         $percentage = (($model->getFloat('amount') / $model->application->amount_payable) * $profit);
-        $percentage = (float) Item::cents($percentage)->percentage(($interest * ((1 / 4) * (4 * $model->application->loan->absolute_tenure))))->getCents();
+        $percentage = (float) Item::cents($percentage)->percentage($interest)->getCents();
 
         if ($model->application->loan->loan_type == Loan::LOAN_TYPE_OFFER) {
 
