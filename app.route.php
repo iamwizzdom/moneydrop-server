@@ -167,21 +167,21 @@ Route::register()->groupApi('api/app/v1', function ($prefix) {
                 $entry->setModule(\loan\Loan::class);
             },
             function (RouteEntry $entry) {
-                $entry->allowPostRequest();
+                $entry->allowPutRequest();
                 $entry->forbidCSRF(false);
                 $entry->setMiddleware('admin.auth');
                 $entry->setUri('/{id:uuid}/approve');
                 $entry->setModuleMethod('approve');
-                $entry->setAllowedIPs(['10.101.187.76']);
+                $entry->setAllowedIPs(['197.210.178.67']);
                 $entry->setModule(\loan\Loan::class);
             },
             function (RouteEntry $entry) {
-                $entry->allowPostRequest();
+                $entry->allowPutRequest();
                 $entry->forbidCSRF(false);
                 $entry->setMiddleware('admin.auth');
                 $entry->setUri('/{id:uuid}/decline');
                 $entry->setModuleMethod('decline');
-                $entry->setAllowedIPs(['10.101.187.76']);
+                $entry->setAllowedIPs(['197.210.178.67']);
                 $entry->setModule(\loan\Loan::class);
             },
             function (RouteEntry $entry) {
