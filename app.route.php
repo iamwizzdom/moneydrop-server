@@ -7,6 +7,8 @@ use access\Login;
 use access\PasswordReset;
 use access\Register;
 use access\Verification;
+use loan\LoanApprove;
+use loan\LoanDecline;
 use loan\Repayment;
 use module\home\Dashboard;
 use module\profile\Profile;
@@ -171,18 +173,16 @@ Route::register()->groupApi('api/app/v1', function ($prefix) {
                 $entry->forbidCSRF(false);
                 $entry->setMiddleware('admin.auth');
                 $entry->setUri('/{id:uuid}/approve');
-                $entry->setModuleMethod('approve');
                 $entry->setAllowedIPs(['197.210.178.67']);
-                $entry->setModule(\loan\Loan::class);
+                $entry->setModule(LoanApprove::class);
             },
             function (RouteEntry $entry) {
                 $entry->allowPutRequest();
                 $entry->forbidCSRF(false);
                 $entry->setMiddleware('admin.auth');
                 $entry->setUri('/{id:uuid}/decline');
-                $entry->setModuleMethod('decline');
                 $entry->setAllowedIPs(['197.210.178.67']);
-                $entry->setModule(\loan\Loan::class);
+                $entry->setModule(LoanDecline::class);
             },
             function (RouteEntry $entry) {
                 $entry->allowPostRequest()->allowGetRequest();
