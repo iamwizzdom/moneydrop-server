@@ -211,6 +211,10 @@ class LoanObserver extends Observer
                 Notification::create("Loan Approved",
                     "Your loan {$newModel->loan_type_readable} has been approved",
                     "loanDetails", $newModel->user_id, $newModel);
+            } elseif ($newModel->getInt('status') == Loan::STATUS_REJECTED) {
+                Notification::create("Loan Rejected",
+                    "Your loan {$newModel->loan_type_readable} has been rejected",
+                    "loanDetails", $newModel->user_id, $newModel);
             }
         });
 

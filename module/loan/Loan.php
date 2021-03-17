@@ -216,14 +216,17 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
             $loan->setModelKey('loanModel');
             $loan = $loan->getFirstWithModel();
 
-            if ($loan?->getInt('status') == \model\Loan::STATUS_REVOKED)
-                throw $this->baseException("This loan has already been revoked.", "Revoke Failed", HTTP::CONFLICT);
+            if ($loan?->getInt('user_id') != $this->user('id'))
+                throw $this->baseException("Sorry, you can't revoke a loan that's not yours.", "Revoke Failed", HTTP::UNAUTHORIZED);
 
             if (!$loan?->getBool('is_active'))
                 throw $this->baseException("Sorry, you can't revoke an inactive loan.", "Revoke Failed", HTTP::FORBIDDEN);
 
-            if ($loan?->getInt('user_id') != $this->user('id'))
-                throw $this->baseException("Sorry, you can't revoke a loan that's not yours.", "Revoke Failed", HTTP::UNAUTHORIZED);
+            if ($loan?->getInt('status') == \model\Loan::STATUS_REVOKED)
+                throw $this->baseException("This loan has already been revoked.", "Revoke Failed", HTTP::CONFLICT);
+
+            if ($loan?->getInt('status') == \model\Loan::STATUS_REJECTED)
+                throw $this->baseException("Sorry, you can't revoke a loan that's been rejected.", "Revoke Failed", HTTP::NOT_ACCEPTABLE);
 
             if ($loan?->getInt('status') == \model\Loan::STATUS_GRANTED || $loan?->getBool('is_granted') == true)
                 throw $this->baseException("Sorry, you can't revoke a loan that's been granted.", "Revoke Failed", HTTP::NOT_ACCEPTABLE);
@@ -291,6 +294,51 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                 'code' => HTTP::OK,
                 'title' => 'Approve Successful',
                 'message' => "Loan approved successfully.",
+                'response' => [
+                    'loan' => $loan
+                ]
+            ]);
+
+        } catch (BaseException $e) {
+            return $this->http()->output()->json([
+                'status' => $e->getStatus(),
+                'code' => $e->getCode(),
+                'title' => $e->getTitle(),
+                'message' => $e->getMessage(),
+                'errors' => (object)[]
+            ], $e->getCode());
+        }
+    }
+
+    public function decline(Input $input) {
+
+        try {
+
+            $input['loan_id'] = Request::getUriParam('id');
+
+            $validator = $input->validate('loan_id');
+
+            if (!$validator->isUUID()) throw $this->baseException(
+                "Please enter a valid loan ID", "Decline Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+            if (!$validator->isFoundInDB('loans', 'uuid')) throw $this->baseException(
+                "Sorry, that loan ID does not exist", "Decline Failed", HTTP::EXPECTATION_FAILED);
+
+            $loan = $this->db()->find('loans', $input['loan_id'], 'uuid');
+            $loan->setModelKey('loanModel');
+            $loan = $loan->getFirstWithModel();
+
+            if ($loan?->getInt('status') != \model\Loan::STATUS_PENDING)
+                throw $this->baseException("You can only decline a pending loan.", "Decline Failed", HTTP::NOT_ACCEPTABLE);
+
+            $update = $loan->update(['status' => \model\Loan::STATUS_AWAITING]);
+            if (!$update->isSuccessful()) throw $this->baseException($update->getQueryError() ?: "Loan decline failed at this time.", "Decline Failed", HTTP::EXPECTATION_FAILED);
+
+            return $this->http()->output()->json([
+                'status' => true,
+                'code' => HTTP::OK,
+                'title' => 'Decline Successful',
+                'message' => "Loan declined successfully.",
                 'response' => [
                     'loan' => $loan
                 ]

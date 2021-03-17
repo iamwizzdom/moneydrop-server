@@ -42,6 +42,7 @@ class Loan extends Model
     const STATUS_GRANTED = STATE_SUCCESSFUL;
     const STATUS_COMPLETED = STATE_COMPLETED;
     const STATUS_REVOKED = STATE_REVOKED;
+    const STATUS_REJECTED = STATE_REJECTED;
 
     /**
      * Loan types
