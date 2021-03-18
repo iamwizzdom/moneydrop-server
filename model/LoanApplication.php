@@ -74,56 +74,41 @@ class LoanApplication extends Model
             $interest = $loan->getFloat('interest');
             $tenure = $loan->getInt('tenure');
 
+            $isDue = $this->validate('due_at')->isDateLessThan($now = new DateTime('now'));
+
+            if ($loan->getInt('interest_type') == Loan::INTEREST_TYPE_NON_STATIC && $isDue) {
+                $interest += ($interest / 2);
+            }
+
             $percentage = (float) Item::cents($amount)->percentage($interest)->getCents();
 
-            $date = new DateTime($this->getValue('granted_at'));
-            $to = new DateTime('now');
-            $weeks = ($date->diff($to)->days / 7);
+            $date = new DateTime($this->getValue('granted_at') ?: $this->getValue('updated_at'));
 
             if ($tenure < Loan::LOAN_TENURE_ONE_MONTH) {
-                if ($tenure == Loan::LOAN_TENURE_ONE_WEEK) {
-                    if ($loan->getInt('interest_type') == Loan::INTEREST_TYPE_STATIC) {
-                        $tenure = (1 / 4);
-                        if ($weeks > 1) $tenure = ($tenure * ceil($weeks));
-                        $amount += ($percentage * $tenure);
-                    } else {
-                        $tenure = ((1 / 4) * ceil($weeks));
-                        if ($weeks > 1) $percentage = (float) Item::cents($amount)->percentage(($interest + ($interest / 2)))->getCents();
-                        $amount += ($percentage * $tenure);
-                    }
-                } elseif ($tenure == Loan::LOAN_TENURE_TWO_WEEKS) {
-                    if ($loan->getInt('interest_type') == Loan::INTEREST_TYPE_STATIC) {
-                        $tenure = ((1 / 4) * 2);
-                        if ($weeks > 2) $tenure = ((1 / 4) * ceil($weeks));
-                        $amount += ($percentage * $tenure);
-                    } else {
-                        $tenure = ((1 / 4) * ceil($weeks));
-                        if ($weeks > 2) $percentage = (float) Item::cents($amount)->percentage(($interest + ($interest / 2)))->getCents();
-                        $amount = ($amount + ($percentage * $tenure));
-                    }
-                } elseif ($tenure == Loan::LOAN_TENURE_THREE_WEEKS) {
-                    if ($loan->getInt('interest_type') == Loan::INTEREST_TYPE_STATIC) {
-                        $tenure = ((1 / 4) * 3);
-                        if ($weeks > 3) $tenure = ((1 / 4) * ceil($weeks));
-                        $amount += ($percentage * $tenure);
-                    } else {
-                        $tenure = ((1 / 4) * ceil($weeks));
-                        if ($weeks > 3) $percentage = (float) Item::cents($amount)->percentage(($interest + ($interest / 2)))->getCents();
-                        $amount += ($percentage * $tenure);
-                    }
-                }
-            } else {
+
+                $weeks = ($date->diff($now)->days / 7) ?: 1;
 
                 if ($loan->getInt('interest_type') == Loan::INTEREST_TYPE_STATIC) {
-                    $tenure = ((1 / 4) * (4 * $tenure));
-                    if ($weeks > (4 * $tenure)) $tenure = ((1 / 4) * ceil($weeks));
-                    $amount += ($percentage * $tenure);
+                    if ($tenure == Loan::LOAN_TENURE_ONE_WEEK) $tenure = (1 / 4);
+                    elseif ($tenure == Loan::LOAN_TENURE_TWO_WEEKS) $tenure = ((1 / 4) * 2);
+                    elseif ($tenure == Loan::LOAN_TENURE_THREE_WEEKS) $tenure = ((1 / 4) * 3);
+                    $amount += ($percentage * ($isDue ? ceil($weeks) : $tenure));
                 } else {
-                    $tenure = ((1 / 4) * ($weeks <= 4 ? 4 : ceil($weeks)));
-                    if ($weeks > (4 * $tenure)) $percentage = (float) Item::cents($amount)->percentage(($interest + ($interest / 2)))->getCents();
-                    $amount += ($percentage * $tenure);
+                    $amount += ($percentage * ceil($weeks));
                 }
+
+            } else {
+
+                $months = ((12 * $date->diff($now)->y) + $date->diff($now)->m) ?: 1;
+
+                if ($loan->getInt('interest_type') == Loan::INTEREST_TYPE_STATIC) {
+                    $amount += ($percentage * ($isDue ? ceil($months) : $tenure));
+                } else {
+                    $amount += ($percentage * ceil($months));
+                }
+
             }
+
             return $amount;
         }
         return 0;
