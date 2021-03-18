@@ -154,7 +154,7 @@ class LoanApplicationObserver extends Observer
                     $trans->getFirstWithModel()?->update(['status' => Transaction::TRANS_STATUS_REVERSED]);
 
                     $newModel->loan->load('user');
-                    Notification::create("Reject Loan Application",
+                    Notification::create("Rejected Loan Application",
                         "Your application for {$newModel->loan->user->firstname}'s loan request has been rejected",
                         "loanApplicationDetails", $newModel->applicant->id, $newModel);
                 }
