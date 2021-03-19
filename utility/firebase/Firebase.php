@@ -46,6 +46,6 @@ trait Firebase
             'Content-Type: application/json'
         ]);
         $curl->setPosts($fields);
-        return $curl->_exec();
+        return $curl->send();
     }
 }

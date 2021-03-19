@@ -27,6 +27,6 @@ trait SmartSms
             'token' => $token
         ]);
 
-        return $curl->_exec();
+        return $curl->send();
     }
 }

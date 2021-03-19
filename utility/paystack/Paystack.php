@@ -54,7 +54,7 @@ trait Paystack
 
         $curl->setPosts($post);
 
-        $response = $curl->_exec();
+        $response = $curl->send();
 
         if ($response->isSuccessful()) {
 
@@ -102,7 +102,7 @@ trait Paystack
         ]);
         $curl->setMethod("GET");
 
-        return $curl->_exec();
+        return $curl->send();
     }
 
     /**
@@ -145,7 +145,7 @@ trait Paystack
 
         $curl->setPosts($post);
 
-        $response = $curl->_exec();
+        $response = $curl->send();
 
         if ($response->isSuccessful()) {
 
@@ -206,7 +206,7 @@ trait Paystack
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
-        return $curl->_exec();
+        return $curl->send();
     }
 
     /**
@@ -249,7 +249,7 @@ trait Paystack
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
-        return $curl->_exec();
+        return $curl->send();
     }
 
     /**
@@ -279,7 +279,7 @@ trait Paystack
             'Cache-Control: no-cache'
         ]);
 
-        return $curl->_exec();
+        return $curl->send();
     }
 
     /**
@@ -300,7 +300,7 @@ trait Paystack
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
-        return $curl->_exec();
+        return $curl->send();
     }
 
     /**
@@ -334,7 +334,7 @@ trait Paystack
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
-        return $curl->_exec();
+        return $curl->send();
     }
 
     /**
@@ -376,7 +376,7 @@ trait Paystack
             'Cache-Control: no-cache'
         ]);
 
-        $response = $curl->_exec();
+        $response = $curl->send();
 
         if ($response->isSuccessful()) {
 

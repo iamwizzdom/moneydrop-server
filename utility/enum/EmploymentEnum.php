@@ -6,7 +6,7 @@
  * Time: 9:43 PM
  */
 
-namespace utility\organization;
+namespace utility\enum;
 
 use Exception;
 use ReflectionClass;
