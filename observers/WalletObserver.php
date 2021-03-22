@@ -49,7 +49,7 @@ class WalletObserver extends Observer
             ]);
             $mail->setHtmlPath('email/html/wallet-created.tpl');
             $mail->setBodyPath('email/text/wallet-created.txt');
-            $mail->setFrom('noreply@moneydrop.com', 'MoneyDrop');
+            $mail->setFrom(config('mail.address.reply'), config('template.app.header.name'));
 
             $mailer->addMail($mail);
             $mailer->prepare('wallet-created');
@@ -143,7 +143,7 @@ class WalletObserver extends Observer
                 ]);
                 $mail->setHtmlPath('email/html/wallet-updated.tpl');
                 $mail->setBodyPath('email/text/wallet-updated.txt');
-                $mail->setFrom('noreply@moneydrop.com', 'MoneyDrop');
+                $mail->setFrom(config('mail.address.reply'), config('template.app.header.name'));
 
                 $mailer->addMail($mail);
                 $mailer->prepare('wallet-updated');

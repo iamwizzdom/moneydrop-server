@@ -90,7 +90,7 @@ class LoanApplicationObserver extends Observer
             ]);
             $mail->setHtmlPath('email/html/loan-application.tpl');
             $mail->setBodyPath('email/text/loan-application.txt');
-            $mail->setFrom('noreply@moneydrop.com', 'MoneyDrop');
+            $mail->setFrom(config('mail.address.reply'), config('template.app.header.name'));
 
             $mailer->addMail($mail);
             $mailer->prepare('loan-application');

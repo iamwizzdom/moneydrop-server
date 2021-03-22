@@ -45,6 +45,7 @@ class VerificationObserver extends Observer
                 ]);
                 $mail->setHtmlPath('email/html/verification-otp.tpl');
                 $mail->setBodyPath('email/text/verification-otp.txt');
+                $mail->setFrom(config('mail.address.reply'), config('template.app.header.name'));
 
                 $mailer->addMail($mail);
                 $mailer->prepare('verify');
@@ -123,6 +124,7 @@ class VerificationObserver extends Observer
                         ]);
                         $mail->setHtmlPath('email/html/verified.tpl');
                         $mail->setBodyPath('email/text/verified.txt');
+                        $mail->setFrom(config('mail.address.reply'), config('template.app.header.name'));
 
                         $mailer->addMail($mail);
                         $mailer->prepare('verified');

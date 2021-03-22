@@ -58,7 +58,7 @@ class UserObserver extends Observer
             ]);
             $mail->setHtmlPath('email/html/successful-registration-notice.tpl');
             $mail->setBodyPath('email/text/successful-registration-notice.txt');
-            $mail->setFrom('account@moneydrop.com', 'MoneyDrop');
+            $mail->setFrom(config('mail.address.reply'), config('template.app.header.name'));
 
             $mailer->addMail($mail);
             $mailer->prepare('register');
@@ -132,6 +132,7 @@ class UserObserver extends Observer
                     ]);
                     $mail->setHtmlPath('email/html/reset-password.tpl');
                     $mail->setBodyPath('email/text/reset-password.txt');
+                    $mail->setFrom(config('mail.address.reply'), config('template.app.header.name'));
 
                     $mailer->addMail($mail);
                     $mailer->prepare('reset');
