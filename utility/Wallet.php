@@ -49,13 +49,15 @@ trait Wallet
 
         $wallet = db()->find('wallets', $walletID ?: ($userID ?: user('id')), $walletID ? 'id' : 'user_id');
 
+        $wallet->setModelKey('walletModel');
+
         if (!$wallet->isSuccessful() && !$restarted) {
             if (!$walletID) $this->createWallet(($userID ?: user('id')));
             $restarted = true;
             goto restart;
         }
 
-        $this->wallet = $wallet->isSuccessful() ? $wallet->getFirstWithModel() : null;
+        $this->wallet = $wallet->isSuccessful() ? $wallet->getFirstWithModel()?->load('user') : null;
     }
 
     /**
@@ -171,11 +173,7 @@ trait Wallet
     {
         if (!$this->wallet) throw new Exception("No wallet found");
 
-        if (!$forceUpdate && $this->wallet->validate('is_active')->isNotEqual(true))
-            throw new Exception("Wallet is deactivated");
-
-        if (!$forceUpdate && $this->wallet->validate('is_frozen')->isEqual(true))
-            throw new Exception("Wallet is frozen");
+        if (!$forceUpdate) $this->validateWallet();
 
         return !!$this->wallet->update(['balance' => $balance])?->isSuccessful();
     }
@@ -190,11 +188,7 @@ trait Wallet
     {
         if (!$this->wallet) throw new Exception("No wallet found");
 
-        if (!$forceUpdate && $this->wallet->validate('is_active')->isNotEqual(true))
-            throw new Exception("Wallet is deactivated");
-
-        if (!$forceUpdate && $this->wallet->validate('is_frozen')->isEqual(true))
-            throw new Exception("Wallet is frozen");
+        if (!$forceUpdate) $this->validateWallet();
 
         return !!$this->wallet->update(['available_balance' => $balance])?->isSuccessful();
     }
@@ -210,11 +204,7 @@ trait Wallet
     {
         if (!$this->wallet) throw new Exception("No wallet found");
 
-        if (!$forceUpdate && $this->wallet->validate('is_active')->isNotEqual(true))
-            throw new Exception("Wallet is deactivated");
-
-        if (!$forceUpdate && $this->wallet->validate('is_frozen')->isEqual(true))
-            throw new Exception("Wallet is frozen");
+        if (!$forceUpdate) $this->validateWallet();
 
         return !!$this->wallet->update([
             'balance' => $balance,
@@ -268,5 +258,27 @@ trait Wallet
     {
         if (!$this->wallet) throw new Exception("No wallet found");
         return !!$this->wallet->update(['is_active' => false])?->isSuccessful();
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function validateWallet() {
+
+        if ($this->wallet->validate('is_active')->isNotEqual(true)) {
+            if ($this->wallet->user->id == user('id')) {
+                throw new Exception("Your wallet is deactivated");
+            } else {
+                throw new Exception("{$this->wallet->user->firstname}'s wallet is deactivated");
+            }
+        }
+
+        if ($this->wallet->validate('is_frozen')->isEqual(true)) {
+            if ($this->wallet->user->id == user('id')) {
+                throw new Exception("Your wallet is frozen");
+            } else {
+                throw new Exception("{$this->wallet->user->firstname}'s wallet is frozen");
+            }
+        }
     }
 }
