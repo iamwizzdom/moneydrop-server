@@ -115,7 +115,7 @@ class LoanApplication extends Model
     }
 
     public function isRepaid() {
-        return $this->getInt('status') == self::STATUS_REPAID || $this->getFloat('repaid_amount') >= $this->getFloat('amount_payable');
+        return $this->getInt('status') == self::STATUS_REPAID || ($this->getFloat('amount_payable') && $this->getFloat('repaid_amount') >= $this->getFloat('amount_payable'));
     }
 
     public function isReviewed() {
