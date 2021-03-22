@@ -121,15 +121,16 @@ trait Wallet
 
     /**
      * @param float $amount
+     * @param bool $forceLock
      * @return float|bool
      * @throws Exception
      */
-    public function lockFund(float $amount): float|bool
+    public function lockFund(float $amount, bool $forceLock = true): float|bool
     {
         $availableBalance = Item::factor($this->getAvailableBalance())->getCents();
         if ($amount > $availableBalance) throw new Exception("Insufficient fund");
         $availableBalance = ($availableBalance - $amount);
-        if ($this->updateAvailableBalance($availableBalance, true)) return $availableBalance;
+        if ($this->updateAvailableBalance($availableBalance, $forceLock)) return $availableBalance;
         return false;
     }
 
@@ -264,6 +265,8 @@ trait Wallet
      * @throws Exception
      */
     private function validateWallet() {
+
+        log_err(['wallet' => $this->wallet]);
 
         if ($this->wallet->validate('is_active')->isNotEqual(true)) {
             if ($this->wallet->user->id == user('id')) {

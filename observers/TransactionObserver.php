@@ -164,7 +164,7 @@ class TransactionObserver extends Observer
 
                 try {
 
-                    if ($wallet->lockFund($amount = ($model->getFloat('amount') + $model->getFloat('fee'))) === false) {
+                    if ($wallet->lockFund($amount = ($model->getFloat('amount') + $model->getFloat('fee')), false) === false) {
                         throw new Exception("Unable to lock wallet fund at this time.");
                     }
 
