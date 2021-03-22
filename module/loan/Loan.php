@@ -137,6 +137,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                 case "requests":
 
                     $loans = $this->db()->select("*")->table('loans')
+                        ->where('amount', $this->user('max_loan_amount'), '<=')
                         ->where('status', \model\Loan::STATUS_AWAITING)
                         ->where('is_active', true)
                         ->where('loan_type', $type == "offers" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST)

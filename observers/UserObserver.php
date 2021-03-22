@@ -16,6 +16,7 @@ use que\database\observer\Observer;
 use que\http\HTTP;
 use que\mail\Mail;
 use que\mail\Mailer;
+use que\support\Str;
 
 class UserObserver extends Observer
 {
@@ -34,6 +35,12 @@ class UserObserver extends Observer
     public function onCreated(Model $model)
     {
         // TODO: Implement onCreated() method.
+        db()->insert('system_ratings', [
+            'rating' => 0,
+            'user_id' => $model->getInt('id'),
+            'is_active' => true
+        ]);
+
         try {
 
             $mailer = Mailer::getInstance();

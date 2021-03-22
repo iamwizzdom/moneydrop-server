@@ -26,6 +26,13 @@ class LoanApplicationObserver extends Observer
     public function onCreating(Model $model)
     {
         // TODO: Implement onCreating() method.
+        if (!$model instanceof LoanApplication) $model = LoanApplication::cast($model);
+
+        if (!$model->has('loan')) $model->load('loan');
+
+        if ($model->getModel('loan')->getFloat('amount') > user('max_loan_amount')) {
+            $this->getSignal()->discontinueOperation("Sorry, you're not qualified to apply for that loan.");
+        }
     }
 
     /**
