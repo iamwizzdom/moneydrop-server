@@ -306,6 +306,7 @@ class LoanApplication extends Manager implements Api
 
             $application->setModelKey('loanApplicationModel');
             $application = $application->getFirstWithModel();
+            $application->load('loan');
 
             if ($application->validate('is_active')->isNotEqual(true)) throw $this->baseException(
                 "Sorry, it seems that application has already been cancelled.", "Loan Failed", HTTP::EXPECTATION_FAILED);
