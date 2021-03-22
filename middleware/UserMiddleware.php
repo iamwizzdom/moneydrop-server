@@ -40,6 +40,7 @@ class UserMiddleware extends Middleware
 //        sleep(2);
         // TODO: Implement handle() method.
         $hasAccess = true;
+        $title = "Auth Error";
         $message = "";
         $code = HTTP::EXPIRED_AUTHENTICATION;
 
@@ -48,6 +49,7 @@ class UserMiddleware extends Middleware
         } catch (QueRuntimeException $e) {
             $hasAccess = false;
             $code = $e->getHttpCode();
+            $title = $e->getTitle();
             $message = $e->getMessage();
         } catch (Exception $e) {
             $hasAccess = false;
@@ -58,7 +60,7 @@ class UserMiddleware extends Middleware
 
         if (!$hasAccess) {
 
-            $this->setTitle("Auth Error");
+            $this->setTitle($title);
             $this->setResponse(http()->output()->json([
                 'status' => false,
                 'message' => $message,
