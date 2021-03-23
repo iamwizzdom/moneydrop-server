@@ -35,7 +35,7 @@ class LoanApprove extends \que\common\manager\Manager implements \que\common\str
                 "Sorry, that loan ID does not exist", "Approve Failed", HTTP::EXPECTATION_FAILED);
 
             $loan = $this->db()->find('loans', $input['loan_id'], 'uuid');
-            $loan->setModelKey('loanModel');
+//            $loan->setModelKey('loanModel');
             $loan = $loan->getFirstWithModel();
 
             if ($loan?->getInt('status') != \model\Loan::STATUS_PENDING)
