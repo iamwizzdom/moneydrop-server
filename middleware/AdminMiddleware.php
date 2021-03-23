@@ -29,6 +29,7 @@ use que\security\JWT\Exceptions\UnsupportedTokenTypeException;
 use que\security\JWT\JWT;
 use que\security\Middleware;
 use que\security\MiddlewareResponse;
+use que\user\User;
 use que\utility\hash\Hash;
 
 class AdminMiddleware extends Middleware
@@ -55,6 +56,9 @@ class AdminMiddleware extends Middleware
 
             return $this;
         }
+
+        //login anonymous
+        User::login((object)[]);
 
         return parent::handle($input);
     }
