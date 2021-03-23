@@ -41,7 +41,7 @@ class LoanDecline extends \que\common\manager\Manager implements \que\common\str
             if ($loan?->getInt('status') != \model\Loan::STATUS_PENDING)
                 throw $this->baseException("You can only decline a pending loan.", "Decline Failed", HTTP::NOT_ACCEPTABLE);
 
-            $update = $loan->update(['status' => \model\Loan::STATUS_AWAITING]);
+            $update = $loan->update(['status' => \model\Loan::STATUS_REJECTED]);
             if (!$update->isSuccessful()) throw $this->baseException($update->getQueryError() ?: "Loan decline failed at this time.", "Decline Failed", HTTP::EXPECTATION_FAILED);
 
             return $this->http()->output()->json([
