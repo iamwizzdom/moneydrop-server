@@ -40,6 +40,33 @@ class Update extends Manager implements Api
         try {
 
             switch (Request::getUriParam('type')) {
+                case 'bank_statement':
+
+                    $file = $validator->validateFile();
+                    $file->setMaxFileSize(convert_mega_bytes(2));
+                    $file->setAllowedExtension(['pdf']);
+                    $file->setUploadDir('/profile/bank_statement/');
+                    $file->setFileName(Hash::sha("bank_statement_{$this->user('id')}"));
+
+                    if (!$file->upload("bank_statement"))
+                        $validator->addConditionErrors('bank_statement', $file->getErrors('bank_statement'), true);
+
+                    if ($validator->hasError()) throw $this->baseException(
+                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+                    if (!$this->user()->getModel()->getModel('bank_statement')->update(['file' => "storage/{$file->getFileInfo('path')}"]))
+                        throw $this->baseException("Failed to update picture at this time, please try again later.", "Update Failed", HTTP::EXPECTATION_FAILED);
+
+                    return $this->http()->output()->json([
+                        'status' => true,
+                        'code' => HTTP::OK,
+                        'title' => 'Update Successful',
+                        'message' => "Bank statement updated successfully.",
+                        'response' => [
+                            'user' => $this->user()->getUserArray()
+                        ]
+                    ]);
+
                 case 'picture':
 
                     $file = $validator->validateBase64File();

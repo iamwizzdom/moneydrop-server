@@ -6,6 +6,7 @@
  * Time: 9:34 AM
  */
 
+use model\BankStatement;
 use model\Card;
 use model\LoanApplication;
 use model\LoanRepayment;
@@ -93,7 +94,8 @@ return [
         'loanApplicationModel' => LoanApplication::class,
         'loanRepaymentModel' => LoanRepayment::class,
         'reviewModel' => Review::class,
-        'notificationModel' => Notification::class
+        'notificationModel' => Notification::class,
+        'bankStatement' => BankStatement::class
     ],
 
     /*

@@ -18,7 +18,7 @@ class User extends Model
     protected array $hidden = ['password', 'pn_token'];
     protected array $fillable = ['uuid', 'firstname', 'middlename', 'lastname', 'phone', 'email', 'password', 'bvn',
         'picture', 'dob', 'gender', 'address', 'country_id', 'state_id', 'status', 'is_active'];
-    protected array $appends = ['verified', 'country', 'state', 'rating', 'max_loan_amount'];
+    protected array $appends = ['bank_statement', 'verified', 'country', 'state', 'rating', 'max_loan_amount'];
     protected array $casts = ['id,gender,country_id,state_id,status' => 'int',
         'address,country,state,bvn,pn_token,picture' => 'string', 'is_active' => 'bool'];
 
@@ -28,6 +28,10 @@ class User extends Model
 
     public function getState() {
         return converter()->convertState($this->getInt('state_id'), 'stateName');
+    }
+
+    public function getBankStatement() {
+        return $this->hasOne('bank_statements', 'user_id');
     }
 
     public function getVerified() {

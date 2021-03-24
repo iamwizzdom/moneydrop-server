@@ -41,6 +41,8 @@ class UserObserver extends Observer
             'is_active' => true
         ]);
 
+        db()->insert('bank_statements', ['user_id' => $model->getInt('id')]);
+
         try {
 
             $mailer = Mailer::getInstance();
