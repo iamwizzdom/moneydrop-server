@@ -13,7 +13,7 @@ use que\database\model\Model;
 
 class BankStatement extends Model
 {
-    protected array $fillable = ['uuid', 'file', 'user_id', 'expires_at'];
+    protected array $fillable = ['uuid', 'file', 'file_name', 'user_id', 'expires_at'];
     protected array $copy = ['expires_at' => 'expiration'];
     protected array $casts = ['expiration' => "date:jS M 'y"];
     protected array $appends = ['is_expired'];

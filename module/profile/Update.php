@@ -54,7 +54,9 @@ class Update extends Manager implements Api
                     if ($validator->hasError()) throw $this->baseException(
                         "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
 
-                    if (!$this->user()->getModel()->getModel('bank_statement')?->update(['file' => "storage/{$file->getFileInfo('path')}"]))
+                    $fileName = $input->getFiles()->get('bank_statement')['name'] ?? $file->getFileName();
+
+                    if (!$this->user()->getModel()->getModel('bank_statement')?->update(['file' => "storage/{$file->getFileInfo('path')}", 'file_name' => $fileName]))
                         throw $this->baseException("Failed to update bank statement at this time, please try again later.", "Update Failed", HTTP::EXPECTATION_FAILED);
 
                     return $this->http()->output()->json([
