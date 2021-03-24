@@ -72,8 +72,16 @@ class User extends Model
             ->where('user_id', $this->getInt('id'))
             ->where('is_active', true)->exec();
 
-        $systemRating = db()->find('system_ratings', $this->getInt('id'), 'user_id')
-            ->getFirstWithModel()?->getFloat('rating') ?: 0;
+        $systemRating = db()->find('system_ratings', $this->getInt('id'), 'user_id');
+
+        if ($systemRating->isSuccessful()) $systemRating = $systemRating->getFirstWithModel()?->getFloat('rating') ?: 0;
+        else {
+            $systemRating = db()->insert('system_ratings', [
+                'rating' => 0,
+                'user_id' => $this->getInt('id'),
+                'is_active' => true
+            ])->getFirstWithModel()?->getFloat('rating') ?: 0;
+        }
 
         if (!$sum->isSuccessful() || !$count->isSuccessful()) return ($systemRating + 0) / 2;
 
