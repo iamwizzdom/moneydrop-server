@@ -31,7 +31,9 @@ class User extends Model
     }
 
     public function getBankStatement() {
-        return $this->hasOne('bank_statements', 'user_id');
+        $statement = $this->hasOne('bank_statements', 'user_id');
+        if (!$statement) $statement = db()->insert('bank_statements', ['user_id' => $this->getInt('id')])->getFirstWithModel();
+        return $statement;
     }
 
     public function getVerified() {
