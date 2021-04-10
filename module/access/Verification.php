@@ -9,9 +9,11 @@ use que\common\exception\BaseException;
 use que\common\exception\QueException;
 use que\common\manager\Manager;
 use que\common\structure\Api;
+use que\common\validator\condition\ConditionError;
 use que\database\interfaces\Builder;
 use que\http\HTTP;
 use que\http\input\Input;
+use que\user\User;
 use que\utility\hash\Hash;
 
 class Verification extends Manager implements Api
@@ -37,6 +39,9 @@ class Verification extends Manager implements Api
 
                             $condition = $validator->validate('email')
                                 ->isEmail("Please enter a valid email address")
+                                ->when($input['old_email'], function (ConditionError $error, $oldEmail) {
+                                    $error->isNotEqual($oldEmail, "That's already your email");
+                                })
                                 ->isUniqueInDB('users', 'email', "That email is already taken.")
                                 ->toLower();
 
@@ -195,6 +200,9 @@ class Verification extends Manager implements Api
 
                             $condition = $validator->validate('phone')
                                 ->isPhoneNumber("Please enter a valid phone number")
+                                ->when($input['old_phone'], function (ConditionError $error, $oldPhone) {
+                                    $error->isNotEqual($oldPhone, "That's already your phone number");
+                                })
                                 ->isUniqueInDB('users', 'phone', "That phone number is already taken.")
                                 ->toLower();
 
