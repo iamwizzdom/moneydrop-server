@@ -42,34 +42,32 @@ class PasswordReset extends Manager implements Api
 
             $user = $this->db()->find('users', $input['email'], 'email')->getFirstWithModel();
 
-            $code = $this->db()->find('password_resets', $user->getValue('id'), 'user_id',
+            $reset = $this->db()->find('password_resets', $user->getValue('id'), 'user_id',
                 function (Builder $builder) {
                     $builder->where('is_active', true);
                 }
             );
 
-            if (!$code->isSuccessful()) {
-                $validator->addConditionError('otp', 'The OTP has either been invalidated or does not exist');
-                throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::UNPROCESSABLE_ENTITY);
+            if (!$reset->isSuccessful()) {
+                $validator->addConditionError('otp', 'Seems a password reset process has not been initiated for that account.');
+                throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::EXPECTATION_FAILED);
             }
 
-            $code = $code->getFirstWithModel();
+            $reset = $reset->getFirstWithModel();
 
-            if ($code->validate('expiration')->isDateLessThan(
-                DateTime::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', APP_TIME)))) {
-
-                $code->update(['is_active' => false]);
-
-                $validator->addConditionError('otp', 'That OTP has expired');
-                throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::UNPROCESSABLE_ENTITY);
-            }
-
-            if ($input->validate('otp')->hash()->isNotEqual($code->getValue('code'))) {
+            if ($input->validate('otp')->hash()->isNotEqual($reset->getValue('code'))) {
                 $validator->addConditionError('otp', 'OTP do not match');
                 throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::UNPROCESSABLE_ENTITY);
             }
 
-            $code->update(['is_active' => false]);
+            $reset->update(['is_active' => false]);
+
+            if ($reset->validate('expiration')->isDateLessThan(
+                DateTime::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', APP_TIME)))) {
+
+                $validator->addConditionError('otp', 'That OTP has expired');
+                throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::UNPROCESSABLE_ENTITY);
+            }
 
             $update = $user->update(['password' => $validator->getValue('password')]);
 
@@ -82,7 +80,7 @@ class PasswordReset extends Manager implements Api
                 'code' => HTTP::OK,
                 'title' => 'Password Reset Successful',
                 'message' => "Your password has been reset successfully, you may now log in."
-            ], HTTP::OK);
+            ]);
 
         } catch (BaseException $e) {
             return $this->http()->output()->json([

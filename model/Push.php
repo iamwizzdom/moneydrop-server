@@ -17,8 +17,8 @@ class Push
 
     // flag indicating whether to show the push
     // notification or not
-    // this flag will be useful when perform some opertation
-    // in background when push is recevied
+    // this flag will be useful when perform some operation
+    // in background when push is received
     private bool $is_background = false;
 
     public function setTitle(string $title)

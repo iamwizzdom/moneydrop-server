@@ -73,6 +73,12 @@ class Register extends Manager implements Api
             if ($validator->hasError()) throw $this->baseException(
                 "The inputted data is invalid", "Registration Failed", HTTP::UNPROCESSABLE_ENTITY, false);
 
+            $previousPnTokenUser = $this->db()->find('users', $validator->getValue('pn_token'), 'pn_token');
+
+            if ($previousPnTokenUser->isSuccessful()) {
+                $previousPnTokenUser->getFirstWithModel()->update(['pn_token' => null]);
+            }
+
             $user = $this->db()->insert('users', $validator->getValidated());
 
             if (!$user->isSuccessful()) throw $this->baseException(

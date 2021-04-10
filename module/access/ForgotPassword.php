@@ -28,7 +28,7 @@ class ForgotPassword extends Manager implements Api
                 ->isFoundInDB('users', 'email', 'That email address is not associated to any account');
 
             if ($validator->hasError()) throw $this->baseException("The inputted data is invalid",
-                "Forgot password Failed", HTTP::UNPROCESSABLE_ENTITY);
+                "Forgot password failed", HTTP::UNPROCESSABLE_ENTITY);
 
             $user = $this->db()->find('users', $input['email'], 'email')->getFirstWithModel();
 
@@ -44,7 +44,7 @@ class ForgotPassword extends Manager implements Api
                 return $this->http()->output()->json([
                     'status' => true,
                     'code' => HTTP::CONFLICT,
-                    'title' => 'Password OTP Sent',
+                    'title' => 'Forgot password successful',
                     'message' => "An OTP has already been sent to your email.",
                     'errors' => (object)[]
                 ], HTTP::CONFLICT);
@@ -67,7 +67,7 @@ class ForgotPassword extends Manager implements Api
 
             if (!$response->isSuccessful()) throw $this->baseException(
                 "Sorry, we couldn't send you an OTP at this time, please try again later",
-                "Forgot password Failed", HTTP::EXPECTATION_FAILED);
+                "Forgot password failed", HTTP::EXPECTATION_FAILED);
 
             try {
 
@@ -102,7 +102,7 @@ class ForgotPassword extends Manager implements Api
             return $this->http()->output()->json([
                 'status' => true,
                 'code' => HTTP::OK,
-                'title' => 'Password OTP Sent',
+                'title' => 'Forgot password successful',
                 'message' => "An OTP has been sent successfully to your email, use it to reset your password."
             ]);
 

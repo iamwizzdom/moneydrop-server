@@ -14,7 +14,7 @@ trait SmartSms
      */
     public function send(string $message, string $to): CurlResponse
     {
-        $token = 'JzTVSHcCxmmKxwuJN7MF3iO6E6x7q50nVjdNIq1I4eIzMoXmmgQG3wB5fzbzOoi2xp44peY2bOzxffDAAlbBiWKCrrAVLQtWDLfR';
+        $token = '2nZc8deS6gM1uuXT5XDQNFx1wQIIdwAtDPx5vRDeid2pnJH3Ee2MTEIurcnOqyAYWzqo6NN7aO2DbsGsZNROL7JjY8OEi6NpM2Ah';
 
         $curl = http()->curl_request();
         $curl->setUrl('https://smartsmssolutions.com/api/json.php?');
