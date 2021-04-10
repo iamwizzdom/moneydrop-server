@@ -249,7 +249,7 @@ class Verification extends Manager implements Api
                             ]);
                         case self::VERIFICATION_ACTION_VERIFY:
 
-                            $validator->validate('old_email', true)->isPhoneNumber("Please enter a valid phone number")->toLower()
+                            $validator->validate('old_phone', true)->isPhoneNumber("Please enter a valid phone number")->toLower()
                                 ->isFoundInDB('users', 'phone', "That phone number is not associated with any account.");
 
                             $condition = $validator->validate('phone')->isPhoneNumber("Please enter a valid phone number")->toLower()
