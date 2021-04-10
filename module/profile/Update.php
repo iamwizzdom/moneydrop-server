@@ -40,7 +40,7 @@ class Update extends Manager implements Api
         try {
 
             switch (Request::getUriParam('type')) {
-                case 'bank_statement':
+                case 'bank-statement':
 
                     $file = $validator->validateFile();
                     $file->setMaxFileSize(convert_mega_bytes(2));

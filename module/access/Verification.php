@@ -200,6 +200,8 @@ class Verification extends Manager implements Api
 
                             $condition = $validator->validate('phone')
                                 ->isPhoneNumber("Please enter a valid phone number")
+                                ->startsWithAny(['+234', '234'], "Sorry, we only support nigerian phone numbers for now.")
+                                ->hasMinLength(13, "Enter your phone number with your country code, and it must be at least %s digits long")
                                 ->when($input['old_phone'], function (ConditionError $error, $oldPhone) {
                                     $error->isNotEqual($oldPhone, "That's already your phone number");
                                 })

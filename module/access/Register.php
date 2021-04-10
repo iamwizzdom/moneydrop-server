@@ -37,11 +37,18 @@ class Register extends Manager implements Api
             $validator->validate('phone')->isPhoneNumber("Please enter a valid phone number")
                 ->startsWithAny(['+234', '234'], "Sorry, we only support nigerian phone numbers for now.")
                 ->hasMinLength(13, "Enter your phone number with your country code, and it must be at least %s digits long")
+                ->isFoundInDB('verifications', 'data', "That phone number has not been verified.",
+                    function (Builder $builder) {
+                        $builder->where('type', Verification::VERIFICATION_TYPE_PHONE);
+                        $builder->where('is_verified', true);
+                        $builder->where('is_active', true);
+                    })
                 ->isUniqueInDB("users", "phone", "That phone number already exist");
 
             $validator->validate('email')->isEmail("Please enter a valid email address")->toLower()
                 ->isFoundInDB('verifications', 'data', "That email has not been verified.",
                     function (Builder $builder) {
+                    $builder->where('type', Verification::VERIFICATION_TYPE_EMAIL);
                     $builder->where('is_verified', true);
                     $builder->where('is_active', true);
                 })->isUniqueInDB("users", "email", "That email address already exist");

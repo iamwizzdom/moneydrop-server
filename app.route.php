@@ -79,7 +79,7 @@ Route::register()->groupApi('api/app/v1', function ($prefix) {
                 $entry->allowPostRequest();
                 $entry->forbidCSRF(false);
                 $entry->setMiddleware('user.auth');
-                $entry->setUri('/profile/update/{type:alpha|/^[a-zA-Z0-9_]+$/}');
+                $entry->setUri('/profile/update/{type:alpha|/^[a-zA-Z0-9\-_]+$/}');
                 $entry->setModule(Update::class);
             },
             function (RouteEntry $entry) {
