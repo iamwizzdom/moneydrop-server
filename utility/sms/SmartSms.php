@@ -19,7 +19,7 @@ trait SmartSms
         $curl = http()->curl_request();
         $curl->setUrl('https://smartsmssolutions.com/api/json.php?');
         $curl->setPosts([
-            'sender' => "MoneyDrop",
+            'sender' => "config('template.app.header.name')",
             'to' => $to,
             'message' => $message,
             'type' => '0',

@@ -20,7 +20,7 @@ return [
     'app' => [
         'header' => [
             'title' => '',
-            'name' => 'MoneyDrop',
+            'name' => 'Moneydrop',
             'desc' => '',
             'fav_icon' => '',
             'icon' => 'storage/system/logo.png',
