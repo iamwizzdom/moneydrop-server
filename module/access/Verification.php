@@ -166,6 +166,12 @@ class Verification extends Manager implements Api
                                     throw $this->baseException($update->getQueryError() ?: "Sorry, we could not verify that email at this time, please try again later.",
                                         "Verification failed", HTTP::EXPECTATION_FAILED);
                                 }
+
+                                $this->db()->findAll('verifications', $input['old_email'], 'data', function ($query) {
+                                    $query->where('type', self::VERIFICATION_TYPE_EMAIL);
+                                    $query->where('is_verified', true);
+                                    $query->where('is_active', true);
+                                })?->getAllWithModel()?->update(['is_verified' => false, 'is_active' => false]);
                             }
 
                             $this->db()->transComplete();
@@ -318,6 +324,12 @@ class Verification extends Manager implements Api
                                     throw $this->baseException($update->getQueryError() ?: "Sorry, we could not verify that phone at this time, please try again later.",
                                         "Verification failed", HTTP::EXPECTATION_FAILED);
                                 }
+
+                                $this->db()->findAll('verifications', $input['old_phone'], 'data', function ($query) {
+                                    $query->where('type', self::VERIFICATION_TYPE_PHONE);
+                                    $query->where('is_verified', true);
+                                    $query->where('is_active', true);
+                                })?->getAllWithModel()?->update(['is_verified' => false, 'is_active' => false]);
                             }
 
                             $this->db()->transComplete();
