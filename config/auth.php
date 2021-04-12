@@ -105,9 +105,43 @@ return [
         */
         'leeway' => 0,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | App Keys
+    |--------------------------------------------------------------------------
+    |
+    | Here you specify your app unique keys
+    |
+    */
     'app' => [
         'salt' => sha1("MAY GOD HAVE MERCY ON US ALL -- {86#08*43@+17&60!57}"),
         'secret' => sha1("MAY GOD HELP US ALL -- [86#08*43@+17&60!57]"),
-        'version' => '1.1'
+        'version' => '1.0'
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Auth Provider
+    |--------------------------------------------------------------------------
+    |
+    | Here you specify the default provider
+    |
+    */
+    'default' => [
+        'provider' => 'user'
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auth Providers
+    |--------------------------------------------------------------------------
+    |
+    | Here you specify the db model keys to be used to provide user authentication.
+    | Note: Theses model keys must be registered in your database config.
+    |
+    */
+    'providers' => [
+        'user' => 'userModel'
     ]
 ];

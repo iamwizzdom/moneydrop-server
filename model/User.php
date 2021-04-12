@@ -20,14 +20,14 @@ class User extends Model
         'picture', 'dob', 'gender', 'address', 'country_id', 'state_id', 'status', 'is_active'];
     protected array $appends = ['bank_statement', 'verified', 'country', 'state', 'rating', 'max_loan_amount'];
     protected array $casts = ['id,gender,country_id,state_id,status' => 'int',
-        'address,country,state,bvn,pn_token,picture' => 'string', 'is_active' => 'bool'];
+        'address,bvn,pn_token,picture' => 'string', 'is_active' => 'bool'];
 
     public function getCountry() {
-        return converter()->convertCountry($this->getInt('country_id'), 'countryName');
+        return $this->belongTo('countries', 'country_id');
     }
 
     public function getState() {
-        return converter()->convertState($this->getInt('state_id'), 'stateName');
+        return $this->belongTo('states', 'state_id');
     }
 
     public function getBankStatement() {

@@ -28,6 +28,7 @@ use que\security\JWT\Exceptions\UnsupportedTokenTypeException;
 use que\security\JWT\JWT;
 use que\security\Middleware;
 use que\security\MiddlewareResponse;
+use que\user\User;
 
 class UserMiddleware extends Middleware
 {
@@ -45,12 +46,9 @@ class UserMiddleware extends Middleware
         $code = HTTP::EXPIRED_AUTHENTICATION;
 
         try {
-            JWT::toUser(headers('Auth-Token') ?: '', "userModel");
+            JWT::toUser((headers('Auth-Token') ?: ''), config('auth.default.provider', 'user'));
         } catch (QueRuntimeException $e) {
-            $hasAccess = false;
-            $code = $e->getHttpCode();
-            $title = $e->getTitle();
-            $message = $e->getMessage();
+            throw $e;
         } catch (Exception $e) {
             $hasAccess = false;
             $message = $e->getMessage();

@@ -21,6 +21,7 @@ use que\http\output\response\Jsonp;
 use que\http\output\response\Plain;
 use que\http\request\Request;
 use que\route\Route;
+use que\support\Arr;
 use que\utility\hash\Hash;
 use utility\paystack\exception\PaystackException;
 use utility\paystack\Paystack;
@@ -56,7 +57,7 @@ class Update extends Manager implements Api
 
                     $fileName = $input->getFiles()->get('bank_statement')['name'] ?? $file->getFileName();
 
-                    if (!$this->user()->getModel()->getModel('bank_statement')?->update(['file' => "storage/{$file->getFileInfo('path')}", 'file_name' => $fileName]))
+                    if (!$this->user()->bank_statement?->update(['file' => "storage/{$file->getFileInfo('path')}", 'file_name' => $fileName]))
                         throw $this->baseException("Failed to update bank statement at this time, please try again later.", "Update Failed", HTTP::EXPECTATION_FAILED);
 
                     return $this->http()->output()->json([
@@ -65,7 +66,7 @@ class Update extends Manager implements Api
                         'title' => 'Update Successful',
                         'message' => "Bank statement updated successfully.",
                         'response' => [
-                            'user' => $this->user()->getUserArray()
+                            'user' => $this->user()
                         ]
                     ]);
 
@@ -85,7 +86,7 @@ class Update extends Manager implements Api
 
                     if (!$this->user()->update(['picture' => "storage/{$file->getFileInfo('path')}"]))
                         throw $this->baseException("Failed to update picture at this time, please try again later.",
-                        "Update Failed", HTTP::EXPECTATION_FAILED);
+                            "Update Failed", HTTP::EXPECTATION_FAILED);
 
                     return $this->http()->output()->json([
                         'status' => true,
@@ -93,7 +94,7 @@ class Update extends Manager implements Api
                         'title' => 'Update Successful',
                         'message' => "Picture updated successfully.",
                         'response' => [
-                            'user' => $this->user()->getUserArray()
+                            'user' => $this->user()
                         ]
                     ]);
 
@@ -121,7 +122,7 @@ class Update extends Manager implements Api
                         'title' => 'Update Successful',
                         'message' => "Name updated successfully.",
                         'response' => [
-                            'user' => $this->user()->getUserArray()
+                            'user' => $this->user()
                         ]
                     ]);
 
@@ -146,7 +147,7 @@ class Update extends Manager implements Api
 //                        'title' => 'Update Successful',
 //                        'message' => "Phone number updated successfully.",
 //                        'response' => [
-//                            'user' => $this->user()->getUserArray()
+//                            'user' => $this->user()
 //                        ]
 //                    ]);
 
@@ -173,7 +174,7 @@ class Update extends Manager implements Api
 //                        'title' => 'Update Successful',
 //                        'message' => "Email address updated successfully.",
 //                        'response' => [
-//                            'user' => $this->user()->getUserArray()
+//                            'user' => $this->user()
 //                        ]
 //                    ]);
 
@@ -181,7 +182,7 @@ class Update extends Manager implements Api
 
                     $validator->validate('gender')->isNumber("Please select a valid gender")
                         ->isEqualToAny([GENDER_MALE, GENDER_FEMALE], "Sorry, you have not selected a valid gender")
-                    ->isNotEqual($this->user()->getInt('gender'), "That's already your gender");
+                        ->isNotEqual($this->user()->getInt('gender'), "That's already your gender");
 
                     if ($validator->hasError()) throw $this->baseException(
                         "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
@@ -196,7 +197,7 @@ class Update extends Manager implements Api
                         'title' => 'Update Successful',
                         'message' => "Gender updated successfully.",
                         'response' => [
-                            'user' => $this->user()->getUserArray()
+                            'user' => $this->user()
                         ]
                     ]);
 
@@ -218,7 +219,7 @@ class Update extends Manager implements Api
                         'title' => 'Update Successful',
                         'message' => "Address updated successfully.",
                         'response' => [
-                            'user' => $this->user()->getUserArray()
+                            'user' => $this->user()
                         ]
                     ]);
 
@@ -229,7 +230,7 @@ class Update extends Manager implements Api
                             \DateTime::createFromFormat('Y-m-d', $this->user('dob')),
                             "That's already your date of birth."
                         )->isDateLessThanOrEqual(
-                                \DateTime::createFromFormat('Y-m-d', date('Y-m-d')),
+                            \DateTime::createFromFormat('Y-m-d', date('Y-m-d')),
                             "Sorry, we don't accept people that were born in the future"
                         )->isDateLessThanOrEqual(
                             \DateTime::createFromFormat('Y-m-d', date('Y-m-d', strtotime('-15years'))),
@@ -249,7 +250,68 @@ class Update extends Manager implements Api
                         'title' => 'Update Successful',
                         'message' => "Date of birth updated successfully.",
                         'response' => [
-                            'user' => $this->user()->getUserArray()
+                            'user' => $this->user()
+                        ]
+                    ]);
+
+                case 'country':
+
+                    $validator->validate('country')->isNumber("Please select a valid country")
+                        ->isNotEqual($this->user('country_id'), "That's already your country.")
+                        ->isFoundInDB('countries', 'id', "Sorry we currently don't support that country.",
+                            function (Builder $builder) {
+                                $builder->where('iso3', "NGA");
+                                $builder->where('is_active', true);
+                            });
+
+                    if ($validator->hasError()) throw $this->baseException(
+                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+                    $data = $validator->getValidated();
+                    Arr::rename_key($data, 'country', 'country_id');
+
+                    if (!$this->user()->update($data)) throw $this->baseException(
+                        "Failed to update country at this time, please try again later.",
+                        "Update Failed", HTTP::EXPECTATION_FAILED);
+
+                    return $this->http()->output()->json([
+                        'status' => true,
+                        'code' => HTTP::OK,
+                        'title' => 'Update Successful',
+                        'message' => "Country updated successfully.",
+                        'response' => [
+                            'user' => $this->user()
+                        ]
+                    ]);
+
+                case 'state':
+
+                    $validator->validate('state')->isNumber("Please select a valid state.")
+                        ->isNotEqual($this->user('state_id'), "That's already your state.")
+                        ->isFoundInDB('states', 'id', "Sorry we currently don't support that state.",
+                            function (Builder $builder) {
+                                $builder->where('country_id', 169);
+                                $builder->where('is_active', true);
+                            });
+
+                    if ($validator->hasError()) throw $this->baseException(
+                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+
+                    $data = $validator->getValidated();
+                    Arr::rename_key($data, 'state', 'state_id');
+
+                    $user = $this->user();
+                    if (!$user->update($data)) throw $this->baseException(
+                        "Failed to update state at this time, please try again later.",
+                        "Update Failed", HTTP::EXPECTATION_FAILED);
+
+                    return $this->http()->output()->json([
+                        'status' => true,
+                        'code' => HTTP::OK,
+                        'title' => 'Update Successful',
+                        'message' => "State updated successfully.",
+                        'response' => [
+                            'user' => $this->user()
                         ]
                     ]);
 
@@ -264,7 +326,7 @@ class Update extends Manager implements Api
                         "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
 
                     try {
-                        $charge = \utility\Wallet::charge(LIVE ? \model\Transaction::BVN_RESOLVE_PREMIUM_FEE : \model\Transaction::BVN_RESOLVE_STANDARD_FEE, 500,"Resolve BVN charge");
+                        $charge = \utility\Wallet::charge(LIVE ? \model\Transaction::BVN_RESOLVE_PREMIUM_FEE : \model\Transaction::BVN_RESOLVE_STANDARD_FEE, 500, "Resolve BVN charge");
                         if ($charge->isSuccessful()) $bvnResolve = $this->resolve_bvn($validator->getValue('bvn'));
                         else throw new PaystackException($charge->getQueryError());
                     } catch (PaystackException $e) {
@@ -289,7 +351,7 @@ class Update extends Manager implements Api
                     $userModel = $this->user()->getModel();
 
                     if ($userModel->validate('firstname')->toLower()->isNotEqual(strtolower($data['first_name'] ?? ''))
-                    && $userModel->validate('middlename')->toLower()->isNotEqual(strtolower($data['first_name'] ?? ''))) {
+                        && $userModel->validate('middlename')->toLower()->isNotEqual(strtolower($data['first_name'] ?? ''))) {
                         $validator->addError('bvn', "The first name on that BVN do not match your first/middle name on this platform.");
                     }
 
@@ -298,7 +360,7 @@ class Update extends Manager implements Api
                     }
 
                     if (!$validator->hasError() && $userModel->validate('dob')->isDateNotEqual(
-                        \DateTime::createFromFormat('Y-m-d', $data['formatted_dob'] ?? date('Y-m-d')), 'Y-m-d')) {
+                            \DateTime::createFromFormat('Y-m-d', $data['formatted_dob'] ?? date('Y-m-d')), 'Y-m-d')) {
                         $validator->addError('bvn', "The date of birth on that BVN do not match your date of birth on this platform.");
                     }
 
@@ -316,7 +378,7 @@ class Update extends Manager implements Api
                         'title' => 'Update Successful',
                         'message' => "BVN updated successfully.",
                         'response' => [
-                            'user' => $this->user()->getUserArray()
+                            'user' => $this->user()
                         ]
                     ]);
 
@@ -335,7 +397,7 @@ class Update extends Manager implements Api
 
                     if (!$this->user()->update(['password' => $validator->getValue('password')]))
                         throw $this->baseException("Failed to update password at this time, please try again later.",
-                        "Update Failed", HTTP::EXPECTATION_FAILED);
+                            "Update Failed", HTTP::EXPECTATION_FAILED);
 
                     return $this->http()->output()->json([
                         'status' => true,
@@ -343,7 +405,7 @@ class Update extends Manager implements Api
                         'title' => 'Update Successful',
                         'message' => "Password changed successfully.",
                         'response' => [
-                            'user' => $this->user()->getUserArray()
+                            'user' => $this->user()
                         ]
                     ]);
 
@@ -356,7 +418,7 @@ class Update extends Manager implements Api
 
                     if (!$this->user()->update(['pn_token' => $validator->getValue('pn_token')]))
                         throw $this->baseException("Failed to update token at this time, please try again later.",
-                        "Update Failed", HTTP::EXPECTATION_FAILED);
+                            "Update Failed", HTTP::EXPECTATION_FAILED);
 
                     return $this->http()->output()->json([
                         'status' => true,
@@ -377,7 +439,7 @@ class Update extends Manager implements Api
                 'code' => $e->getCode(),
                 'title' => $e->getTitle(),
                 'message' => $e->getMessage(),
-                'errors' => (object) $validator->getErrors()
+                'errors' => (object)$validator->getErrors()
             ], $e->getCode());
         }
     }

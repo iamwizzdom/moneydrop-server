@@ -71,7 +71,7 @@ class Login extends Manager implements Api
 
             $user->update(['pn_token' => $validator->getValue('pn_token')]);
 
-            User::login($user->getObject());
+            User::login($user);
 
             $user->set('token', JWT::fromUser($input->user()));
 

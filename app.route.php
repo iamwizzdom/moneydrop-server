@@ -10,6 +10,8 @@ use access\Verification;
 use loan\LoanApprove;
 use loan\LoanDecline;
 use loan\Repayment;
+use location\Country;
+use location\State;
 use module\home\Dashboard;
 use module\profile\Profile;
 use module\profile\Rate;
@@ -26,7 +28,7 @@ use que\route\RouteEntry;
 
 require 'app.settings.php';
 
-Route::register()->groupApi('api/app/v1', function ($prefix) {
+Route::register()->groupApi('api/v1/m-app', function ($prefix) {
 
     Route::register()->groupApi("{$prefix}/auth", function ($prefix) {
 
@@ -239,11 +241,23 @@ Route::register()->groupApi('api/app/v1', function ($prefix) {
             $entry->setModule(Review::class);
             $entry->setModuleMethod('deleteReview');
         },
+        function (RouteEntry $entry) {
+            $entry->allowGetRequest();
+            $entry->forbidCSRF(false);
+            $entry->setUri('/import/countries');
+            $entry->setModule(Country::class);
+        },
+        function (RouteEntry $entry) {
+            $entry->allowGetRequest();
+            $entry->forbidCSRF(false);
+            $entry->setUri('/import/states');
+            $entry->setModule(State::class);
+        },
     ];
 
 });
 
-Route::register()->groupApi('api/v1', function ($prefix) {
+Route::register()->groupApi('api/v1/w-app', function ($prefix) {
 
     Route::register()->groupApi("{$prefix}/loan", function ($prefix) {
 

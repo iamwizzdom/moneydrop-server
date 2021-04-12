@@ -45,7 +45,7 @@ DirectoryIndex ^(.*)$ app.route.php
 
 # Do the regex check against the URI here, if match, set the "require_auth" var
 
-SetEnvIf Request_URI ^/api/app/v1/(.*) auth=1
+SetEnvIf Request_URI ^/api/v1/m-app/(.*) auth=1
 
 AuthName "Application area, please login"
 AuthType Basic

@@ -266,8 +266,6 @@ trait Wallet
      */
     private function validateWallet() {
 
-        log_err(['wallet' => $this->wallet]);
-
         if ($this->wallet->validate('is_active')->isNotEqual(true)) {
             if ($this->wallet->user->id == user('id')) {
                 throw new Exception("Your wallet is deactivated");
