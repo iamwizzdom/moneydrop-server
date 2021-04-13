@@ -111,7 +111,7 @@ class Bank extends Manager implements Api
                     if (($response['meta']['data_status'] ?? null) != "AVAILABLE" || !($accountDetails = ($response['account'] ?? null))) {
                         $account->update(['is_active' => false]);
                         throw $this->baseException(
-                            "Sorry, your bank account details are no available at this time, let's try that again later.",
+                            "Sorry, your bank account details are not available at this time, let's try that again later.",
                             "Bank Failed", HTTP::EXPECTATION_FAILED
                         );
                     }
