@@ -51,7 +51,7 @@ class Bank extends Manager implements Api
                         ->where('user_id', $this->user('id'))
                         ->where('is_active', true)->exec();
 
-                    if ($bank_accounts->getQueryResponse() > self::MAX_BANK_ACCOUNT) {
+                    if ($bank_accounts->getQueryResponse() >= self::MAX_BANK_ACCOUNT) {
                         throw $this->baseException("Sorry, you can't have more than " . self::MAX_BANK_ACCOUNT . " bank accounts.",
                             "Bank Failed", HTTP::EXPECTATION_FAILED);
                     }
