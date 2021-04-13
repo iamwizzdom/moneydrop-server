@@ -100,14 +100,18 @@ class Bank extends Manager implements Api
                         throw $this->baseException($e->getMessage(), "Bank Failed", HTTP::EXPECTATION_FAILED);
                     }
 
-                    if (!$account->isSuccessful()) throw $this->baseException(
-                        "Sorry we couldn't retrieve your bank account details at this time, let's try that again later.",
-                        "Bank Failed", HTTP::EXPECTATION_FAILED
-                    );
+                    if (!$account->isSuccessful()) {
+                        \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
+                        throw $this->baseException(
+                            "Sorry we couldn't retrieve your bank account details at this time, let's try that again later.",
+                            "Bank Failed", HTTP::EXPECTATION_FAILED
+                        );
+                    }
 
                     $response = $account->getResponseArray();
 
                     if (($response['meta']['data_status'] ?? null) != "AVAILABLE" || !($accountDetails = ($response['account'] ?? null))) {
+                        \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
                         throw $this->baseException(
                             "Sorry, your bank account details are no available at this time, let's try that again later.",
                             "Bank Failed", HTTP::EXPECTATION_FAILED
@@ -124,10 +128,13 @@ class Bank extends Manager implements Api
                         'currency' => $accountDetails['currency']
                     ]);
 
-                    if (!$update->isSuccessful()) throw $this->baseException(
-                        "Sorry we couldn't add that account number at this time, let's that again later.",
-                        "Bank Failed", HTTP::EXPECTATION_FAILED
-                    );
+                    if (!$update?->isSuccessful()) {
+                        \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
+                        throw $this->baseException(
+                            "Sorry we couldn't add that account number at this time, let's that again later.",
+                            "Bank Failed", HTTP::EXPECTATION_FAILED
+                        );
+                    }
 
                     return $this->http()->output()->json([
                         'status' => true,

@@ -12,6 +12,8 @@ namespace utility;
 use Exception;
 use model\Transaction;
 use que\database\interfaces\model\Model;
+use que\database\model\ModelQueryResponse;
+use que\database\QueryResponse;
 use que\support\Str;
 use que\utility\money\Item;
 
@@ -24,7 +26,8 @@ trait Wallet
         $this->loadWallet();
     }
 
-    public static function charge(float $amount, float $fee, string $narration = null) {
+    public static function charge(float $amount, float $fee, string $narration = null): QueryResponse
+    {
         return db()->insert('transactions', [
             'uuid' => Str::uuidv4(),
             'user_id' => user('id'),
@@ -35,6 +38,11 @@ trait Wallet
             'status' => Transaction::TRANS_STATUS_SUCCESSFUL,
             'narration' => $narration
         ]);
+    }
+
+    public static function reverseTransaction(Model $model): ?ModelQueryResponse
+    {
+        return $model->update(['status' => Transaction::TRANS_STATUS_REVERSED]);
     }
 
     /**
