@@ -97,7 +97,7 @@ class Bank extends Manager implements Api
                         throw $this->baseException($e->getMessage(), "Bank Failed", HTTP::EXPECTATION_FAILED);
                     }
 
-                    if ($monoAccount->isSuccessful()) {
+                    if (!$monoAccount->isSuccessful()) {
                         $account->update(['is_active' => false]);
                         \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
                         throw $this->baseException(
