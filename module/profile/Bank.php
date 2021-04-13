@@ -72,35 +72,30 @@ class Bank extends Manager implements Api
                         );
                     }
 
-                    $add = $this->db()->find('bank_accounts', $accountID, 'account_id', function (Builder $builder) {
-                        $builder->where('user_id', $this->user('id'));
-                        $builder->where('is_active', true);
-                    });
+                    $add = $this->db()->insert('bank_accounts', [
+                        'uuid' => Str::uuidv4(),
+                        'account_id' => $accountID,
+                        'user_id' => $this->user('id')
+                    ]);
 
-                    if (!$add->isSuccessful()) {
+                    if (!$add->isSuccessful()) throw $this->baseException(
+                        "Sorry we couldn't add that account ID at this time, let's that again later.",
+                        "Bank Failed", HTTP::EXPECTATION_FAILED
+                    );
 
-                        $add = $this->db()->insert('bank_accounts', [
-                            'uuid' => Str::uuidv4(),
-                            'account_id' => $accountID,
-                            'user_id' => $this->user('id')
-                        ]);
-
-                        if (!$add->isSuccessful()) throw $this->baseException(
-                            "Sorry we couldn't add that account ID at this time, let's that again later.",
-                            "Bank Failed", HTTP::EXPECTATION_FAILED
-                        );
-
-                    }
-
+                    $charge = null;
                     try {
                         $charge = \utility\Wallet::charge(\model\Transaction::ACCOUNT_DETAIL_RETRIEVAL_FEE, 1000, "Account detail retrieval charge");
                         if ($charge->isSuccessful()) $account = $this->account_details($accountID);
                         else throw new MonoException($charge->getQueryError());
                     } catch (MonoException $e) {
+                        $add->getFirstWithModel()->delete();
+                        if ($charge) \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
                         throw $this->baseException($e->getMessage(), "Bank Failed", HTTP::EXPECTATION_FAILED);
                     }
 
                     if (!$account->isSuccessful()) {
+                        $add->getFirstWithModel()->delete();
                         \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
                         throw $this->baseException(
                             "Sorry we couldn't retrieve your bank account details at this time, let's try that again later.",
@@ -111,6 +106,7 @@ class Bank extends Manager implements Api
                     $response = $account->getResponseArray();
 
                     if (($response['meta']['data_status'] ?? null) != "AVAILABLE" || !($accountDetails = ($response['account'] ?? null))) {
+                        $add->getFirstWithModel()->delete();
                         \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
                         throw $this->baseException(
                             "Sorry, your bank account details are no available at this time, let's try that again later.",
@@ -129,6 +125,7 @@ class Bank extends Manager implements Api
                     ]);
 
                     if (!$update?->isSuccessful()) {
+                        $add->getFirstWithModel()->delete();
                         \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
                         throw $this->baseException(
                             "Sorry we couldn't add that account number at this time, let's that again later.",
