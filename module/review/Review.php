@@ -63,7 +63,7 @@ class Review extends Manager implements Api
                 throw $this->baseException("Sorry, you can't review yourself", "Review Failed", HTTP::NOT_ACCEPTABLE);
             }
 
-            $check = $this->db()->check('reviews', function (Builder $builder) {
+            $check = $this->db()->exists('reviews', function (Builder $builder) {
                 $builder->where('application_id', \input('application_id'));
                 $builder->where('user_id', $this->user('id'));
             });

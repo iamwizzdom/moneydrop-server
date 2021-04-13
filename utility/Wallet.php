@@ -43,6 +43,7 @@ trait Wallet
 
     public static function reverseTransaction(Model $model): ?ModelQueryResponse
     {
+        $model = Transaction::cast($model);
         return $model->update(['status' => Transaction::TRANS_STATUS_REVERSED]);
     }
 

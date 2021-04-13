@@ -68,7 +68,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
 
                     $amount = Item::factor(\input('amount'))->getCents();
 
-                    $check = $this->db()->check('loans', function (Builder $builder) use ($type, $amount) {
+                    $check = $this->db()->exists('loans', function (Builder $builder) use ($type, $amount) {
                         $builder->where('amount', $amount);
                         $builder->where('tenure', \input('tenure'));
                         $builder->where('interest', \input('interest'));
@@ -81,7 +81,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                     if ($check->isSuccessful()) throw $this->baseException(
                         "You already {$type}ed that exact loan and it's still pending.", "Loan Failed", HTTP::CONFLICT);
 
-                    $check = $this->db()->check('loans', function (Builder $builder) use ($type, $amount) {
+                    $check = $this->db()->exists('loans', function (Builder $builder) use ($type, $amount) {
                         $builder->where('user_id', $this->user('id'));
                         $builder->where('loan_type', \model\Loan::LOAN_TYPE_REQUEST);
                         $builder->where('status', \model\Loan::STATUS_COMPLETED, '!=');

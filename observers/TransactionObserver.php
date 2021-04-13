@@ -240,8 +240,7 @@ class TransactionObserver extends Observer
             if (!$newModel instanceof Transaction) $newModel = Transaction::cast($newModel);
             if (!$oldModel instanceof Transaction) $oldModel = Transaction::cast($oldModel);
 
-            if ($oldModel->getInt('status') != Transaction::TRANS_STATUS_SUCCESSFUL &&
-                $newModel->getInt('status') == Transaction::TRANS_STATUS_REVERSED) {
+            if ($newModel->getInt('status') == Transaction::TRANS_STATUS_REVERSED) {
 
                 //Reverse Transaction
 
@@ -287,7 +286,8 @@ class TransactionObserver extends Observer
                     }
                 }
 
-            } elseif ($oldModel->getInt('status') == Transaction::TRANS_STATUS_REVERSED &&
+            }
+            elseif ($oldModel->getInt('status') == Transaction::TRANS_STATUS_REVERSED &&
                 $newModel->getInt('status') != Transaction::TRANS_STATUS_REVERSED) {
 
                 //Undo Transaction Reversal
