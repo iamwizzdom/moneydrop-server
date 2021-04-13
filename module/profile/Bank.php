@@ -39,8 +39,8 @@ class Bank extends Manager implements Api
 
         try {
 
-            if (empty($this->user('bvn'))) throw $this->baseException(
-                "Sorry, you must add your BVN to perform any bank operation.", "Bank Failed", HTTP::EXPECTATION_FAILED);
+//            if (empty($this->user('bvn'))) throw $this->baseException(
+//                "Sorry, you must add your BVN to perform any bank operation.", "Bank Failed", HTTP::EXPECTATION_FAILED);
 
             $type = Request::getUriParam('type');
 
