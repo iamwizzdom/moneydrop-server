@@ -177,7 +177,7 @@ class Card extends Manager implements Api
                                 'uuid' => Str::uuidv4(),
                                 'auth' => GATEWAY == PAYSTACK ? $authorization['authorization_code'] : $authorization['life_time_token'],
                                 'name' => !empty($input['card_name']) && $input['card_name'] != '0' ? $input['card_name'] : '',
-                                'brand' => $authorization['brand'],
+                                'brand' => GATEWAY == PAYSTACK ? $authorization['card_type'] : $authorization['type'],
                                 'exp_year' => GATEWAY == PAYSTACK ? $authorization['exp_year'] : $authorization['expiryyear'],
                                 'exp_month' => GATEWAY == PAYSTACK ? $authorization['exp_month'] : $authorization['expirymonth'],
                                 'last4digits' => GATEWAY == PAYSTACK ? $authorization['last4'] : $authorization['last4digits'],
