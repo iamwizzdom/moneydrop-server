@@ -83,19 +83,22 @@ class Bank extends Manager implements Api
                         "Bank Failed", HTTP::EXPECTATION_FAILED
                     );
 
+                    $account = $add->getFirstWithModel();
+
                     $charge = null;
                     try {
-                        $charge = \utility\Wallet::charge(\model\Transaction::ACCOUNT_DETAIL_RETRIEVAL_FEE, 1000, "Account detail retrieval charge");
-                        if ($charge->isSuccessful()) $account = $this->account_details($accountID);
+                        $charge = \utility\Wallet::charge(\model\Transaction::ACCOUNT_DETAIL_RETRIEVAL_FEE,
+                            1000, $account->uuid, "Account detail retrieval charge");
+                        if ($charge->isSuccessful()) $monoAccount = $this->account_details($accountID);
                         else throw new MonoException($charge->getQueryError());
                     } catch (MonoException $e) {
-                        $add->getFirstWithModel()->delete();
+                        $account->delete();
                         if ($charge) \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
                         throw $this->baseException($e->getMessage(), "Bank Failed", HTTP::EXPECTATION_FAILED);
                     }
 
-                    if (!$account->isSuccessful()) {
-                        $add->getFirstWithModel()->delete();
+                    if (!$monoAccount->isSuccessful()) {
+                        $account->delete();
                         \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
                         throw $this->baseException(
                             "Sorry we couldn't retrieve your bank account details at this time, let's try that again later.",
@@ -103,18 +106,16 @@ class Bank extends Manager implements Api
                         );
                     }
 
-                    $response = $account->getResponseArray();
+                    $response = $monoAccount->getResponseArray();
 
                     if (($response['meta']['data_status'] ?? null) != "AVAILABLE" || !($accountDetails = ($response['account'] ?? null))) {
-                        $add->getFirstWithModel()->delete();
+                        $account->delete();
                         \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
                         throw $this->baseException(
                             "Sorry, your bank account details are no available at this time, let's try that again later.",
                             "Bank Failed", HTTP::EXPECTATION_FAILED
                         );
                     }
-
-                    $account = $add->getFirstWithModel();
 
                     $update = $account->update([
                         'account_name' => $accountDetails['name'],
@@ -125,7 +126,7 @@ class Bank extends Manager implements Api
                     ]);
 
                     if (!$update?->isSuccessful()) {
-                        $add->getFirstWithModel()->delete();
+                        $account->delete();
                         \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
                         throw $this->baseException(
                             "Sorry we couldn't add that account number at this time, let's that again later.",
@@ -139,7 +140,7 @@ class Bank extends Manager implements Api
                         'title' => 'Bank Successful',
                         'message' => "Successfully added account number",
                         'response' => [
-                            'account' => $account
+                            'account' => $monoAccount
                         ]
                     ]);
 
@@ -279,7 +280,7 @@ class Bank extends Manager implements Api
 
                     if ($id == 'all') {
 
-                        $accounts = $this->db()->findAll('bank_accounts', $this->user('id'), 'user_id',
+                        $account = $this->db()->findAll('bank_accounts', $this->user('id'), 'user_id',
                             function (Builder $builder) {
                                 $builder->where('is_active', true);
                                 $builder->orderBy('desc', 'id');
@@ -287,7 +288,7 @@ class Bank extends Manager implements Api
 
                         $accountList = [];
 
-                        if ($accounts->isSuccessful()) $accountList = $accounts->getAllArray();
+                        if ($account->isSuccessful()) $accountList = $account->getAllArray();
 
                         Arr::callback($accountList, function ($account) {
                             $account['account_number'] = hide_number($account['account_number'], 0, strlen($account['account_number']) - 4);
@@ -303,16 +304,16 @@ class Bank extends Manager implements Api
                                 'accounts' => $accountList,
                                 'banks' => BanksEnum::getBanks()
                             ]
-                        ], HTTP::OK);
+                        ]);
                     }
 
-                    $account = $this->db()->find('bank_accounts', $this->user('id'), 'user_id',
+                    $monoAccount = $this->db()->find('bank_accounts', $this->user('id'), 'user_id',
                         function (Builder $builder) use ($id) {
                             $builder->where('uuid', $id);
                             $builder->where('is_active', true);
                         });
 
-                    if (!$account->isSuccessful()) return $this->http()->output()->json([
+                    if (!$monoAccount->isSuccessful()) return $this->http()->output()->json([
                         'status' => true,
                         'code' => HTTP::NOT_FOUND,
                         'title' => 'Bank Account Not Found',
@@ -325,20 +326,20 @@ class Bank extends Manager implements Api
                         'code' => HTTP::OK,
                         'title' => 'Bank Successful',
                         'message' => "Bank account retrieved successfully.",
-                        'response' => $account->getFirstArray()
-                    ], HTTP::OK);
+                        'response' => $monoAccount->getFirstArray()
+                    ]);
                 case 'remove':
 
                     $id = Request::getUriParam('id');
 
-                    $account = $this->db()->find('bank_accounts', $id, 'uuid', function (Builder $builder) {
+                    $monoAccount = $this->db()->find('bank_accounts', $id, 'uuid', function (Builder $builder) {
                         $builder->where('user_id', $this->user('id'));
                     });
 
                     $remove = false;
 
-                    if ($account->isSuccessful()) {
-                        $remove = !!$account->getFirstWithModel()?->update(['is_active' => false])?->isSuccessful();
+                    if ($monoAccount->isSuccessful()) {
+                        $remove = !!$monoAccount->getFirstWithModel()?->update(['is_active' => false])?->isSuccessful();
                     }
 
                     return $this->http()->output()->json([

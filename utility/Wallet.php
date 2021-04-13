@@ -26,12 +26,13 @@ trait Wallet
         $this->loadWallet();
     }
 
-    public static function charge(float $amount, float $fee, string $narration = null): QueryResponse
+    public static function charge(float $amount, float $fee, ?string $reference, string $narration = null): QueryResponse
     {
         return db()->insert('transactions', [
             'uuid' => Str::uuidv4(),
             'user_id' => user('id'),
             'type' => Transaction::TRANS_TYPE_CHARGE,
+            'gateway_reference' => $reference,
             'direction' => "w2s",
             'amount' => $amount,
             'fee' => $fee,
