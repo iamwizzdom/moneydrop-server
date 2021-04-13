@@ -11,6 +11,7 @@ namespace utility;
 
 use que\database\interfaces\Builder;
 use que\database\interfaces\model\Model;
+use que\database\model\ModelCollection;
 
 trait Card
 {
@@ -22,7 +23,7 @@ trait Card
     public function getMyCard($cardID): ?Model
     {
         $card = db()->find('cards', $cardID, is_numeric($cardID) ? 'id' : 'uuid',
-            function (Builder $builder) use ($cardID) {
+            function (Builder $builder) {
                 $builder->where('user_id', user('id'));
             });
         $card->setModelKey('cardModel');
@@ -30,9 +31,9 @@ trait Card
     }
 
     /**
-     * @return \que\database\model\ModelCollection|null
+     * @return ModelCollection|null
      */
-    public function getAllMyCards(): ?\que\database\model\ModelCollection
+    public function getAllMyCards(): ?ModelCollection
     {
         $card = db()->findAll('cards', user('id'), 'user_id', function (Builder $builder) {
             $builder->where('is_active', true);
@@ -70,10 +71,7 @@ trait Card
      */
     public function getCardAuthCode($cardID): mixed
     {
-        $card = db()->find('cards', $cardID, is_numeric($cardID) ? 'id' : 'uuid',
-            function (Builder $builder) use ($cardID) {
-                $builder->selectJsonValue('auth', 'auth_code', '$.authorization_code');
-            });
-        return $card->getFirstWithModel()?->getValue('auth_code');
+        $card = db()->find('cards', $cardID, is_numeric($cardID) ? 'id' : 'uuid');
+        return $card->getFirstWithModel()?->getValue('auth');
     }
 }

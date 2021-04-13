@@ -9,6 +9,7 @@
 namespace profile;
 
 
+use Exception;
 use que\common\exception\BaseException;
 use que\common\manager\Manager;
 use que\common\structure\Api;
@@ -24,12 +25,15 @@ use que\support\Arr;
 use que\support\Str;
 use que\utility\hash\Hash;
 use que\utility\money\Item;
+use utility\flutterwave\Flutterwave;
 use utility\paystack\exception\PaystackException;
 use utility\paystack\Paystack;
 
 class Card extends Manager implements Api
 {
-    use Paystack;
+    const MAX_CARD = 5;
+
+    use Flutterwave;
 
     /**
      * @inheritDoc
@@ -105,7 +109,7 @@ class Card extends Manager implements Api
 
                             try {
                                 $verify = $this->verify_transaction($validator->getValue('reference'));
-                            } catch (PaystackException $e) {
+                            } catch (Exception $e) {
                                 throw $this->baseException($e->getMessage(), "Verification Failed", HTTP::UNPROCESSABLE_ENTITY);
                             }
 
@@ -118,11 +122,14 @@ class Card extends Manager implements Api
 
                             $data = $response['data'] ?? [];
 
-                            if (!($response['status'] ?? false) || ($data['status'] ?? 'failed') != 'success'
-                                || empty($authorization = ($data['authorization'] ?? []))) {
+                            if (!in_array(($data['status'] ?? 'failed'), ['success', 'successful']) ||
+                                (GATEWAY == FLUTTERWAVE && $data['chargecode'] != '00') ||
+                                empty($authorization = ($data[GATEWAY == PAYSTACK ? 'authorization' : 'card'] ?? []))) {
 
-                                throw $this->baseException("Sorry, we couldn't verify that transaction at this time.",
-                                    "Verification Failed", HTTP::EXPECTATION_FAILED);
+                                throw $this->baseException(
+                                    "Sorry, that transaction seems to be unsuccessful at this time.",
+                                    "Verification Failed", HTTP::EXPECTATION_FAILED
+                                );
                             }
 
                             $trans = db()->insert('transactions', [
@@ -130,7 +137,7 @@ class Card extends Manager implements Api
                                 'user_id' => user('id'),
                                 'type' => \model\Transaction::TRANS_TYPE_TOP_UP,
                                 'direction' => "b2w",
-                                'gateway_reference' => $data['reference'],
+                                'gateway_reference' => $data[GATEWAY == PAYSTACK ? 'reference' : 'txref'],
                                 'amount' => $data['amount'],
                                 'currency' => $data['currency'],
                                 'status' => \model\Transaction::TRANS_STATUS_SUCCESSFUL,
@@ -146,7 +153,7 @@ class Card extends Manager implements Api
 
                             $amount = Item::cents($data['amount'])->getFactor(true);
 
-                            if (!$authorization['reusable']) {
+                            if (GATEWAY == PAYSTACK && !$authorization['reusable']) {
 
                                 throw $this->baseException("Sorry, this card is not reusable, you may want to try another card instead. " .
                                     "However, we have topped up your wallet with {$amount} {$data['currency']} which was debited from the card being added.",
@@ -158,16 +165,22 @@ class Card extends Manager implements Api
                                 ->where('user_id', $this->user('id'))
                                 ->where('is_active', true)->exec();
 
-                            if ($cards->getQueryResponse() > 4) {
-                                throw $this->baseException("Sorry, you can't have more than 4 cards. However, your wallet has been " .
+                            if ($cards->getQueryResponse() >= self::MAX_CARD) {
+                                throw $this->baseException(
+                                    "Sorry, you can't have more than ". self::MAX_CARD ." cards. However, your wallet has been " .
                                     "topped up with {$amount} {$data['currency']} which was debited from the card being added.",
-                                    "Verification Failed", HTTP::EXPECTATION_FAILED);
+                                    "Verification Failed", HTTP::EXPECTATION_FAILED
+                                );
                             }
 
                             $card = db()->insert('cards', [
                                 'uuid' => Str::uuidv4(),
-                                'auth' => $authorization,
+                                'auth' => GATEWAY == PAYSTACK ? $authorization['authorization_code'] : $authorization['life_time_token'],
                                 'name' => !empty($input['card_name']) && $input['card_name'] != '0' ? $input['card_name'] : '',
+                                'brand' => $authorization['brand'],
+                                'exp_year' => GATEWAY == PAYSTACK ? $authorization['exp_year'] : $authorization['expiryyear'],
+                                'exp_month' => GATEWAY == PAYSTACK ? $authorization['exp_month'] : $authorization['expirymonth'],
+                                'last4digits' => GATEWAY == PAYSTACK ? $authorization['last4'] : $authorization['last4digits'],
                                 'user_id' => $this->user('id'),
                                 'status' => STATE_ACTIVE,
                                 'is_active' => true
@@ -181,9 +194,11 @@ class Card extends Manager implements Api
                                     "Verification Failed", HTTP::EXPECTATION_FAILED);
                             }
 
-                            $trans->getFirstWithModel()?->update(['card_id' => $card->getFirstWithModel()->getValue('uuid')]);
 
                             $card->setModelKey("cardModel");
+                            $card = $card->getFirstWithModel();
+
+                            $trans->getFirstWithModel()?->update(['card_id' => $card->getValue('uuid')]);
 
                             return $this->http()->output()->json([
                                 'status' => true,
@@ -191,7 +206,7 @@ class Card extends Manager implements Api
                                 'title' => 'Verification Successful',
                                 'message' => "Card added successfully.",
                                 'response' => [
-                                    'card' => $card->getFirstWithModel()
+                                    'card' => $card
                                 ]
                             ], HTTP::CREATED);
 

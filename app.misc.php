@@ -6,11 +6,19 @@
  * Time: 1:20 PM
  */
 
+const PAYSTACK = 1;
+const FLUTTERWAVE = 2;
+
+const GATEWAY = FLUTTERWAVE;
+
+/**
+ * Paystack key
+ */
+const PAYSTACK_API_KEY = 'sk_test_8d5f40d2aaca8d452582e98771f19cbd508d6483';
 
 /**
  * Paystack endpoints
  */
-const PAYSTACK_API_KEY = 'sk_test_8d5f40d2aaca8d452582e98771f19cbd508d6483';
 const PAYSTACK_INIT_TRANS_URL = 'https://api.paystack.co/transaction/initialize';
 const PAYSTACK_VERIFY_INIT_TRANS_URL = 'https://api.paystack.co/transaction/verify';
 const PAYSTACK_CHARGE_CARD_URL = 'https://api.paystack.co/transaction/charge_authorization';
@@ -20,6 +28,20 @@ const PAYSTACK_RESOLVE_ACCOUNT_URL = 'https://api.paystack.co/bank/resolve';
 const PAYSTACK_RESOLVE_CARD_URL = 'https://api.paystack.co/decision/bin';
 const PAYSTACK_TRANSFER_RECIPIENT_URL = 'https://api.paystack.co/transferrecipient';
 const PAYSTACK_TRANSFER_URL = 'https://api.paystack.co/transfer';
+
+
+/**
+ * Flutterwave Keys
+ */
+const FLUTTERWAVE_SECRET_KEY = "FLWSECK-a97c898dfc763a1616af6c75699877a2-X";
+const FLUTTERWAVE_ENCRYPTION_KEY = "a97c898dfc76e1e276b6eb4d";
+
+/**
+ * Flutterwave endpoints
+ */
+const FLUTTERWAVE_TRANS_VERIFY_URL = LIVE ?
+    "https://api.ravepay.co/flwv3-pug/getpaidx/api/v2/verify " :
+    "https://ravesandboxapi.flutterwave.com/flwv3-pug/getpaidx/api/v2/verify";
 
 /**
  * Mono endpoints
