@@ -33,8 +33,8 @@ const PAYSTACK_TRANSFER_URL = 'https://api.paystack.co/transfer';
 /**
  * Flutterwave Keys
  */
-const FLUTTERWAVE_SECRET_KEY = "FLWSECK-a97c898dfc763a1616af6c75699877a2-X";
-const FLUTTERWAVE_ENCRYPTION_KEY = "a97c898dfc76e1e276b6eb4d";
+const FLUTTERWAVE_SECRET_KEY = "FLWSECK_TEST-2e259f3ffdd346e188e9554b7dd574d4-X";
+const FLUTTERWAVE_ENCRYPTION_KEY = "FLWSECK_TEST76766747e348";
 
 /**
  * Flutterwave endpoints
