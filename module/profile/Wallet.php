@@ -23,12 +23,12 @@ use que\http\output\response\Plain;
 use que\http\request\Request;
 use que\support\Str;
 use que\utility\money\Item;
-use utility\paystack\exception\PaystackException;
-use utility\paystack\Paystack;
+use utility\flutterwave\Flutterwave;
+use utility\flutterwave\exception\FlutterwaveException;
 
 class Wallet extends Manager implements Api
 {
-    use \utility\Wallet, Paystack;
+    use \utility\Wallet, Flutterwave;
 
     const MIN_TOP_UP_AMOUNT = 1000;
     const MIN_CASH_OUT_AMOUNT = 1000;
@@ -80,7 +80,7 @@ class Wallet extends Manager implements Api
 
                     try {
                         $charge = $this->charge_card($input['card'], $input['amount']);
-                    } catch (PaystackException $e) {
+                    } catch (FlutterwaveException $e) {
                         throw $this->baseException($e->getMessage(), "Top-up Failed", HTTP::EXPECTATION_FAILED);
                     }
 
@@ -90,21 +90,17 @@ class Wallet extends Manager implements Api
 
                     $response = $charge->getResponseArray();
 
-                    if (!($response['status'] ?? false)) throw $this->baseException(
-                        $response['message'] ?? "Failed to charge the selected card, please try another card.",
-                        "Top-up Failed", HTTP::EXPECTATION_FAILED);
-
                     $data = $response['data'] ?? [];
 
-                    $trans = $this->db()->find('transactions', $data['reference'], 'gateway_reference');
+                    if (!in_array(($data['status'] ?? 'failed'), ['success', 'successful'])) throw $this->baseException(
+                        $data['message'] ?? "Failed to charge the selected card, please try another card.",
+                        "Top-up Failed", HTTP::EXPECTATION_FAILED);
+
+                    $trans = $this->db()->find('transactions', $data[GATEWAY == PAYSTACK ? 'reference' : 'txRef'], 'gateway_reference');
 
                     $trans->setModelKey("transactionModel");
 
                     if ($trans->isSuccessful()) $transaction = $trans->getFirstWithModel();
-
-                    if (($data['status'] ?? 'failed') != 'success') throw $this->baseException(
-                        $data['message'] ?? "Failed to charge the selected card, please try another card.",
-                        "Top-up Failed", HTTP::EXPECTATION_FAILED);
 
                     $this->refreshWallet();
 
@@ -129,7 +125,7 @@ class Wallet extends Manager implements Api
                             "Sorry, your cash-out amount must be at least %s");
 
                     $validator->validate('recipient')->isNotEmpty('Please enter a valid bank account')
-                        ->isFoundInDB('bank_accounts', 'recipient_code',
+                        ->isFoundInDB('bank_accounts', 'uuid',
                             'That bank account either does not exist or has been deactivated', function (Builder $builder) {
                                 $builder->where('user_id', $this->user('id'));
                                 $builder->where('is_active', true);
@@ -170,9 +166,21 @@ class Wallet extends Manager implements Api
                         $reference = $transaction->getValue('gateway_reference');
                     }
 
+                    $account = $this->db()->find('bank_accounts', $input['recipient'], 'uuid',
+                        function (Builder $builder) {
+                            $builder->where('user_id', $this->user('id'));
+                            $builder->where('is_active', true);
+                        });
+
+                    $account = $account->getFirstWithModel();
+
+                    $bankName = $account->getValue('bank_name');
+                    $bankCode = $account->getValue('bank_code');
+                    $accountNumber = $account->getValue('account_number');
+
                     try {
-                        $transfer = $this->init_transfer($input['amount'], $input['recipient'], $reference ?: Str::uuidv4());
-                    } catch (PaystackException $e) {
+                        $transfer = $this->init_transfer($input['amount'], $input['recipient'], $bankCode, $accountNumber, $reference ?: Str::uuidv4());
+                    } catch (FlutterwaveException $e) {
                         throw $this->baseException($e->getMessage(), "Cash-out Failed", HTTP::EXPECTATION_FAILED);
                     }
 
@@ -182,16 +190,16 @@ class Wallet extends Manager implements Api
 
                     $response = $transfer->getResponseArray();
 
-                    if (!($response['status'] ?? false)) {
-                        throw $this->baseException(
-                            $response['message'] ?? "Sorry we couldn't complete that transfer at this time, let's try it again later.",
-                            "Cash-out Failed", HTTP::EXPECTATION_FAILED
-                        );
-                    }
+//                    if (!($response['status'] ?? false)) {
+//                        throw $this->baseException(
+//                            $response['message'] ?? "Sorry we couldn't complete that transfer at this time, let's try it again later.",
+//                            "Cash-out Failed", HTTP::EXPECTATION_FAILED
+//                        );
+//                    }
 
                     $data = $response['data'] ?? [];
 
-                    if (($data['status'] ?? 'failed') != 'success') throw $this->baseException(
+                    if (!in_array(($data['status'] ?? 'failed'), ['SUCCESS', 'SUCCESSFUL', 'NEW'])) throw $this->baseException(
                         $response['message'] ?? "Sorry we couldn't complete that transfer at this time, let's try it again later.",
                         "Cash-out Failed", HTTP::EXPECTATION_FAILED);
 
@@ -200,17 +208,6 @@ class Wallet extends Manager implements Api
                         $trans->setModelKey("transactionModel");
                         if ($trans->isSuccessful()) $transaction = $trans->getFirstWithModel();
                     }
-
-                    $account = $this->db()->find('bank_accounts', $input['recipient'], 'recipient_code',
-                        function (Builder $builder) {
-                            $builder->where('user_id', $this->user('id'));
-                            $builder->where('is_active', true);
-                        });
-
-                    $account = $account->getFirstWithModel();
-
-                    $bankName = $account->getValue('bank_name');
-                    $accountNumber = $account->getValue('account_number');
 
                     $this->refreshWallet();
 

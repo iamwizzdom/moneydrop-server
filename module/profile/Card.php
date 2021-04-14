@@ -123,7 +123,7 @@ class Card extends Manager implements Api
                             $data = $response['data'] ?? [];
 
                             if (!in_array(($data['status'] ?? 'failed'), ['success', 'successful']) ||
-                                (GATEWAY == FLUTTERWAVE && $data['chargecode'] != '00') ||
+                                (GATEWAY == FLUTTERWAVE && $data['chargecode'] !== '00') ||
                                 empty($authorization = ($data[GATEWAY == PAYSTACK ? 'authorization' : 'card'] ?? []))) {
 
                                 throw $this->baseException(
@@ -181,6 +181,7 @@ class Card extends Manager implements Api
                                 'exp_year' => GATEWAY == PAYSTACK ? $authorization['exp_year'] : $authorization['expiryyear'],
                                 'exp_month' => GATEWAY == PAYSTACK ? $authorization['exp_month'] : $authorization['expirymonth'],
                                 'last4digits' => GATEWAY == PAYSTACK ? $authorization['last4'] : $authorization['last4digits'],
+                                'gateway' => GATEWAY,
                                 'user_id' => $this->user('id'),
                                 'status' => STATE_ACTIVE,
                                 'is_active' => true
@@ -221,17 +222,20 @@ class Card extends Manager implements Api
 
                     if ($cardID == 'all') {
 
+                        $cards = ($this->getAllMyCards() ?: []);
+
                         return $this->http()->output()->json([
                             'status' => true,
                             'code' => HTTP::OK,
                             'title' => 'Card Successful',
                             'message' => !empty($cards) ? "Cards retrieved successfully." : "No Card found.",
-                            'response' => $this->getAllMyCards() ?: []
+                            'response' => $cards
                         ]);
                     }
 
                     $card = $this->db()->find('cards', $this->user('id'), 'user_id',
                         function (Builder $builder) use ($cardID) {
+                            $builder->where('gateway', GATEWAY);
                             $builder->where('uuid', $cardID);
                             $builder->where('is_active', true);
                         });

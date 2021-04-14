@@ -42,6 +42,12 @@ const FLUTTERWAVE_ENCRYPTION_KEY = "FLWSECK_TEST76766747e348";
 const FLUTTERWAVE_TRANS_VERIFY_URL = LIVE ?
     "https://api.ravepay.co/flwv3-pug/getpaidx/api/v2/verify " :
     "https://ravesandboxapi.flutterwave.com/flwv3-pug/getpaidx/api/v2/verify";
+const FLUTTERWAVE_CHARGE_CARD_URL = LIVE ?
+    'https://api.ravepay.co/flwv3-pug/getpaidx/api/tokenized/charge' :
+    'https://ravesandboxapi.flutterwave.com/flwv3-pug/getpaidx/api/tokenized/charge';
+const FLUTTERWAVE_TRANSFER_URL = LIVE ?
+    'https://api.ravepay.co/v2/gpx/transfers/create' :
+    'https://ravesandboxapi.flutterwave.com/v2/gpx/transfers/create';
 
 /**
  * Mono endpoints

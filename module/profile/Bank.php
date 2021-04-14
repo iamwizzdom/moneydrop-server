@@ -88,7 +88,7 @@ class Bank extends Manager implements Api
                     $charge = null;
                     try {
                         $charge = \utility\Wallet::charge(\model\Transaction::ACCOUNT_DETAIL_RETRIEVAL_FEE,
-                            1000, $account->uuid, "Account detail retrieval charge");
+                            1000, $account->uuid, "Bank account detail retrieval charge");
                         if ($charge->isSuccessful()) $monoAccount = $this->account_details($accountID);
                         else throw new MonoException($charge->getQueryError());
                     } catch (MonoException $e) {

@@ -24,6 +24,7 @@ trait Card
     {
         $card = db()->find('cards', $cardID, is_numeric($cardID) ? 'id' : 'uuid',
             function (Builder $builder) {
+                $builder->where('gateway', GATEWAY);
                 $builder->where('user_id', user('id'));
             });
         $card->setModelKey('cardModel');
@@ -36,6 +37,7 @@ trait Card
     public function getAllMyCards(): ?ModelCollection
     {
         $card = db()->findAll('cards', user('id'), 'user_id', function (Builder $builder) {
+            $builder->where('gateway', GATEWAY);
             $builder->where('is_active', true);
             $builder->orderBy("desc", "id");
         });
@@ -60,7 +62,9 @@ trait Card
      */
     public function getCard($cardID): ?Model
     {
-        $card = db()->find('cards', $cardID, is_numeric($cardID) ? 'id' : 'uuid');
+        $card = db()->find('cards', $cardID, is_numeric($cardID) ? 'id' : 'uuid', function ($builder) {
+            $builder->where('gateway', GATEWAY);
+        });
         $card->setModelKey('cardModel');
         return $card->getFirstWithModel();
     }
@@ -71,7 +75,9 @@ trait Card
      */
     public function getCardAuthCode($cardID): mixed
     {
-        $card = db()->find('cards', $cardID, is_numeric($cardID) ? 'id' : 'uuid');
+        $card = db()->find('cards', $cardID, is_numeric($cardID) ? 'id' : 'uuid', function ($builder) {
+            $builder->where('gateway', GATEWAY);
+        });
         return $card->getFirstWithModel()?->getValue('auth');
     }
 }

@@ -18,4 +18,7 @@ class Card extends Model
                                 'last4digits', 'user_id', 'status', 'is_active'];
     protected array $casts = ['is_active' => 'bool', 'created_at' => 'date:d/m/y'];
 
+    public function getUser() {
+        return $this->belongTo('users', 'user_id');
+    }
 }
