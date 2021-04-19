@@ -35,13 +35,13 @@ class UserObserver extends Observer
     public function onCreated(Model $model)
     {
         // TODO: Implement onCreated() method.
-        db()->insert('system_ratings', [
-            'rating' => 0,
-            'user_id' => $model->getInt('id'),
-            'is_active' => true
-        ]);
+//        db()->insert('system_ratings', [
+//            'rating' => 0,
+//            'user_id' => $model->getInt('id'),
+//            'is_active' => true
+//        ]);
 
-        db()->insert('bank_statements', ['user_id' => $model->getInt('id')]);
+//        db()->insert('bank_statements', ['user_id' => $model->getInt('id')]);
 
         try {
 

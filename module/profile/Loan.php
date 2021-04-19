@@ -46,7 +46,7 @@ class Loan extends Manager implements Api
                         ->where('user_id', $this->user('id'))
                         ->where('is_active', true)
                         ->where('loan_type', $type == "offers" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST)
-                        ->orderBy('desc', 'id')->paginate(PAGINATION_PER_PAGE);
+                        ->orderBy('desc', 'id')->paginate(headers('X-PerPage', PAGINATION_PER_PAGE));
 
                     $loans->setModelKey("loanModel");
 
@@ -55,6 +55,7 @@ class Loan extends Manager implements Api
                     return [
                         'pagination' => [
                             'page' => $pagination->getPaginator("default")->getPage(),
+                            'perPage' => $pagination->getPerPage('default'),
                             'totalRecords' => $pagination->getTotalRecords("default"),
                             'totalPages' => $pagination->getTotalPages("default"),
                             'nextPage' => $pagination->getNextPage("default", true),

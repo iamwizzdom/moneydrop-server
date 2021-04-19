@@ -84,14 +84,14 @@ class LoanApplication extends Model
 
             $date = new DateTime($this->getValue('granted_at') ?: $this->getValue('updated_at'));
 
-            if ($tenure < Loan::LOAN_TENURE_ONE_MONTH) {
+            if ($tenure < Loan::TENURE_ONE_MONTH) {
 
                 $weeks = ($date->diff($now)->days / 7) ?: 1;
 
                 if ($loan->getInt('interest_type') == Loan::INTEREST_TYPE_STATIC) {
-                    if ($tenure == Loan::LOAN_TENURE_ONE_WEEK) $tenure = (1 / 4);
-                    elseif ($tenure == Loan::LOAN_TENURE_TWO_WEEKS) $tenure = ((1 / 4) * 2);
-                    elseif ($tenure == Loan::LOAN_TENURE_THREE_WEEKS) $tenure = ((1 / 4) * 3);
+                    if ($tenure == Loan::TENURE_ONE_WEEK) $tenure = (1 / 4);
+                    elseif ($tenure == Loan::TENURE_TWO_WEEKS) $tenure = ((1 / 4) * 2);
+                    elseif ($tenure == Loan::TENURE_THREE_WEEKS) $tenure = ((1 / 4) * 3);
                     $amount += ($percentage * ($isDue ? ceil($weeks) : $tenure));
                 } else {
                     $amount += ($percentage * ceil($weeks));

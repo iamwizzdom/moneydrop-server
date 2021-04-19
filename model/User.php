@@ -15,10 +15,10 @@ use que\utility\money\Item;
 class User extends Model
 {
     protected string $modelKey = 'userModel';
-    protected array $hidden = ['password', 'pn_token'];
+    protected array $hidden = ['password', 'pn_token', 'max_loan_amount'];
     protected array $fillable = ['uuid', 'firstname', 'middlename', 'lastname', 'phone', 'email', 'password', 'bvn',
         'picture', 'dob', 'gender', 'address', 'country_id', 'state_id', 'status', 'is_active'];
-    protected array $appends = ['bank_statement', 'verified', 'country', 'state', 'rating', 'max_loan_amount'];
+    protected array $appends = ['country', 'state', 'rating', 'max_loan_amount'];
     protected array $casts = ['id,gender,country_id,state_id,status' => 'int',
         'address,bvn,pn_token,picture' => 'string', 'is_active' => 'bool'];
 
@@ -72,35 +72,52 @@ class User extends Model
             ->where('user_id', $this->getInt('id'))
             ->where('is_active', true)->exec();
 
-        $systemRating = db()->find('system_ratings', $this->getInt('id'), 'user_id');
+//        $systemRating = db()->find('system_ratings', $this->getInt('id'), 'user_id');
 
-        if ($systemRating->isSuccessful()) $systemRating = $systemRating->getFirstWithModel()?->getFloat('rating') ?: 0;
-        else {
-            $systemRating = db()->insert('system_ratings', [
-                'rating' => 0,
-                'user_id' => $this->getInt('id'),
-                'is_active' => true
-            ])->getFirstWithModel()?->getFloat('rating') ?: 0;
-        }
+//        if ($systemRating->isSuccessful()) $systemRating = $systemRating->getFirstWithModel()?->getFloat('rating') ?: 0;
+//        else {
+//            $systemRating = db()->insert('system_ratings', [
+//                'rating' => 0,
+//                'user_id' => $this->getInt('id'),
+//                'is_active' => true
+//            ])->getFirstWithModel()?->getFloat('rating') ?: 0;
+//        }
 
-        if (!$sum->isSuccessful() || !$count->isSuccessful()) return ($systemRating + 0) / 2;
+        if (!$sum->isSuccessful() || !$count->isSuccessful()) return 0;
 
-        if (!($sum = $sum->getQueryResponse()) || !($count = $count->getQueryResponse())) return ($systemRating + 0) / 2;
+        if (!($sum = $sum->getQueryResponse()) || !($count = $count->getQueryResponse())) return 0;
 
-        return (round(($sum / $count), 1) + $systemRating) / 2;
+//        if (!($sum = $sum->getQueryResponse()) || !($count = $count->getQueryResponse())) return ($systemRating + 0) / 2;
+
+        return round(($sum / $count));
     }
 
     public function getMaxLoanAmount() {
 
-        $maxAmount = 500000;
+        $maxAmount = (Loan::MIN_AMOUNT * 100);
 
         $rating = $this->getFloat('rating');
 
-        if ($rating <= 1) $maxAmount = $rating < 1 ? 500000 : 1000000;
-        elseif ($rating <= 2) $maxAmount = $rating < 2 ? 1500000 : 3000000;
-        elseif ($rating <= 3) $maxAmount = $rating < 3 ? 4000000 : 6000000;
-        elseif ($rating <= 4) $maxAmount = $rating < 4 ? 7000000 : 8000000;
-        elseif ($rating <= 5) $maxAmount = $rating < 5 ? 9000000 : 10000000;
+//        if ($rating <= 1) $maxAmount = $rating < 1 ? 500000 : 1000000;
+//        elseif ($rating <= 2) $maxAmount = $rating < 2 ? 1500000 : 3000000;
+//        elseif ($rating <= 3) $maxAmount = $rating < 3 ? 4000000 : 6000000;
+//        elseif ($rating <= 4) $maxAmount = $rating < 4 ? 7000000 : 8000000;
+//        elseif ($rating <= 5) $maxAmount = $rating < 5 ? 9000000 : 10000000;
+
+        $maxIncome = db()->select('max(ba.income) as max_income')
+            ->table('bank_accounts as ba')
+            ->where('user_id', $this->getInt('id'))
+            ->where('is_active', true)
+            ->limit(1)
+            ->exec();
+
+        $maxIncome = $maxIncome->getFirstWithModel()?->getFloat('max_income');
+
+        if ($maxIncome > Loan::MIN_AMOUNT) {
+            $percentage = (Loan::PERCENTAGE_INCOME + $rating);
+            $availableIncome = (float) Item::cents($maxIncome)->percentage($percentage)->getCents();
+            if ($availableIncome > Loan::MIN_AMOUNT) $maxAmount = $availableIncome;
+        }
 
         if ($maxAmount == 10000000) {
 
@@ -112,8 +129,11 @@ class User extends Model
                 ->limit(1)
                 ->exec();
 
-            $maxLoanAmount = $max->getFirstWithModel()->getFloat('max_amount');
-            if ($maxLoanAmount >= 10000000) $maxAmount = ($maxLoanAmount * 2);
+            $maxLoanAmount = $max->getFirstWithModel()?->getFloat('max_amount');
+            if ($maxLoanAmount && $maxLoanAmount >= 10000000) {
+                $maxLoanAmount = ($maxLoanAmount * 2);
+                if ($maxLoanAmount > $maxAmount) $maxAmount = $maxLoanAmount;
+            }
         }
 
         return $maxAmount;

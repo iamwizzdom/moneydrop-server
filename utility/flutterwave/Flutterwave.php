@@ -78,7 +78,7 @@ trait Flutterwave
             'lastname' => $card->user->lastname,
             'email' => $card->user->email,
             'txRef' => $reference,
-            'narration' => "wallet top-up transaction"
+            'narration' => "Moneydrop wallet top-up"
         ]);
 
         $response = $curl->send();
@@ -154,7 +154,7 @@ trait Flutterwave
         $curl->setHeader('Content-Type', 'application/json');
         $curl->setPosts([
             'seckey' => FLUTTERWAVE_SECRET_KEY,
-            'narration' => $reason ?: 'wallet cash-out transaction',
+            'narration' => $reason ?: 'Moneydrop wallet cash-out',
             'amount' => $amount,
             'account_bank' => $bankCode,
             'account_number' => $accountNumber,

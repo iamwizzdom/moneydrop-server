@@ -87,7 +87,7 @@ class LoanApplication extends Manager implements Api
 //                    }
 
                     $validator->validate('amount')->isFloatingNumber('Please enter a valid amount')
-                        ->isFloatingNumberGreaterThanOrEqual(\model\Loan::MIN_LOAN_AMOUNT, "Sorry, you must apply with at least %s NGN.")
+                        ->isFloatingNumberGreaterThanOrEqual(\model\Loan::MIN_AMOUNT, "Sorry, you must apply with at least %s NGN.")
                         ->isFloatingNumberLessThanOrEqual(Item::cents($loan->getFloat('amount'))->getFactor(), "Sorry, you can't apply with an amount greater than the loan amount");
 
 //                    if ($availableRaise != null) {

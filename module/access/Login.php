@@ -43,7 +43,7 @@ class Login extends Manager implements Api
                 ->hasMinLength(8, "Your password is expected to be at least %s characters long")
                 ->hash('SHA512');
 
-            $validator->validate('pn_token')->isNotEmpty("Please enter a valid token");
+            $validator->validate('pn_token', true)->isNotEmpty("Please enter a valid token");
 
             if ($validator->hasError()) throw $this->baseException(
                 "The inputted data is invalid", "Login Failed", HTTP::UNPROCESSABLE_ENTITY, false
@@ -60,16 +60,19 @@ class Login extends Manager implements Api
             $user->setModelKey('userModel');
             $user = $user->getFirstWithModel();
 
-            $previousPnTokenUser = $this->db()->find('users', $validator->getValue('pn_token'), 'pn_token',
-                function (Builder $builder) use ($user) {
-                    $builder->where('id', $user->id, '!=');
-            });
+            if ($validator->has('pn_token')) {
 
-            if ($previousPnTokenUser->isSuccessful()) {
-                $previousPnTokenUser->getFirstWithModel()->update(['pn_token' => null]);
+                $previousPnTokenUser = $this->db()->find('users', $validator->getValue('pn_token'), 'pn_token',
+                    function (Builder $builder) use ($user) {
+                        $builder->where('id', $user->id, '!=');
+                    });
+
+                if ($previousPnTokenUser->isSuccessful()) {
+                    $previousPnTokenUser->getFirstWithModel()->update(['pn_token' => null]);
+                }
+
+                $user->update(['pn_token' => $validator->getValue('pn_token')]);
             }
-
-            $user->update(['pn_token' => $validator->getValue('pn_token')]);
 
             User::login($user);
 
@@ -83,7 +86,7 @@ class Login extends Manager implements Api
                 'response' => [
                     'user' => $user,
                     'cards' => $this->getAllMyCards() ?: [],
-                    'banks' => BanksEnum::getBanks(),
+//                    'banks' => BanksEnum::getBanks(),
                 ]
             ]);
 

@@ -32,7 +32,9 @@ class Loan extends Model
     /**
      * Minimum loan amount
      */
-    const MIN_LOAN_AMOUNT = 5000;
+    const MIN_AMOUNT = 5000;
+
+    const PERCENTAGE_INCOME = 25;
 
     /**
      * Loan status
@@ -56,53 +58,53 @@ class Loan extends Model
     /**
      * Loan tenure constants
      */
-    const LOAN_TENURE_ONE_WEEK = -1;
-    const LOAN_TENURE_TWO_WEEKS = -2;
-    const LOAN_TENURE_THREE_WEEKS = -3;
-    const LOAN_TENURE_ONE_MONTH = 1;
-    const LOAN_TENURE_TWO_MONTHS = 2;
-    const LOAN_TENURE_THREE_MONTHS = 3;
-    const LOAN_TENURE_FOUR_MONTHS = 4;
-    const LOAN_TENURE_FIVE_MONTHS = 5;
-    const LOAN_TENURE_SIX_MONTHS = 6;
-    const LOAN_TENURE_SEVEN_MONTHS = 7;
-    const LOAN_TENURE_EIGHT_MONTHS = 8;
-    const LOAN_TENURE_NINE_MONTHS = 9;
-    const LOAN_TENURE_TEN_MONTHS = 10;
-    const LOAN_TENURE_ELEVEN_MONTHS = 11;
-    const LOAN_TENURE_ONE_YEAR = 12;
-    const LOAN_TENURE_ONE_YEAR_AND_SIX_MONTHS = 18;
-    const LOAN_TENURE_TWO_YEARS = 24;
-    const LOAN_TENURE_TWO_YEARS_AND_SIX_MONTHS = 30;
-    const LOAN_TENURE_THREE_YEARS = 36;
-    const LOAN_TENURE_THREE_YEARS_AND_SIX_MONTHS = 42;
-    const LOAN_TENURE_FOUR_YEARS = 48;
-    const LOAN_TENURE_FOUR_YEARS_AND_SIX_MONTHS = 54;
-    const LOAN_TENURE_FIVE_YEARS = 60;
-    const LOAN_TENURE_FIVE_YEARS_AND_SIX_MONTHS = 66;
-    const LOAN_TENURE_SIX_YEARS = 72;
-    const LOAN_TENURE_SIX_YEARS_AND_SIX_MONTHS = 78;
-    const LOAN_TENURE_SEVEN_YEARS = 84;
-    const LOAN_TENURE_SEVEN_YEARS_AND_SIX_MONTHS = 90;
-    const LOAN_TENURE_EIGHT_YEARS = 96;
-    const LOAN_TENURE_EIGHT_YEARS_AND_SIX_MONTHS = 102;
-    const LOAN_TENURE_NINE_YEARS = 108;
-    const LOAN_TENURE_NINE_YEARS_AND_SIX_MONTHS = 114;
-    const LOAN_TENURE_TEN_YEARS = 120;
+    const TENURE_ONE_WEEK = -1;
+    const TENURE_TWO_WEEKS = -2;
+    const TENURE_THREE_WEEKS = -3;
+    const TENURE_ONE_MONTH = 1;
+    const TENURE_TWO_MONTHS = 2;
+    const TENURE_THREE_MONTHS = 3;
+    const TENURE_FOUR_MONTHS = 4;
+    const TENURE_FIVE_MONTHS = 5;
+    const TENURE_SIX_MONTHS = 6;
+    const TENURE_SEVEN_MONTHS = 7;
+    const TENURE_EIGHT_MONTHS = 8;
+    const TENURE_NINE_MONTHS = 9;
+    const TENURE_TEN_MONTHS = 10;
+    const TENURE_ELEVEN_MONTHS = 11;
+    const TENURE_ONE_YEAR = 12;
+    const TENURE_ONE_YEAR_AND_SIX_MONTHS = 18;
+    const TENURE_TWO_YEARS = 24;
+    const TENURE_TWO_YEARS_AND_SIX_MONTHS = 30;
+    const TENURE_THREE_YEARS = 36;
+    const TENURE_THREE_YEARS_AND_SIX_MONTHS = 42;
+    const TENURE_FOUR_YEARS = 48;
+    const TENURE_FOUR_YEARS_AND_SIX_MONTHS = 54;
+    const TENURE_FIVE_YEARS = 60;
+    const TENURE_FIVE_YEARS_AND_SIX_MONTHS = 66;
+    const TENURE_SIX_YEARS = 72;
+    const TENURE_SIX_YEARS_AND_SIX_MONTHS = 78;
+    const TENURE_SEVEN_YEARS = 84;
+    const TENURE_SEVEN_YEARS_AND_SIX_MONTHS = 90;
+    const TENURE_EIGHT_YEARS = 96;
+    const TENURE_EIGHT_YEARS_AND_SIX_MONTHS = 102;
+    const TENURE_NINE_YEARS = 108;
+    const TENURE_NINE_YEARS_AND_SIX_MONTHS = 114;
+    const TENURE_TEN_YEARS = 120;
 
     /**
      * Loan purpose
      */
-    const LOAN_PURPOSE_HOUSEHOLD_PURCHASE = 1;
-    const LOAN_PURPOSE_PAY_RENT = 2;
-    const LOAN_PURPOSE_GADGET_PURCHASE = 3;
-    const LOAN_PURPOSE_CAR_PURCHASE = 4;
-    const LOAN_PURPOSE_HOUSE_PURCHASE = 5;
-    const LOAN_PURPOSE_PAY_SCHOOL_FEES = 6;
-    const LOAN_PURPOSE_START_BUSINESS = 7;
-    const LOAN_PURPOSE_HEALTHCARE = 8;
-    const LOAN_PURPOSE_TRAVEL = 9;
-    const LOAN_PURPOSE_OTHERS = -1;
+    const PURPOSE_HOUSEHOLD_PURCHASE = 1;
+    const PURPOSE_PAY_RENT = 2;
+    const PURPOSE_GADGET_PURCHASE = 3;
+    const PURPOSE_CAR_PURCHASE = 4;
+    const PURPOSE_HOUSE_PURCHASE = 5;
+    const PURPOSE_PAY_SCHOOL_FEES = 6;
+    const PURPOSE_START_BUSINESS = 7;
+    const PURPOSE_HEALTHCARE = 8;
+    const PURPOSE_TRAVEL = 9;
+    const PURPOSE_OTHERS = -1;
 
     public function getArray(bool $onlyFillable = false): array
     {
@@ -129,11 +131,11 @@ class Loan extends Model
     }
 
     public function getTenureReadable() {
-        return converter()->convertClassConst($this->getInt('tenure'), $this, "LOAN_TENURE_");
+        return converter()->convertClassConst($this->getInt('tenure'), $this, "TENURE_");
     }
 
     public function getPurposeReadable() {
-        return converter()->convertClassConst($this->getInt('purpose'), $this, "LOAN_PURPOSE_");
+        return converter()->convertClassConst($this->getInt('purpose'), $this, "PURPOSE_");
     }
 
     public function getLoanTypeReadable() {
@@ -178,12 +180,12 @@ class Loan extends Model
 
     public function getAbsoluteTenure() {
         $tenure = $this->getInt('tenure');
-        if ($tenure < Loan::LOAN_TENURE_ONE_MONTH) {
-            if ($tenure == Loan::LOAN_TENURE_ONE_WEEK) {
+        if ($tenure < Loan::TENURE_ONE_MONTH) {
+            if ($tenure == Loan::TENURE_ONE_WEEK) {
                 $tenure = (1 / 4);
-            } elseif ($tenure == Loan::LOAN_TENURE_TWO_WEEKS) {
+            } elseif ($tenure == Loan::TENURE_TWO_WEEKS) {
                 $tenure = ((1 / 4) * 2);
-            } elseif ($tenure == Loan::LOAN_TENURE_THREE_WEEKS) {
+            } elseif ($tenure == Loan::TENURE_THREE_WEEKS) {
                 $tenure = ((1 / 4) * 3);
             }
         }
@@ -197,112 +199,112 @@ class Loan extends Model
     #[Pure] public static function getLoanDueDate(int $tenure): string
     {
         switch ($tenure) {
-            case self::LOAN_TENURE_ONE_WEEK:
+            case self::TENURE_ONE_WEEK:
                 $date = strtotime('+1 week');
                 break;
-            case self::LOAN_TENURE_TWO_WEEKS:
+            case self::TENURE_TWO_WEEKS:
                 $date = strtotime('+2 weeks');
                 break;
-            case self::LOAN_TENURE_THREE_WEEKS:
+            case self::TENURE_THREE_WEEKS:
                 $date = strtotime('+3 weeks');
                 break;
-            case self::LOAN_TENURE_ONE_MONTH:
+            case self::TENURE_ONE_MONTH:
                 $date = strtotime('+1 month');
                 break;
-            case self::LOAN_TENURE_TWO_MONTHS:
+            case self::TENURE_TWO_MONTHS:
                 $date = strtotime('+2 months');
                 break;
-            case self::LOAN_TENURE_THREE_MONTHS:
+            case self::TENURE_THREE_MONTHS:
                 $date = strtotime('+3 months');
                 break;
-            case self::LOAN_TENURE_FOUR_MONTHS:
+            case self::TENURE_FOUR_MONTHS:
                 $date = strtotime('+4 months');
                 break;
-            case self::LOAN_TENURE_FIVE_MONTHS:
+            case self::TENURE_FIVE_MONTHS:
                 $date = strtotime('+5 months');
                 break;
-            case self::LOAN_TENURE_SIX_MONTHS:
+            case self::TENURE_SIX_MONTHS:
                 $date = strtotime('+6 months');
                 break;
-            case self::LOAN_TENURE_SEVEN_MONTHS:
+            case self::TENURE_SEVEN_MONTHS:
                 $date = strtotime('+7 months');
                 break;
-            case self::LOAN_TENURE_EIGHT_MONTHS:
+            case self::TENURE_EIGHT_MONTHS:
                 $date = strtotime('+8 months');
                 break;
-            case self::LOAN_TENURE_NINE_MONTHS:
+            case self::TENURE_NINE_MONTHS:
                 $date = strtotime('+9 months');
                 break;
-            case self::LOAN_TENURE_TEN_MONTHS:
+            case self::TENURE_TEN_MONTHS:
                 $date = strtotime('+10 months');
                 break;
-            case self::LOAN_TENURE_ELEVEN_MONTHS:
+            case self::TENURE_ELEVEN_MONTHS:
                 $date = strtotime('+11 months');
                 break;
-            case self::LOAN_TENURE_ONE_YEAR:
+            case self::TENURE_ONE_YEAR:
                 $date = strtotime('+1 year');
                 break;
-            case self::LOAN_TENURE_ONE_YEAR_AND_SIX_MONTHS:
+            case self::TENURE_ONE_YEAR_AND_SIX_MONTHS:
                 $date = strtotime('+1 year');
                 $date = strtotime('+6 months', $date);
                 break;
-            case self::LOAN_TENURE_TWO_YEARS:
+            case self::TENURE_TWO_YEARS:
                 $date = strtotime('+2 years');
                 break;
-            case self::LOAN_TENURE_TWO_YEARS_AND_SIX_MONTHS:
+            case self::TENURE_TWO_YEARS_AND_SIX_MONTHS:
                 $date = strtotime('+2 years');
                 $date = strtotime('+6 months', $date);
                 break;
-            case self::LOAN_TENURE_THREE_YEARS:
+            case self::TENURE_THREE_YEARS:
                 $date = strtotime('+3 years');
                 break;
-            case self::LOAN_TENURE_THREE_YEARS_AND_SIX_MONTHS:
+            case self::TENURE_THREE_YEARS_AND_SIX_MONTHS:
                 $date = strtotime('+3 years');
                 $date = strtotime('+6 months', $date);
                 break;
-            case self::LOAN_TENURE_FOUR_YEARS:
+            case self::TENURE_FOUR_YEARS:
                 $date = strtotime('+4 years');
                 break;
-            case self::LOAN_TENURE_FOUR_YEARS_AND_SIX_MONTHS:
+            case self::TENURE_FOUR_YEARS_AND_SIX_MONTHS:
                 $date = strtotime('+4 years');
                 $date = strtotime('+6 months', $date);
                 break;
-            case self::LOAN_TENURE_FIVE_YEARS:
+            case self::TENURE_FIVE_YEARS:
                 $date = strtotime('+5 years');
                 break;
-            case self::LOAN_TENURE_FIVE_YEARS_AND_SIX_MONTHS:
+            case self::TENURE_FIVE_YEARS_AND_SIX_MONTHS:
                 $date = strtotime('+5 years');
                 $date = strtotime('+6 months', $date);
                 break;
-            case self::LOAN_TENURE_SIX_YEARS:
+            case self::TENURE_SIX_YEARS:
                 $date = strtotime('+6 years');
                 break;
-            case self::LOAN_TENURE_SIX_YEARS_AND_SIX_MONTHS:
+            case self::TENURE_SIX_YEARS_AND_SIX_MONTHS:
                 $date = strtotime('+6 years');
                 $date = strtotime('+6 months', $date);
                 break;
-            case self::LOAN_TENURE_SEVEN_YEARS:
+            case self::TENURE_SEVEN_YEARS:
                 $date = strtotime('+7 years');
                 break;
-            case self::LOAN_TENURE_SEVEN_YEARS_AND_SIX_MONTHS:
+            case self::TENURE_SEVEN_YEARS_AND_SIX_MONTHS:
                 $date = strtotime('+7 years');
                 $date = strtotime('+6 months', $date);
                 break;
-            case self::LOAN_TENURE_EIGHT_YEARS:
+            case self::TENURE_EIGHT_YEARS:
                 $date = strtotime('+8 years');
                 break;
-            case self::LOAN_TENURE_EIGHT_YEARS_AND_SIX_MONTHS:
+            case self::TENURE_EIGHT_YEARS_AND_SIX_MONTHS:
                 $date = strtotime('+8 years');
                 $date = strtotime('+6 months', $date);
                 break;
-            case self::LOAN_TENURE_NINE_YEARS:
+            case self::TENURE_NINE_YEARS:
                 $date = strtotime('+9 years');
                 break;
-            case self::LOAN_TENURE_NINE_YEARS_AND_SIX_MONTHS:
+            case self::TENURE_NINE_YEARS_AND_SIX_MONTHS:
                 $date = strtotime('+9 years');
                 $date = strtotime('+6 months', $date);
                 break;
-            case self::LOAN_TENURE_TEN_YEARS:
+            case self::TENURE_TEN_YEARS:
                 $date = strtotime('+10 years');
                 break;
             default:

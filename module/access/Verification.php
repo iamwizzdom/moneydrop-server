@@ -56,7 +56,7 @@ class Verification extends Manager implements Api
                                 });
 
                             if ($validator->hasError()) throw $this->baseException(
-                                current($validator->getError('email')), "Verified", HTTP::CONFLICT);
+                                current($validator->getError('email')), "Verified", HTTP::CONFLICT, true);
 
                             $insert = $this->db()->select('*')->table('verifications')
                                 ->where('data', $validator->getValue('email'))
@@ -200,7 +200,7 @@ class Verification extends Manager implements Api
 
                             $condition = $validator->validate('phone')
                                 ->isPhoneNumber("Please enter a valid phone number")
-                                ->startsWithAny(['+234', '234'], "Sorry, we only support nigerian phone numbers for now.")
+                                ->startsWith('+234', "Sorry, we only support nigerian phone numbers for now.")
                                 ->hasMinLength(13, "Enter your phone number with your country code, and it must be at least %s digits long")
                                 ->when($input['old_phone'], function (ConditionError $error, $oldPhone) {
                                     $error->isNotEqual($oldPhone, "That's already your phone number");
@@ -219,7 +219,7 @@ class Verification extends Manager implements Api
                                 });
 
                             if ($validator->hasError()) throw $this->baseException(
-                                current($validator->getError('phone')), "Verified", HTTP::CONFLICT);
+                                current($validator->getError('phone')), "Verified", HTTP::CONFLICT, true);
 
                             $insert = $this->db()->select('*')->table('verifications')
                                 ->where('data', $validator->getValue('phone'))
@@ -261,7 +261,7 @@ class Verification extends Manager implements Api
                                 'title' => 'Verification OTP Sent',
                                 'message' => "Verify your phone number with the OTP we sent you",
                                 'expire' => strtotime($model->getValue('expiration')) - APP_TIME,
-                                'email' => $model->getValue('data')
+                                'phone' => $model->getValue('data')
                             ]);
                         case self::VERIFICATION_ACTION_VERIFY:
 

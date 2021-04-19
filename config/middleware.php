@@ -8,13 +8,16 @@
 
 use app\middleware\AdminMiddleware;
 use app\middleware\UserMiddleware;
+use middleware\ExpireJWTMiddleware;
 use que\middleware\AddTokensToCookie;
 use que\middleware\AddTokensToHeaderResponse;
 use que\middleware\CheckAuthentication;
 use que\middleware\CheckForAllowedRequestIP;
 use que\middleware\CheckForAllowedRequestMethod;
+use que\middleware\CheckForAllowedRequestOrigin;
 use que\middleware\CheckForAllowedRequestPort;
 use que\middleware\CheckForMaintenanceMode;
+use que\middleware\HandleCors;
 use que\middleware\StartSession;
 use que\middleware\VerifyCsrfToken;
 
@@ -30,12 +33,14 @@ return [
     |
     */
     'global' => [
-        StartSession::class,
-        CheckAuthentication::class,
+        HandleCors::class,
+        CheckForAllowedRequestOrigin::class,
         CheckForAllowedRequestMethod::class,
         CheckForAllowedRequestIP::class,
         CheckForAllowedRequestPort::class,
         CheckForMaintenanceMode::class,
+        StartSession::class,
+        CheckAuthentication::class,
         VerifyCsrfToken::class,
         AddTokensToHeaderResponse::class,
         AddTokensToCookie::class
@@ -52,5 +57,6 @@ return [
     'route' => [
         'user.auth' => UserMiddleware::class,
         'admin.auth' => AdminMiddleware::class,
+        'expire.jwt' => ExpireJWTMiddleware::class
     ]
 ];

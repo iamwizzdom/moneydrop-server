@@ -30,7 +30,7 @@ class Transaction extends Manager implements Api
 
         $trans = $this->db()->select('*')
             ->table('transactions')->where('user_id', $this->user('id'))
-            ->orderBy('desc', 'id')->paginate(PAGINATION_PER_PAGE);
+            ->orderBy('desc', 'id')->paginate(headers('X-PerPage', PAGINATION_PER_PAGE));
 
         $trans->setModelKey("transactionModel");
 

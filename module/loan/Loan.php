@@ -41,10 +41,10 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                     $validator->validate('amount')->if(function (Condition $condition) use ($type) {
                         return $type == 'request' || $this->getAvailableBalance() > (float)$condition->getValue();
                     }, "Sorry, you don't have up to {$input['amount']} NGN in your wallet")->isNumeric('Please enter a valid amount')
-                        ->isNumberGreaterThanOrEqual(\model\Loan::MIN_LOAN_AMOUNT, "Sorry, you must {$type} at least %s NGN");
+                        ->isNumberGreaterThanOrEqual(\model\Loan::MIN_AMOUNT, "Sorry, you must {$type} at least %s NGN");
 
                     $validator->validate('tenure')->isNumeric("Please a loan tenure")
-                        ->isEqualToAny(get_class_consts(\model\Loan::class, 'LOAN_TENURE_'), 'Please select a valid tenure');
+                        ->isEqualToAny(get_class_consts(\model\Loan::class, 'TENURE_'), 'Please select a valid tenure');
 
                     $validator->validate('interest')->isNumeric('Please enter a valid interest rate');
 
@@ -52,7 +52,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                         ->isEqualToAny([\model\Loan::INTEREST_TYPE_STATIC, \model\Loan::INTEREST_TYPE_NON_STATIC], "Please select a valid interest type");
 
                     $validator->validate('purpose', true)->isNumeric('Please select a loan purpose')
-                        ->isEqualToAny(get_class_consts(\model\Loan::class, 'LOAN_PURPOSE_'), "Please select a valid loan purpose");
+                        ->isEqualToAny(get_class_consts(\model\Loan::class, 'PURPOSE_'), "Please select a valid loan purpose");
 
                     $validator->validate('note', true)->isNotEmpty("Your note shouldn't be empty")
                         ->hasMinWord(10, "Please write a meaningful note of at least %s words");
@@ -141,7 +141,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                         ->where('status', \model\Loan::STATUS_AWAITING)
                         ->where('is_active', true)
                         ->where('loan_type', $type == "offers" ? \model\Loan::LOAN_TYPE_OFFER : \model\Loan::LOAN_TYPE_REQUEST)
-                        ->orderBy('desc', 'id')->paginate(PAGINATION_PER_PAGE);
+                        ->orderBy('desc', 'id')->paginate(headers('X-PerPage', PAGINATION_PER_PAGE));
 
                     $loans->setModelKey("loanModel");
 
@@ -152,6 +152,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                             'page' => $pagination->getPaginator("default")->getPage(),
                             'totalRecords' => $pagination->getTotalRecords("default"),
                             'totalPages' => $pagination->getTotalPages("default"),
+                            'perPage' => $pagination->getPerPage('default'),
                             'nextPage' => $pagination->getNextPage("default", true),
                             'previousPage' => $pagination->getPreviousPage("default", true)
                         ],
@@ -160,16 +161,16 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
 
                 case "constants":
 
-                    $tenures = array_flip(get_class_consts(\model\Loan::class, 'LOAN_TENURE_'));
-                    $purposes = array_flip(get_class_consts(\model\Loan::class, 'LOAN_PURPOSE_'));
+                    $tenures = array_flip(get_class_consts(\model\Loan::class, 'TENURE_'));
+                    $purposes = array_flip(get_class_consts(\model\Loan::class, 'PURPOSE_'));
                     $interest_types = array_flip(get_class_consts(\model\Loan::class, 'INTEREST_TYPE_'));
 
                     Arr::callback($tenures, function ($tenure) {
-                        return ucfirst(strtolower(str_replace("_", " ", str_start_from($tenure, 'LOAN_TENURE_'))));
+                        return ucfirst(strtolower(str_replace("_", " ", str_start_from($tenure, 'TENURE_'))));
                     });
 
                     Arr::callback($purposes, function ($purpose) {
-                        return ucfirst(strtolower(str_replace("_", " ", str_start_from($purpose, 'LOAN_PURPOSE_'))));
+                        return ucfirst(strtolower(str_replace("_", " ", str_start_from($purpose, 'PURPOSE_'))));
                     });
 
                     Arr::callback($interest_types, function ($interest_type) {
@@ -226,14 +227,8 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
             if ($loan?->getInt('status') == \model\Loan::STATUS_REVOKED)
                 throw $this->baseException("This loan has already been revoked.", "Revoke Failed", HTTP::CONFLICT);
 
-            if ($loan?->getInt('status') == \model\Loan::STATUS_REJECTED)
-                throw $this->baseException("Sorry, you can't revoke a loan that's been rejected.", "Revoke Failed", HTTP::NOT_ACCEPTABLE);
-
-            if ($loan?->getInt('status') == \model\Loan::STATUS_GRANTED || $loan?->getBool('is_granted') == true)
-                throw $this->baseException("Sorry, you can't revoke a loan that's been granted.", "Revoke Failed", HTTP::NOT_ACCEPTABLE);
-
-            if ($loan?->getInt('status') == \model\Loan::STATUS_COMPLETED || $loan?->getBool('is_granted') == true)
-                throw $this->baseException("Sorry, you can't revoke a loan that's been granted/completed.", "Revoke Failed", HTTP::NOT_ACCEPTABLE);
+            if ($loan?->getInt('status') != \model\Loan::STATUS_PENDING && $loan?->getInt('status') != \model\Loan::STATUS_AWAITING)
+                throw $this->baseException("Sorry, you can only revoke a pending or awaiting loan.", "Revoke Failed", HTTP::NOT_ACCEPTABLE);
 
             $revoke = $loan?->update(['status' => \model\Loan::STATUS_REVOKED]);
 

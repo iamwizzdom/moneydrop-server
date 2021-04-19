@@ -75,15 +75,17 @@ class Register extends Manager implements Api
             $validator->validate('state_id', true)->isNumber("Please select a valid state")
                 ->isFoundInDB('states', 'id', "That state does not exist on this platform");
 
-            $validator->validate('pn_token')->isNotEmpty("Please enter a valid token");
+            $validator->validate('pn_token', true)->isNotEmpty("Please enter a valid token");
 
             if ($validator->hasError()) throw $this->baseException(
                 "The inputted data is invalid", "Registration Failed", HTTP::UNPROCESSABLE_ENTITY, false);
 
-            $previousPnTokenUser = $this->db()->find('users', $validator->getValue('pn_token'), 'pn_token');
+            if ($validator->has('pn_token')) {
+                $previousPnTokenUser = $this->db()->find('users', $validator->getValue('pn_token'), 'pn_token');
 
-            if ($previousPnTokenUser->isSuccessful()) {
-                $previousPnTokenUser->getFirstWithModel()->update(['pn_token' => null]);
+                if ($previousPnTokenUser->isSuccessful()) {
+                    $previousPnTokenUser->getFirstWithModel()->update(['pn_token' => null]);
+                }
             }
 
             $user = $this->db()->insert('users', $validator->getValidated());

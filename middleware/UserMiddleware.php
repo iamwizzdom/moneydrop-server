@@ -44,9 +44,9 @@ class UserMiddleware extends Middleware
         $title = "Auth Error";
         $message = "";
         $code = HTTP::EXPIRED_AUTHENTICATION;
-
         try {
-            JWT::toUser((headers('Auth-Token') ?: ''), config('auth.default.provider', 'user'));
+            $user = JWT::toUser((headers('Auth-Token') ?: ''), config('auth.default.provider', 'user'));
+
         } catch (QueRuntimeException $e) {
             throw $e;
         } catch (Exception $e) {
