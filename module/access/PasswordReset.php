@@ -68,10 +68,9 @@ class PasswordReset extends Manager implements Api
                 throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::UNPROCESSABLE_ENTITY);
             }
 
-            $validator->validate('password')->isNotEqual($validator->getValue('password'));
+            $validator->validate('password')->isNotEqual($validator->getValue('password'), 'Use a stronger password.');
 
             if ($validator->hasError()) {
-                $validator->addConditionError('otp', 'Use a stronger password.');
                 throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::UNPROCESSABLE_ENTITY);
             }
 
