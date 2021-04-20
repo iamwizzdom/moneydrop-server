@@ -49,7 +49,7 @@ class PasswordReset extends Manager implements Api
             );
 
             if (!$reset->isSuccessful()) {
-                $validator->addConditionError('otp', 'Seems a password reset process has not been initiated for that account.');
+                $validator->addConditionError('otp', $reset->getQueryError() ?: 'Seems a password reset process has not been initiated for that account.');
                 throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::EXPECTATION_FAILED);
             }
 
@@ -72,7 +72,7 @@ class PasswordReset extends Manager implements Api
             $update = $user->update(['password' => $validator->getValue('password')]);
 
             if (!$update?->isSuccessful()) throw $this->baseException(
-                "Sorry, we couldn't reset your password at this time. Please try gain later",
+                $update->getQueryError() ?: "Sorry, we couldn't reset your password at this time. Please try gain later",
                 "Password Reset Failed", HTTP::EXPECTATION_FAILED);
 
             return $this->http()->output()->json([

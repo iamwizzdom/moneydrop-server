@@ -32,7 +32,7 @@ class Dashboard extends Manager implements Api
         $loans = $this->db()->select("*")->table('loans')
             ->where('user_id', $this->user('id'))
             ->where('is_active', true)
-            ->orderBy('desc', 'id')->limit(3)->exec();
+            ->orderBy('desc', 'id')->limit(6)->exec();
 
         $loans->setModelKey("loanModel");
 
