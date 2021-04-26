@@ -151,7 +151,7 @@ class Card extends Manager implements Api
                                     "Verification Failed", HTTP::EXPECTATION_FAILED);
                             }
 
-                            $amount = Item::cents($data['amount'])->getFactor(true);
+                            $amount = Item::factor($data['amount'])->getFactor(true);
 
                             if (GATEWAY == PAYSTACK && !$authorization['reusable']) {
 
@@ -162,6 +162,7 @@ class Card extends Manager implements Api
                             }
 
                             $cards = $this->db()->count('cards', 'id')
+                                ->where('gateway', GATEWAY)
                                 ->where('user_id', $this->user('id'))
                                 ->where('is_active', true)->exec();
 

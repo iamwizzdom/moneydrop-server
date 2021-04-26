@@ -83,6 +83,8 @@ class Bank extends Manager implements Api
                         "Bank Failed", HTTP::EXPECTATION_FAILED
                     );
 
+                    $add->setModelKey('bankAccountModel');
+
                     $account = $add->getFirstWithModel();
 
                     $charge = null;
@@ -302,6 +304,8 @@ class Bank extends Manager implements Api
 
                         $accountList = [];
 
+                        $account->setModelKey('bankAccountModel');
+
                         if ($account->isSuccessful()) $accountList = $account->getAllArray();
 
                         Arr::callback($accountList, function ($account) {
@@ -334,6 +338,8 @@ class Bank extends Manager implements Api
                         'message' => "That account either does not exist or has been deactivated.",
                         'response' => []
                     ], HTTP::NOT_FOUND);
+
+                    $monoAccount->setModelKey('bankAccountModel');
 
                     return $this->http()->output()->json([
                         'status' => true,

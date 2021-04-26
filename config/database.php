@@ -6,6 +6,7 @@
  * Time: 9:34 AM
  */
 
+use model\BankAccount;
 use model\BankStatement;
 use model\Card;
 use model\LoanApplication;
@@ -16,6 +17,7 @@ use model\User;
 use model\Loan;
 use model\Transaction;
 use model\Wallet;
+use observers\BankAccountObserver;
 use observers\LoanApplicationObserver;
 use observers\LoanObserver;
 use observers\LoanRepaymentObserver;
@@ -91,11 +93,12 @@ return [
         'transactionModel' => Transaction::class,
         'userModel' => User::class,
         'cardModel' => Card::class,
+        'bankAccountModel' => BankAccount::class,
         'loanApplicationModel' => LoanApplication::class,
         'loanRepaymentModel' => LoanRepayment::class,
         'reviewModel' => Review::class,
         'notificationModel' => Notification::class,
-        'bankStatement' => BankStatement::class
+        'bankStatement' => BankStatement::class,
     ],
 
     /*
@@ -116,6 +119,7 @@ return [
         'loan_repayments' => LoanRepaymentObserver::class,
         'notifications' => NotificationObserver::class,
         'verifications' => VerificationObserver::class,
+        'bank_accounts' => BankAccountObserver::class
     ],
 
     /*

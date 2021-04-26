@@ -78,6 +78,13 @@ class Login extends Manager implements Api
 
             $user->set('token', JWT::fromUser($input->user()));
 
+            $bankAccounts = $this->db()->findAll('bank_accounts', user('id'), 'user_id', function (Builder $builder) {
+                $builder->where('is_active', true);
+                $builder->orderBy("desc", "id");
+            });
+
+            $bankAccounts->setModelKey('bankAccountModel');
+
             return $this->http()->output()->json([
                 'status' => true,
                 'code' => HTTP::OK,
@@ -86,7 +93,7 @@ class Login extends Manager implements Api
                 'response' => [
                     'user' => $user,
                     'cards' => $this->getAllMyCards() ?: [],
-//                    'banks' => BanksEnum::getBanks(),
+                    'bank-accounts' => $bankAccounts->getAllWithModel() ?: []
                 ]
             ]);
 

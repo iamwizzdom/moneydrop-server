@@ -54,7 +54,7 @@ trait Flutterwave
 
         if ($amount <= 0) throw new FlutterwaveException("Please set a valid amount to pay.");
 
-        $amount = Item::factor($amount)->getCents();
+//        $amount = Item::factor($amount)->getCents();
 
         $curl = CurlRequest::getInstance();
 
@@ -69,7 +69,7 @@ trait Flutterwave
 
         $card->load('user');
 
-        $curl->setPosts($post = [
+        $curl->setPosts([
             'SECKEY' => FLUTTERWAVE_SECRET_KEY,
             'amount' => $amount,
             'currency' => $currency,
@@ -98,7 +98,7 @@ trait Flutterwave
                     'type' => Transaction::TRANS_TYPE_TOP_UP,
                     'direction' => 'b2w',
                     'gateway_reference' => $data['txRef'],
-                    'amount' => $amount,
+                    'amount' => Item::factor($amount)->getCents(),
                     'currency' => $currency,
                     'status' => Transaction::TRANS_STATUS_PENDING,
                     'narration' => "wallet top-up transaction"
@@ -146,8 +146,6 @@ trait Flutterwave
         if (empty($recipient) || !UUID::is_valid($recipient)) throw new FlutterwaveException("Please set a valid recipient.");
         if (empty($reference) || !UUID::is_valid($reference)) throw new FlutterwaveException("Please set a valid reference.");
 
-        $amount = Item::factor($amount)->getCents();
-
         $curl = CurlRequest::getInstance();
 
         $curl->setUrl(FLUTTERWAVE_TRANSFER_URL);
@@ -161,6 +159,8 @@ trait Flutterwave
             'reference' => $reference,
             'currency' => $currency
         ]);
+
+        $amount = Item::factor($amount)->getCents();
 
         $response = $curl->send();
 
