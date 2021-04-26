@@ -132,15 +132,15 @@ class VerificationObserver extends Observer
 
                     } elseif ($newModel->validate('type')->isEqual(Verification::VERIFICATION_TYPE_PHONE)) {
 
-                        $composer = composer(false);
-                        $composer->setTmpFileName('sms/verified.txt');
-                        $composer->dataExtra([
-                            'title' => 'Phone Verified',
-                            'type' => $newModel->getValue('type'),
-                            'data' => $newModel->getValue('data')
-                        ]);
-
-                        $this->send($composer->prepare()->renderWithSmarty(true), $newModel->getValue('data'));
+//                        $composer = composer(false);
+//                        $composer->setTmpFileName('sms/verified.txt');
+//                        $composer->dataExtra([
+//                            'title' => 'Phone Verified',
+//                            'type' => $newModel->getValue('type'),
+//                            'data' => $newModel->getValue('data')
+//                        ]);
+//
+//                        $this->send($composer->prepare()->renderWithSmarty(true), $newModel->getValue('data'));
 
                     } else throw new QueException("Invalid verification type");
 
