@@ -1,5 +1,4 @@
 Hello there.
-Please verify your phone number on {$header.name} using the OTP below:
-{$data.otp}
+Your {$header.name} verification code is: {$data.otp}
 ------------------------------------------
 Note: This OTP will expire at {$data.expire}
