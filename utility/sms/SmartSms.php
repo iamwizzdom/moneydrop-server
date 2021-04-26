@@ -27,34 +27,42 @@ trait SmartSms
             'token' => $token
         ]);
 
-        $cl = curl_init();
+        $curl = $curl->send();
 
-        $post_data = json_encode([
-            "to" => $to,
-            "from" => $sender,
-            "sms" => $message,
-            "type" => "plain",
-            "channel" => "whatsapp",
-            "api_key" => "TLD9FjI2ZvMtOtXQWtTZ5ezY9JQG1tT7FFCFSOoP1IPWsVQ01imZLuo6r6XU1e"
-        ]);
+        $sms = $curl->getResponseArray();
 
-        curl_setopt_array($cl, [
-            CURLOPT_URL => "https://termii.com/api/sms/send",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => $post_data,
-            CURLOPT_HTTPHEADER => ["Content-Type: application/json"],
-        ]);
+        if (($sms['code'] ?? '01') == '1000') {
 
-        curl_exec($cl);
+            $cl = curl_init();
 
-        curl_close($cl);
+            $post_data = json_encode([
+                "to" => $to,
+                "from" => $sender,
+                "sms" => $message,
+                "type" => "plain",
+                "channel" => "whatsapp",
+                "api_key" => "TLD9FjI2ZvMtOtXQWtTZ5ezY9JQG1tT7FFCFSOoP1IPWsVQ01imZLuo6r6XU1e"
+            ]);
 
-        return $curl->send();
+            curl_setopt_array($cl, [
+                CURLOPT_URL => "https://termii.com/api/sms/send",
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => "",
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => "POST",
+                CURLOPT_POSTFIELDS => $post_data,
+                CURLOPT_HTTPHEADER => ["Content-Type: application/json"],
+            ]);
+
+            curl_exec($cl);
+
+            curl_close($cl);
+
+        }
+
+        return $curl;
     }
 }
