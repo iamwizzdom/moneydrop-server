@@ -1,4 +1,4 @@
 Hello there.
-Your {$header.name} verification code is: {$data.otp}
+Your {$header.name} verification OTP is: {$data.otp}
 ------------------------------------------
 Note: This OTP will expire at {$data.expire}
