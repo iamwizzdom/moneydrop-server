@@ -96,8 +96,6 @@ class User extends Model
 
         $maxAmount = (Loan::MIN_AMOUNT * 100);
 
-        $rating = $this->getFloat('rating');
-
 //        if ($rating <= 1) $maxAmount = $rating < 1 ? 500000 : 1000000;
 //        elseif ($rating <= 2) $maxAmount = $rating < 2 ? 1500000 : 3000000;
 //        elseif ($rating <= 3) $maxAmount = $rating < 3 ? 4000000 : 6000000;
@@ -107,33 +105,33 @@ class User extends Model
         $maxIncome = db()->select('max(ba.income) as max_income')
             ->table('bank_accounts as ba')
             ->where('user_id', $this->getInt('id'))
+            ->where('income_type', BankAccount::INCOME_TYPE_REGULAR)
             ->where('is_active', true)
             ->limit(1)
             ->exec();
 
         $maxIncome = $maxIncome->getFirstWithModel()?->getFloat('max_income');
 
-        if ($maxIncome > Loan::MIN_AMOUNT) {
-            $percentage = (Loan::PERCENTAGE_INCOME + $rating);
+        if ($maxIncome && $maxIncome > Loan::MIN_AMOUNT) {
+            $percentage = (Loan::PERCENTAGE_INCOME +  $this->getFloat('rating'));
             $availableIncome = (float) Item::cents($maxIncome)->percentage($percentage)->getCents();
             if ($availableIncome > Loan::MIN_AMOUNT) $maxAmount = $availableIncome;
         }
 
-        if ($maxAmount == 10000000) {
+        if ($maxAmount >= 10000000) {
 
             $max = db()->select('max(l.amount) as max_amount')->table('loan_applications as la')
                 ->join('loans as l', 'la.loan_id', 'l.uuid')
                 ->where('l.loan_type', Loan::LOAN_TYPE_OFFER)
                 ->where('la.user_id', $this->getInt('id'))
                 ->where('la.status', LoanApplication::STATUS_REPAID)
+                ->where('la.is_active', true)
+                ->where('l.is_active', true)
                 ->limit(1)
                 ->exec();
 
             $maxLoanAmount = $max->getFirstWithModel()?->getFloat('max_amount');
-            if ($maxLoanAmount && $maxLoanAmount >= 10000000) {
-                $maxLoanAmount = ($maxLoanAmount * 2);
-                if ($maxLoanAmount > $maxAmount) $maxAmount = $maxLoanAmount;
-            }
+            $maxAmount = ($maxLoanAmount && $maxLoanAmount >= 10000000) ? ($maxLoanAmount * 2) : 10000000;
         }
 
         return $maxAmount;

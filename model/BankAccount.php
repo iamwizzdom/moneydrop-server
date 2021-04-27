@@ -13,6 +13,9 @@ use que\database\model\Model;
 
 class BankAccount extends Model
 {
+    const INCOME_TYPE_REGULAR = 1;
+    const INCOME_TYPE_IRREGULAR = -1;
+
     protected string $modelKey = 'bankAccountModel';
     protected array $casts = ['is_active' => 'bool', 'created_at' => 'date:d/m/y'];
     protected array $hidden = ['income'];

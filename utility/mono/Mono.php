@@ -55,4 +55,24 @@ trait Mono
         return $curl->send();
     }
 
+    /**
+     * @param string $accountID
+     * @return CurlResponse
+     * @throws MonoException
+     */
+    public function account_income(string $accountID): CurlResponse
+    {
+
+        if (empty($accountID)) throw new MonoException("Please provide a valid account id.");
+
+        $curl = CurlRequest::getInstance();
+
+        $curl->setUrl("https://api.withmono.com/accounts/{$accountID}/income");
+        $curl->setHeader('mono-sec-key', MONO_API_KEY);
+        $curl->setHeader('Content-Type', 'application/json');
+        $curl->setMethod("GET");
+
+        return $curl->send();
+    }
+
 }

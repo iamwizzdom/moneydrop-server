@@ -4,6 +4,7 @@
 namespace profile;
 
 
+use model\BankAccount;
 use que\common\exception\BaseException;
 use que\common\manager\Manager;
 use que\common\structure\Api;
@@ -17,6 +18,7 @@ use que\http\output\response\Plain;
 use que\http\request\Request;
 use que\support\Arr;
 use que\support\Str;
+use que\utility\money\Item;
 use utility\enum\BanksEnum;
 use utility\mono\exception\MonoException;
 use utility\mono\Mono;
@@ -138,6 +140,51 @@ class Bank extends Manager implements Api
                         'bank_code' => $accountDetails['institution']['bankCode'],
                         'bank_name' => $accountDetails['institution']['name'],
                         'currency' => $accountDetails['currency']
+                    ]);
+
+                    if (!$update?->isSuccessful()) {
+                        $account->update(['is_active' => false]);
+                        throw $this->baseException(
+                            "Sorry we couldn't add that account number at this time, let's that again later.",
+                            "Bank Failed", HTTP::EXPECTATION_FAILED
+                        );
+                    }
+
+                    $charge = null;
+                    try {
+                        $charge = \utility\Wallet::charge(\model\Transaction::ACCOUNT_INCOME_RETRIEVAL_FEE,
+                            2000, $account->uuid, "Bank account income retrieval charge");
+                        if ($charge->isSuccessful()) $monoIncome = $this->account_income($accountID);
+                        else throw new MonoException($charge->getQueryError());
+                    } catch (MonoException $e) {
+                        $account->update(['is_active' => false]);
+                        if ($charge) \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
+                        throw $this->baseException($e->getMessage(), "Bank Failed", HTTP::EXPECTATION_FAILED);
+                    }
+
+                    if (!$monoIncome->isSuccessful()) {
+                        $account->update(['is_active' => false]);
+                        \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
+                        throw $this->baseException(
+                            "Sorry we couldn't retrieve your bank account income at this time, let's try that again later.",
+                            "Bank Failed", HTTP::EXPECTATION_FAILED
+                        );
+                    }
+
+                    $response = $monoIncome->getResponseArray();
+
+                    if (!isset($response['amount'])) {
+                        $account->update(['is_active' => false]);
+                        throw $this->baseException(
+                            sprintf("Sorry we couldn't retrieve your bank account income at this time, %s",
+                            isset($response['message']) ? ("because, " . strtolower($response['message'])) : "let's try that again later."),
+                            "Bank Failed", HTTP::EXPECTATION_FAILED
+                        );
+                    }
+
+                    $update = $account->update([
+                        'income' => (float) Item::cents($response['amount'])->percentage(($response['confidence'] * 100))->getCents(),
+                        'income_type' => $response['type'] == 'INCOME' ? BankAccount::INCOME_TYPE_REGULAR : BankAccount::INCOME_TYPE_IRREGULAR
                     ]);
 
                     if (!$update?->isSuccessful()) {

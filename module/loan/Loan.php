@@ -4,6 +4,7 @@
 namespace loan;
 
 
+use model\BankAccount;
 use que\common\exception\BaseException;
 use que\common\validator\interfaces\Condition;
 use que\database\interfaces\Builder;
@@ -38,10 +39,11 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                 case "request":
                 case "offer":
 
-                    $validator->validate('amount')->if(function (Condition $condition) use ($type) {
-                        return $type == 'request' || $this->getAvailableBalance() > (float)$condition->getValue();
-                    }, "Sorry, you don't have up to {$input['amount']} NGN in your wallet")->isNumeric('Please enter a valid amount')
-                        ->isNumberGreaterThanOrEqual(\model\Loan::MIN_AMOUNT, "Sorry, you must {$type} at least %s NGN");
+                    $validator->validate('amount')->isNumeric('Please enter a valid amount')
+                        ->isNumberGreaterThanOrEqual(\model\Loan::MIN_AMOUNT, "Sorry, you must {$type} at least %s NGN")
+                        ->if(function (Condition $condition) use ($type) {
+                            return $type == 'request' || $this->getAvailableBalance() > (float)$condition->getValue();
+                        }, "Sorry, you don't have up to {$input['amount']} NGN in your wallet");
 
                     $validator->validate('tenure')->isNumeric("Please a loan tenure")
                         ->isEqualToAny(get_class_consts(\model\Loan::class, 'TENURE_'), 'Please select a valid tenure');
@@ -67,6 +69,24 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                         "The inputted data is invalid", "Loan Failed", HTTP::UNPROCESSABLE_ENTITY);
 
                     $amount = Item::factor(\input('amount'))->getCents();
+
+                    if ($type == 'request') {
+
+                        $check = $this->db()->exists('bank_accounts', function (Builder $builder) {
+                            $builder->where('user_id', user('id'));
+                            $builder->where('income_type', BankAccount::INCOME_TYPE_REGULAR);
+                            $builder->where('is_active', true);
+                        });
+
+                        if ($check->isSuccessful()) throw $this->baseException(
+                            "Sorry, you can't request for a loan when you have not added a regular income bank account.",
+                            "Loan Failed", HTTP::EXPECTATION_FAILED);
+
+                        if ($amount > $this->user('max_loan_amount')) throw $this->baseException(
+                            "Sorry, you are currently only eligible to request a loan of {$this->user('max_loan_amount')} NGN.",
+                            "Loan Failed", HTTP::EXPECTATION_FAILED);
+
+                    }
 
                     $check = $this->db()->exists('loans', function (Builder $builder) use ($type, $amount) {
                         $builder->where('amount', $amount);
