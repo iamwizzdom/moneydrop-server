@@ -22,10 +22,11 @@ class Loan extends Model
         'note' => 'string', 'id,tenure,interest_type,user_id,status,loan_type' => 'int',
         'interest,amount' => 'double', 'loan_type_readable' => 'func::strtolower',
         'purpose_readable,tenure_readable,interest_type_readable' => 'func::strtolower|str_replace,_, ,:subject|ucfirst',
-        'is_active,is_fund_raiser' => 'bool', 'created_at' => 'date:d/m/y'
+        'is_active,is_fund_raiser' => 'bool', 'date' => 'date:d/m/y', 'date_time' => "date:jS, M 'y h:i A",
+        'status_readable' => 'func::ucfirst'
     ];
     protected array $hidden = ['updated_at'];
-    protected array $renames = ['created_at' => 'date'];
+    protected array $copy = ['created_at' => 'date', 'date' => 'date_time'];
     public static array $applied = [];
     public static array $granted = [];
 
