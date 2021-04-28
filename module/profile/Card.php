@@ -138,7 +138,7 @@ class Card extends Manager implements Api
                                 'type' => \model\Transaction::TRANS_TYPE_TOP_UP,
                                 'direction' => "b2w",
                                 'gateway_reference' => $data[GATEWAY == PAYSTACK ? 'reference' : 'txref'],
-                                'amount' => $data['amount'],
+                                'amount' => Item::factor($data['amount'])->getCents(),
                                 'currency' => $data['currency'],
                                 'status' => \model\Transaction::TRANS_STATUS_SUCCESSFUL,
                                 'narration' => "Card add top-up transaction"
