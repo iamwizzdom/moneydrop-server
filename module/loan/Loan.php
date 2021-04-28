@@ -82,9 +82,12 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                             "Sorry, you can't request for a loan when you have not added a regular income bank account.",
                             "Loan Failed", HTTP::EXPECTATION_FAILED);
 
-                        if ($amount > $this->user('max_loan_amount')) throw $this->baseException(
-                            "Sorry, you are currently only eligible to request a loan of {$this->user('max_loan_amount')} NGN.",
+                        if ($amount > $this->user('max_loan_amount')) {
+                            $eligible = Item::cents($this->user('max_loan_amount'))->getFactor(true);
+                            throw $this->baseException(
+                            "Sorry, you are currently only eligible to request a loan of {$eligible} NGN.",
                             "Loan Failed", HTTP::EXPECTATION_FAILED);
+                        }
 
                     }
 
