@@ -399,14 +399,39 @@ class Bank extends Manager implements Api
 
                     $id = Request::getUriParam('id');
 
-                    $monoAccount = $this->db()->find('bank_accounts', $id, 'uuid', function (Builder $builder) {
+                    $check = $this->db()->exists('loans', function (Builder $builder) {
+                        $builder->where('user_id', $this->user('id'));
+                        $builder->where('loan_type', \model\Loan::LOAN_TYPE_REQUEST);
+                        $builder->where('status', \model\Loan::STATUS_COMPLETED, '!=');
+                        $builder->where('status', \model\Loan::STATUS_REVOKED, '!=');
+                        $builder->where('is_active', true);
+                    });
+
+                    if ($check->isSuccessful()) throw $this->baseException(
+                        "You cannot remove a bank account when you have an uncompleted loan request.", "Remove Failed", HTTP::FORBIDDEN);
+
+                    $check = $this->db()->select('*')->table('loan_applications as la')
+                        ->join('loans as l', 'la.loan_id', 'l.uuid')
+                        ->where('la.user_id', $this->user('id'))
+                        ->where('la.status', \model\LoanApplication::STATUS_REPAID, '!=')
+                        ->where('la.status', \model\LoanApplication::STATUS_REJECTED, '!=')
+                        ->where('l.loan_type', \model\Loan::LOAN_TYPE_OFFER)
+                        ->where('la.is_active', true)
+                        ->where('l.is_active', true)
+                        ->limit(1)
+                        ->exec();
+
+                    if ($check->isSuccessful()) throw $this->baseException(
+                        "You cannot remove a bank account when you have an un-repaid loan offer.", "Remove Failed", HTTP::FORBIDDEN);
+
+                    $bankAccount = $this->db()->find('bank_accounts', $id, 'uuid', function (Builder $builder) {
                         $builder->where('user_id', $this->user('id'));
                     });
 
                     $remove = false;
 
-                    if ($monoAccount->isSuccessful()) {
-                        $remove = !!$monoAccount->getFirstWithModel()?->update(['is_active' => false])?->isSuccessful();
+                    if ($bankAccount->isSuccessful()) {
+                        $remove = !!$bankAccount->getFirstWithModel()?->update(['is_active' => false])?->isSuccessful();
                     }
 
                     return $this->http()->output()->json([
