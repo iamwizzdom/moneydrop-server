@@ -64,7 +64,7 @@ class VerificationObserver extends Observer
                 $sms = $this->send($composer->prepare()->renderWithSmarty(true), $model->getValue('data'));
                 $sms = $sms->getResponseArray();
 
-                if (($sms['code'] ?? '01') != '1000') throw new QueException(($sms['comment'] ?? null) ?: "Sorry we couldn't send you an SMS at this time.");
+                if (($sms['code'] ?? '01') != '1000') throw new QueException("Sorry we couldn't send you an SMS at this time" . (isset($sms['comment']) && !empty($sms['comment']) ? ", because, {$sms['comment']}" : '.'));
 
             } else throw new QueException("Invalid verification type");
 
