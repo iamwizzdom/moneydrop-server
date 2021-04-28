@@ -101,7 +101,7 @@ class LoanApplication extends Manager implements Api
                         "The inputted data is invalid", "Loan Failed", HTTP::UNPROCESSABLE_ENTITY);
 
                     if ($loan->getInt('loan_type') == \model\Loan::LOAN_TYPE_OFFER && ($loan->getFloat('amount') > $this->user('max_loan_amount'))) {
-                        $eligible = Item::cents($this->user('max_loan_amount'))->getFactor(true);
+                        $eligible = Item::cents($this->user('max_loan_amount'))->getFactor(true, 0);
                         throw $this->baseException(
                             "Sorry, you are currently only eligible to apply for a loan of {$eligible} NGN.",
                             "Loan Failed", HTTP::EXPECTATION_FAILED);

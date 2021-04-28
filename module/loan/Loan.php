@@ -83,7 +83,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                             "Loan Failed", HTTP::EXPECTATION_FAILED);
 
                         if ($amount > $this->user('max_loan_amount')) {
-                            $eligible = Item::cents($this->user('max_loan_amount'))->getFactor(true);
+                            $eligible = Item::cents($this->user('max_loan_amount'))->getFactor(true, 0);
                             throw $this->baseException(
                             "Sorry, you are currently only eligible to request a loan of {$eligible} NGN.",
                             "Loan Failed", HTTP::EXPECTATION_FAILED);
