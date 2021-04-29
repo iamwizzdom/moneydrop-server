@@ -89,7 +89,7 @@ trait Flutterwave
 
             $data = $res['data'] ?? [];
 
-            if (!empty($data)) {
+            if (!empty($data) && in_array(($data['status'] ?? 'failed'), ['success', 'successful'])) {
 
                 $trans = [
                     'uuid' => Str::uuidv4(),
@@ -169,7 +169,7 @@ trait Flutterwave
             $res = $response->getResponseArray();
             $data = $res['data'] ?? [];
 
-            if (!empty($data)) {
+            if (!empty($data) && in_array(($data['status'] ?? 'failed'), ['success', 'successful'])) {
 
                 $fee = Transaction::TRANSFER_5K_FEE;
                 if ($amount > 500000 && $amount < 5000000) $fee = Transaction::TRANSFER_50K_FEE;

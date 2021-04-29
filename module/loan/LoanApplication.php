@@ -149,7 +149,7 @@ class LoanApplication extends Manager implements Api
                         })
                         ->where('is_active', true)
                         ->orderBy('desc', 'id')
-                        ->paginate(PAGINATION_PER_PAGE);
+                        ->paginate(headers('X-PerPage', PAGINATION_PER_PAGE));
 
                     $applications->setModelKey("loanApplicationModel");
 
