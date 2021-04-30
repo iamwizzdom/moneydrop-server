@@ -21,7 +21,7 @@ class LoanApplication extends Model
     protected string $modelKey = 'loanApplicationModel';
     protected array $fillable = ['uuid', 'loan_id', 'user_id', 'amount', 'note', 'due_at', 'status', 'is_active'];
     protected array $copy = ['created_at' => 'date', 'date' => 'date_short', 'due_at' => 'due_date_short', 'granted_at' => 'granted_date_short'];
-    protected array $casts = ['amount_payable,repaid_amount' => 'double', 'status' => 'int', 'is_active,is_repaid' => 'bool',
+    protected array $casts = ['amount_payable,repaid_amount' => 'double', 'status' => 'int', 'is_active,is_repaid' => 'bool', 'status_readable' => 'func::ucfirst',
         'due_date_short' => "date:jS M 'y", 'date' => 'date:d/m/y', 'date_short' => 'date:jS M', 'granted_date_short' => "date:jS M 'y"];
     protected array $appends = ['repaid_amount', 'amount_payable', 'unpaid_amount', 'status_readable', 'applicant', 'has_granted', 'is_repaid', 'is_reviewed'];
 

@@ -22,7 +22,7 @@ class Notification extends \que\common\manager\Manager implements \que\common\st
         // TODO: Implement process() method.
         $notifications = $this->db()->select('*')->table('notifications')
             ->where('user_id', $this->user('id'))->orderBy('desc', 'id')
-            ->paginate(PAGINATION_PER_PAGE);
+            ->paginate(headers('X-PerPage', PAGINATION_PER_PAGE));
 
         $notifications->setModelKey('notificationModel');
 

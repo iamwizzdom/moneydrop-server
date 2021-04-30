@@ -39,7 +39,7 @@ class Repayment extends Manager implements Api
 
             $validator->validate('application_id')->isUUID("Please enter a valid application ID")
                 ->isFoundInDB("loan_applications", 'uuid',
-                    "That application doest not seem to be eligible for repayment", function (Builder $builder) {
+                    "That application doesn't not seem to be eligible for repayment", function (Builder $builder) {
                     $builder->where('status', \model\LoanApplication::STATUS_GRANTED);
                     $builder->where('is_active', true);
                 });
@@ -144,7 +144,7 @@ class Repayment extends Manager implements Api
             $repayments = $this->db()->select('*')->table('loan_repayments')
                 ->where('application_id', $application_id)
                 ->orderBy('desc', 'id')
-                ->paginate(PAGINATION_PER_PAGE);
+                ->paginate(headers('X-PerPage', PAGINATION_PER_PAGE));
 
             $repayments->setModelKey('loanRepaymentModel');
             $repayments = $repayments->getAllWithModel();
