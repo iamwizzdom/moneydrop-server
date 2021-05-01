@@ -5,6 +5,7 @@ namespace module\review;
 
 
 use model\Loan;
+use model\LoanApplication;
 use que\common\exception\BaseException;
 use que\common\manager\Manager;
 use que\common\structure\Api;
@@ -33,7 +34,7 @@ class Review extends Manager implements Api
             $input['application_id'] = Request::getUriParam('id');
 
             $validator->validate('application_id')->isUUID("Please pass a valid application ID");
-            $validator->validate('review')->isNotEmpty("Please a valid review")
+            $validator->validate('review')->isNotEmpty("Please write a review")
                 ->hasMinWord(10, "Please write a meaningful review of at least %s words");
 
             if ($validator->hasError()) throw $this->baseException(
@@ -52,9 +53,13 @@ class Review extends Manager implements Api
 
             $application = $application->getFirstWithModel();
 
-//            if (!$application->is_repaid) throw $this->baseException(
-//                "Sorry, you can only review this loan recipient after the loan has been repaid completely",
-//                "Review Failed", HTTP::UNAUTHORIZED);
+            if ($application->status == LoanApplication::STATUS_REJECTED) throw $this->baseException(
+                "Sorry, you can't review a loan recipient on a rejected application.",
+                "Review Failed", HTTP::NOT_ACCEPTABLE);
+
+            if (!$application->is_repaid) throw $this->baseException(
+                "Sorry, you can only review this loan recipient after the loan has been repaid completely",
+                "Review Failed", HTTP::UNAUTHORIZED);
 
             $application->load('loan');
 
@@ -65,7 +70,7 @@ class Review extends Manager implements Api
 
             $check = $this->db()->exists('reviews', function (Builder $builder) {
                 $builder->where('application_id', \input('application_id'));
-                $builder->where('user_id', $this->user('id'));
+                $builder->where('reviewed_by', $this->user('id'));
             });
 
             if ($application->loan->loan_type == Loan::LOAN_TYPE_REQUEST) $applicant = $application->loan->user;
@@ -111,7 +116,7 @@ class Review extends Manager implements Api
             ->where('user_id', Request::getUriParam('id'))
             ->where('is_active', true)
             ->orderBy('desc', 'id')
-            ->paginate(PAGINATION_PER_PAGE);
+            ->paginate(headers('X-PerPage', PAGINATION_PER_PAGE));
 
         $reviews->setModelKey('reviewModel');
         $status = $reviews->isSuccessful();
