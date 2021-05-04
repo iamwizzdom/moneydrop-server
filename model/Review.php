@@ -11,8 +11,8 @@ class Review extends Model
     protected array $copy = ['created_at' => 'date,date_formatted'];
     protected array $casts = ['date' => 'date:d/m/y', 'date_formatted' => "date:jS M 'y"];
 
-    public function getApplication() {
-        return $this->belongTo('loan_applications', 'application_id', 'uuid', 'loanApplicationModel');
+    public function getLoan() {
+        return $this->belongTo('loans', 'loan_id', 'uuid', 'loanModel');
     }
 
     public function getUser() {

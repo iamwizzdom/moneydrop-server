@@ -53,8 +53,12 @@ class Review extends Manager implements Api
 
             $application = $application->getFirstWithModel();
 
+            $loan = $application->loan;
+
             if ($application->status == LoanApplication::STATUS_REJECTED) throw $this->baseException(
-                "Sorry, you can't review a loan recipient on a rejected application.",
+                ($loan->loan_type == Loan::LOAN_TYPE_REQUEST ?
+                    "Sorry, you can't review a loan recipient with a rejected application." :
+                    "Sorry, you can't review a loan recipient on a rejected application"),
                 "Review Failed", HTTP::NOT_ACCEPTABLE);
 
             if (!$application->is_repaid) throw $this->baseException(
@@ -63,17 +67,17 @@ class Review extends Manager implements Api
 
             $application->load('loan');
 
-            if (($application->loan->loan_type == Loan::LOAN_TYPE_REQUEST && $application->loan->is_mine) ||
-                ($application->loan->loan_type == Loan::LOAN_TYPE_OFFER && $application->applicant->id == $this->user('id')))  {
+            if (($loan->loan_type == Loan::LOAN_TYPE_REQUEST && $loan->is_mine) ||
+                ($loan->loan_type == Loan::LOAN_TYPE_OFFER && $application->applicant->id == $this->user('id')))  {
                 throw $this->baseException("Sorry, you can't review yourself", "Review Failed", HTTP::NOT_ACCEPTABLE);
             }
 
-            $check = $this->db()->exists('reviews', function (Builder $builder) {
-                $builder->where('application_id', \input('application_id'));
+            $check = $this->db()->exists('reviews', function (Builder $builder) use ($loan) {
+                $builder->where('loan_id', $loan->uuid);
                 $builder->where('reviewed_by', $this->user('id'));
             });
 
-            if ($application->loan->loan_type == Loan::LOAN_TYPE_REQUEST) $applicant = $application->loan->user;
+            if ($loan->loan_type == Loan::LOAN_TYPE_REQUEST) $applicant = $loan->user;
             else $applicant = $application->applicant;
 
             if ($check->isSuccessful()) throw $this->baseException(
@@ -81,7 +85,7 @@ class Review extends Manager implements Api
 
             $review = $this->db()->insert('reviews', [
                 'review' => $input['review'],
-                'application_id' => $input['application_id'],
+                'loan_id' => $loan->uuid,
                 'user_id' => $applicant->uuid,
                 'reviewed_by' => $this->user('id')
             ]);
@@ -121,7 +125,7 @@ class Review extends Manager implements Api
         $reviews->setModelKey('reviewModel');
         $status = $reviews->isSuccessful();
         $reviews = $reviews->getAllWithModel();
-        $reviews?->load('application.loan')->load('user')->load('reviewer');
+        $reviews?->load('loan')->load('user')->load('reviewer');
 
         $pagination = Pagination::getInstance();
 
@@ -166,7 +170,7 @@ class Review extends Manager implements Api
                 "Sorry that review either has been deleted or does not exist", "Review Failed", HTTP::NOT_FOUND);
 
             $review = $review->getFirstWithModel();
-            $review?->load('application.loan')->load('user')->load('reviewer');
+            $review?->load('loan')->load('user')->load('reviewer');
 
             if ($review->getValue('reviewed_by') != $this->user('id')) throw $this->baseException(
                 "Sorry, you can only modify your own review.", "Review Failed", HTTP::UNAUTHORIZED);

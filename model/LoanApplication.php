@@ -119,7 +119,7 @@ class LoanApplication extends Model
     }
 
     public function isReviewed() {
-        return $this->validate('uuid')->isFoundInDB('reviews', 'application_id', function (Builder $builder) {
+        return $this->validate('uuid')->isFoundInDB('reviews', 'loan_id', function (Builder $builder) {
             $builder->where('is_active', true);
         });
     }

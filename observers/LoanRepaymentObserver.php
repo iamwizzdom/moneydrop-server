@@ -40,7 +40,6 @@ class LoanRepaymentObserver extends Observer
         $model->application->load('loan');
         $model->payer->load('wallet');
 
-
         $interest = $model->application->loan->getFloat('interest') ?: Loan::MIN_INTEREST;
 
         if ($model->application->loan->getInt('interest_type') == Loan::INTEREST_TYPE_NON_STATIC &&
