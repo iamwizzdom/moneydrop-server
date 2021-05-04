@@ -35,6 +35,11 @@ class Loan extends Model
      */
     const MIN_AMOUNT = 5000;
 
+    /**
+     * Minimum loan interest
+     */
+    const MIN_INTEREST = 2;
+
     const PERCENTAGE_INCOME = 25;
 
     /**
