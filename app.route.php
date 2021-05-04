@@ -186,7 +186,7 @@ Route::register()->groupApi('api/v1/m-app', function ($prefix) {
                 $entry->setModuleMethod("grantApplication");
             },
             function (RouteEntry $entry) {
-                $entry->allowPutRequest();
+                $entry->allowDeleteRequest();
                 $entry->forbidCSRF(false);
                 $entry->setMiddleware('user.auth');
                 $entry->setUri('/{id:uuid}/application/{_id:uuid}/cancel');
@@ -226,7 +226,7 @@ Route::register()->groupApi('api/v1/m-app', function ($prefix) {
             $entry->setModule(History::class);
         },
         function (RouteEntry $entry) {
-            $entry->allowPostRequest();
+            $entry->allowPutRequest();
             $entry->forbidCSRF(false);
             $entry->setMiddleware('user.auth');
             $entry->setUri('/review/{id:uuid}/edit');
