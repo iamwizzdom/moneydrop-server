@@ -78,7 +78,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                             $builder->where('is_active', true);
                         });
 
-                        if ($check->isSuccessful()) throw $this->baseException(
+                        if (!$check->isSuccessful()) throw $this->baseException(
                             "Sorry, you can't request for a loan when you have not added a regular income bank account.",
                             "Loan Failed", HTTP::EXPECTATION_FAILED);
 
