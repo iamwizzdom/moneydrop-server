@@ -98,6 +98,22 @@ class Update extends Manager implements Api
                         ]
                     ]);
 
+                case 'picture-remove':
+
+                    if (!$this->user()->update(['picture' => null]))
+                        throw $this->baseException("Failed to remove picture at this time, please try again later.",
+                            "Update Failed", HTTP::EXPECTATION_FAILED);
+
+                    return $this->http()->output()->json([
+                        'status' => true,
+                        'code' => HTTP::OK,
+                        'title' => 'Update Successful',
+                        'message' => "Picture removed successfully.",
+                        'response' => [
+                            'user' => $this->user()
+                        ]
+                    ]);
+
                 case 'name':
 
                     $validator->validate('firstname')->isNotEmpty('Please enter a valid first name')
