@@ -78,7 +78,7 @@ Route::register()->groupApi('api/v1/m-app', function ($prefix) {
                 $entry->setModule(Profile::class);
             },
             function (RouteEntry $entry) {
-                $entry->allowPostRequest();
+                $entry->allowPutRequest();
                 $entry->forbidCSRF(false);
                 $entry->setMiddleware('user.auth');
                 $entry->setUri('/profile/update/{type:alpha|/^[a-zA-Z0-9\-_]+$/}');
@@ -310,7 +310,7 @@ Route::register()->groupApi('api/v1/w-app', function ($prefix) {
                 $entry->setModule(Profile::class);
             },
             function (RouteEntry $entry) {
-                $entry->allowPostRequest();
+                $entry->allowPutRequest();
                 $entry->forbidCSRF(false);
                 $entry->setMiddleware('user.auth');
                 $entry->setUri('/profile/update/{type:alpha|/^[a-zA-Z0-9\-_]+$/}');
