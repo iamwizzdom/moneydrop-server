@@ -41,7 +41,7 @@ class LoanRepaymentObserver extends Observer
         $model->payer->load('wallet');
 
 
-        $interest = $model->application->loan->getFloat('interest');
+        $interest = $model->application->loan->getFloat('interest') ?: Loan::MIN_INTEREST;
 
         if ($model->application->loan->getInt('interest_type') == Loan::INTEREST_TYPE_NON_STATIC &&
             $model->application->validate('due_at')->isDateLessThan(new \DateTime('now'))) {
