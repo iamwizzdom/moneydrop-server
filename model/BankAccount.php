@@ -19,7 +19,7 @@ class BankAccount extends Model
     protected string $modelKey = 'bankAccountModel';
     protected array $copy = ['account_number' => 'acct_no'];
     protected array $casts = ['is_active' => 'bool', 'created_at' => 'date:d/m/y'];
-    protected array $hidden = ['account_number', 'income'];
+    protected array $hidden = ['account_id', 'account_number', 'income'];
 
     public function addCasts(): ?array
     {
