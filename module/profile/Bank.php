@@ -195,8 +195,6 @@ class Bank extends Manager implements Api
                         );
                     }
 
-                    $account['account_number'] = hide_number($account['account_number'], 0, strlen($account['account_number']) - 4);
-
                     return $this->http()->output()->json([
                         'status' => true,
                         'code' => HTTP::OK,

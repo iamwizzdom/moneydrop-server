@@ -17,8 +17,15 @@ class BankAccount extends Model
     const INCOME_TYPE_IRREGULAR = -1;
 
     protected string $modelKey = 'bankAccountModel';
+    protected array $copy = ['account_number' => 'acct_no'];
     protected array $casts = ['is_active' => 'bool', 'created_at' => 'date:d/m/y'];
-    protected array $hidden = ['income'];
+    protected array $hidden = ['account_number', 'income'];
+
+    public function addCasts(): ?array
+    {
+        $limit = strlen($this->getValue('account_number')) - 4;
+        return ['acct_no' => "func::hide_number,:subject,0,$limit"];
+    }
 
     public function getUser() {
         return $this->belongTo('users', 'user_id');
