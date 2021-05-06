@@ -40,7 +40,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
                 case "offer":
 
                     $validator->validate('amount')->isNumeric('Please enter a valid amount')
-                        ->isNumberGreaterThanOrEqual(\model\Loan::MIN_AMOUNT, "Sorry, you must {$type} at least %s NGN")
+                        ->isNumberGreaterThanOrEqual((\model\Loan::MIN_AMOUNT / 100), "Sorry, you must {$type} at least %s NGN")
                         ->if(function (Condition $condition) use ($type) {
                             return $type == 'request' || $this->getAvailableBalance() > (float)$condition->getValue();
                         }, "Sorry, you don't have up to {$input['amount']} NGN in your wallet");

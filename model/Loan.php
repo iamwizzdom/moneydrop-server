@@ -33,7 +33,12 @@ class Loan extends Model
     /**
      * Minimum loan amount
      */
-    const MIN_AMOUNT = 5000;
+    const MIN_AMOUNT = 500000;
+
+    /**
+     * Maximum loan amount
+     */
+    const MAX_AMOUNT = 5000000;
 
     /**
      * Minimum loan interest

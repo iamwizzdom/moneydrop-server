@@ -94,7 +94,7 @@ class User extends Model
 
     public function getMaxLoanAmount() {
 
-        $maxAmount = (Loan::MIN_AMOUNT * 100);
+        $maxAmount = Loan::MIN_AMOUNT;
 
 //        if ($rating <= 1) $maxAmount = $rating < 1 ? 500000 : 1000000;
 //        elseif ($rating <= 2) $maxAmount = $rating < 2 ? 1500000 : 3000000;
@@ -118,7 +118,7 @@ class User extends Model
             if ($availableIncome > Loan::MIN_AMOUNT) $maxAmount = $availableIncome;
         }
 
-        if ($maxAmount >= 10000000) {
+        if ($maxAmount < Loan::MAX_AMOUNT) {
 
             $max = db()->select('max(l.amount) as max_amount')->table('loan_applications as la')
                 ->join('loans as l', 'la.loan_id', 'l.uuid')
@@ -131,9 +131,9 @@ class User extends Model
                 ->exec();
 
             $maxLoanAmount = $max->getFirstWithModel()?->getFloat('max_amount');
-            $maxAmount = ($maxLoanAmount && $maxLoanAmount >= 10000000) ? ($maxLoanAmount * 2) : 10000000;
+            $maxAmount = ($maxLoanAmount && $maxLoanAmount < Loan::MAX_AMOUNT) ? ($maxLoanAmount * 2) : Loan::MAX_AMOUNT;
         }
 
-        return $maxAmount;
+        return $maxAmount > Loan::MAX_AMOUNT ? Loan::MAX_AMOUNT : $maxAmount;
     }
 }
