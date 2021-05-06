@@ -41,7 +41,7 @@ class VerificationObserver extends Observer
                 $mail->setData([
                     'title' => 'Email Verification',
                     'otp' => $model->getValue('code'),
-                    'expire' => get_date('h:i a M jS, Y', $model->getValue('expiration'))
+                    'expire' => get_date('h:i a, M jS, Y', $model->getValue('expiration'))
                 ]);
                 $mail->setHtmlPath('email/html/verification-otp.tpl');
                 $mail->setBodyPath('email/text/verification-otp.txt');
@@ -58,7 +58,7 @@ class VerificationObserver extends Observer
                 $composer->dataExtra([
                     'title' => 'Phone Verification',
                     'otp' => $model->getValue('code'),
-                    'expire' => get_date('h:i a M jS, Y', $model->getValue('expiration'))
+                    'expire' => get_date('h:i a, M jS, Y', $model->getValue('expiration'))
                 ]);
 
                 $sms = $this->send($composer->prepare()->renderWithSmarty(true), $model->getValue('data'));

@@ -48,15 +48,17 @@ class Verification extends Manager implements Api
                             if ($validator->hasError()) throw $this->baseException(
                                 "The inputted data is invalid", "Verification failed", HTTP::UNPROCESSABLE_ENTITY);
 
-                            $condition->isNotFoundInDB('verifications', 'data',
-                                'That email has already been verified.', function (Builder $builder) {
-                                    $builder->where('type', self::VERIFICATION_TYPE_EMAIL);
-                                    $builder->where('is_verified', true);
-                                    $builder->where('is_active', true);
-                                });
+                            if (!$input->_isset('old_email')) {
+                                $condition->isNotFoundInDB('verifications', 'data',
+                                    'That email has already been verified.', function (Builder $builder) {
+                                        $builder->where('type', self::VERIFICATION_TYPE_EMAIL);
+                                        $builder->where('is_verified', true);
+                                        $builder->where('is_active', true);
+                                    });
 
-                            if ($validator->hasError()) throw $this->baseException(
-                                current($validator->getError('email')), "Verified", HTTP::CONFLICT, true);
+                                if ($validator->hasError()) throw $this->baseException(
+                                    current($validator->getError('email')), "Verified", HTTP::CONFLICT, true);
+                            }
 
                             $insert = $this->db()->select('*')->table('verifications')
                                 ->where('data', $validator->getValue('email'))
@@ -118,6 +120,7 @@ class Verification extends Manager implements Api
                                 function (Builder $builder) {
                                     $builder->where('type', self::VERIFICATION_TYPE_EMAIL);
                                     $builder->where('is_verified', true);
+                                    $builder->where('is_active', true);
                                 });
 
                             if ($validator->hasError()) throw $this->baseException(
@@ -211,15 +214,17 @@ class Verification extends Manager implements Api
                             if ($validator->hasError()) throw $this->baseException(
                                 "The inputted data is invalid", "Verification failed", HTTP::UNPROCESSABLE_ENTITY);
 
-                            $condition->isNotFoundInDB('verifications', 'data',
-                                'That phone number has already been verified.', function (Builder $builder) {
-                                    $builder->where('type', self::VERIFICATION_TYPE_PHONE);
-                                    $builder->where('is_verified', true);
-                                    $builder->where('is_active', true);
-                                });
+                            if (!$input->_isset('old_phone')) {
+                                $condition->isNotFoundInDB('verifications', 'data',
+                                    'That phone number has already been verified.', function (Builder $builder) {
+                                        $builder->where('type', self::VERIFICATION_TYPE_PHONE);
+                                        $builder->where('is_verified', true);
+                                        $builder->where('is_active', true);
+                                    });
 
-                            if ($validator->hasError()) throw $this->baseException(
-                                current($validator->getError('phone')), "Verified", HTTP::CONFLICT, true);
+                                if ($validator->hasError()) throw $this->baseException(
+                                    current($validator->getError('phone')), "Verified", HTTP::CONFLICT, true);
+                            }
 
                             $insert = $this->db()->select('*')->table('verifications')
                                 ->where('data', $validator->getValue('phone'))
@@ -281,6 +286,7 @@ class Verification extends Manager implements Api
                                 function (Builder $builder) {
                                     $builder->where('type', self::VERIFICATION_TYPE_PHONE);
                                     $builder->where('is_verified', true);
+                                    $builder->where('is_active', true);
                                 });
 
                             if ($validator->hasError()) throw $this->baseException(

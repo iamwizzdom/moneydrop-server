@@ -41,34 +41,34 @@ class Update extends Manager implements Api
         try {
 
             switch (Request::getUriParam('type')) {
-                case 'bank-statement':
-
-                    $file = $validator->validateFile();
-                    $file->setMaxFileSize(convert_mega_bytes(2));
-                    $file->setAllowedExtension(['pdf']);
-                    $file->setUploadDir('/profile/bank_statement/');
-                    $file->setFileName(Hash::sha("bank_statement_{$this->user('id')}"));
-
-                    if (!$file->upload("bank_statement"))
-                        $validator->addConditionErrors('bank_statement', $file->getErrors('bank_statement'), true);
-
-                    if ($validator->hasError()) throw $this->baseException(
-                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
-
-                    $fileName = $input->getFiles()->get('bank_statement')['name'] ?? $file->getFileName();
-
-                    if (!$this->user()->bank_statement?->update(['file' => "storage/{$file->getFileInfo('path')}", 'file_name' => $fileName]))
-                        throw $this->baseException("Failed to update bank statement at this time, please try again later.", "Update Failed", HTTP::EXPECTATION_FAILED);
-
-                    return $this->http()->output()->json([
-                        'status' => true,
-                        'code' => HTTP::OK,
-                        'title' => 'Update Successful',
-                        'message' => "Bank statement updated successfully.",
-                        'response' => [
-                            'user' => $this->user()
-                        ]
-                    ]);
+//                case 'bank-statement':
+//
+//                    $file = $validator->validateFile();
+//                    $file->setMaxFileSize(convert_mega_bytes(2));
+//                    $file->setAllowedExtension(['pdf']);
+//                    $file->setUploadDir('/profile/bank_statement/');
+//                    $file->setFileName(Hash::sha("bank_statement_{$this->user('id')}"));
+//
+//                    if (!$file->upload("bank_statement"))
+//                        $validator->addConditionErrors('bank_statement', $file->getErrors('bank_statement'), true);
+//
+//                    if ($validator->hasError()) throw $this->baseException(
+//                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+//
+//                    $fileName = $input->getFiles()->get('bank_statement')['name'] ?? $file->getFileName();
+//
+//                    if (!$this->user()->bank_statement?->update(['file' => "storage/{$file->getFileInfo('path')}", 'file_name' => $fileName]))
+//                        throw $this->baseException("Failed to update bank statement at this time, please try again later.", "Update Failed", HTTP::EXPECTATION_FAILED);
+//
+//                    return $this->http()->output()->json([
+//                        'status' => true,
+//                        'code' => HTTP::OK,
+//                        'title' => 'Update Successful',
+//                        'message' => "Bank statement updated successfully.",
+//                        'response' => [
+//                            'user' => $this->user()
+//                        ]
+//                    ]);
 
                 case 'picture':
 
@@ -331,72 +331,72 @@ class Update extends Manager implements Api
                         ]
                     ]);
 
-                case 'bvn':
-
-                    $validator->validate('bvn')->isNotEmpty('Please enter a valid BVN')
-                        ->isNotEqual($this->user('bvn'), "That's already your BVN.")
-                        ->hasMinLength(11, "A valid BVN must be at least %s characters long")
-                        ->hasMaxLength(11, "A valid BVN must not exceed %s characters");
-
-                    if ($validator->hasError()) throw $this->baseException(
-                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
-
-                    try {
-                        $charge = \utility\Wallet::charge(LIVE ? \model\Transaction::BVN_RESOLVE_PREMIUM_FEE : \model\Transaction::BVN_RESOLVE_STANDARD_FEE, 500, null,"Resolve BVN charge");
-                        if ($charge->isSuccessful()) $bvnResolve = $this->resolve_bvn($validator->getValue('bvn'));
-                        else throw new PaystackException($charge->getQueryError());
-                    } catch (PaystackException $e) {
-                        throw $this->baseException($e->getMessage(), "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
-                    }
-
-                    if (!$bvnResolve->isSuccessful()) {
-                        throw $this->baseException("Sorry, we couldn't resolve that BVN at this time, please try again later.",
-                            "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
-                    }
-
-                    $response = $bvnResolve->getResponseArray();
-
-                    if (!($response['status'] ?? false)) {
-                        throw $this->baseException(
-                            $response['message'] ?? "Sorry, we couldn't resolve that BVN at this time, please try again later.",
-                            "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
-                    }
-
-                    $data = $response['data'] ?? [];
-
-                    $userModel = $this->user()->getModel();
-
-                    if ($userModel->validate('firstname')->toLower()->isNotEqual(strtolower($data['first_name'] ?? ''))
-                        && $userModel->validate('middlename')->toLower()->isNotEqual(strtolower($data['first_name'] ?? ''))) {
-                        $validator->addError('bvn', "The first name on that BVN do not match your first/middle name on this platform.");
-                    }
-
-                    if (!$validator->hasError() && $userModel->validate('lastname')->toLower()->isNotEqual(strtolower($data['last_name'] ?? ''))) {
-                        $validator->addError('bvn', "The last name on that BVN do not match your last name on this platform.");
-                    }
-
-                    if (!$validator->hasError() && $userModel->validate('dob')->isDateNotEqual(
-                            \DateTime::createFromFormat('Y-m-d', $data['formatted_dob'] ?? date('Y-m-d')), 'Y-m-d')) {
-                        $validator->addError('bvn', "The date of birth on that BVN do not match your date of birth on this platform.");
-                    }
-
-                    if ($validator->hasError()) throw $this->baseException(
-                        "Sorry, we couldn't resolve that BVN at this time, please try again later.",
-                        "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
-
-                    if (!$this->user()->update($validator->getValidated())) throw $this->baseException(
-                        "Failed to update BVN at this time, please try again later.",
-                        "Update Failed", HTTP::EXPECTATION_FAILED);
-
-                    return $this->http()->output()->json([
-                        'status' => true,
-                        'code' => HTTP::OK,
-                        'title' => 'Update Successful',
-                        'message' => "BVN updated successfully.",
-                        'response' => [
-                            'user' => $this->user()
-                        ]
-                    ]);
+//                case 'bvn':
+//
+//                    $validator->validate('bvn')->isNotEmpty('Please enter a valid BVN')
+//                        ->isNotEqual($this->user('bvn'), "That's already your BVN.")
+//                        ->hasMinLength(11, "A valid BVN must be at least %s characters long")
+//                        ->hasMaxLength(11, "A valid BVN must not exceed %s characters");
+//
+//                    if ($validator->hasError()) throw $this->baseException(
+//                        "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+//
+//                    try {
+//                        $charge = \utility\Wallet::charge(LIVE ? \model\Transaction::BVN_RESOLVE_PREMIUM_FEE : \model\Transaction::BVN_RESOLVE_STANDARD_FEE, 500, null,"Resolve BVN charge");
+//                        if ($charge->isSuccessful()) $bvnResolve = $this->resolve_bvn($validator->getValue('bvn'));
+//                        else throw new PaystackException($charge->getQueryError());
+//                    } catch (PaystackException $e) {
+//                        throw $this->baseException($e->getMessage(), "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+//                    }
+//
+//                    if (!$bvnResolve->isSuccessful()) {
+//                        throw $this->baseException("Sorry, we couldn't resolve that BVN at this time, please try again later.",
+//                            "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+//                    }
+//
+//                    $response = $bvnResolve->getResponseArray();
+//
+//                    if (!($response['status'] ?? false)) {
+//                        throw $this->baseException(
+//                            $response['message'] ?? "Sorry, we couldn't resolve that BVN at this time, please try again later.",
+//                            "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+//                    }
+//
+//                    $data = $response['data'] ?? [];
+//
+//                    $userModel = $this->user()->getModel();
+//
+//                    if ($userModel->validate('firstname')->toLower()->isNotEqual(strtolower($data['first_name'] ?? ''))
+//                        && $userModel->validate('middlename')->toLower()->isNotEqual(strtolower($data['first_name'] ?? ''))) {
+//                        $validator->addError('bvn', "The first name on that BVN do not match your first/middle name on this platform.");
+//                    }
+//
+//                    if (!$validator->hasError() && $userModel->validate('lastname')->toLower()->isNotEqual(strtolower($data['last_name'] ?? ''))) {
+//                        $validator->addError('bvn', "The last name on that BVN do not match your last name on this platform.");
+//                    }
+//
+//                    if (!$validator->hasError() && $userModel->validate('dob')->isDateNotEqual(
+//                            \DateTime::createFromFormat('Y-m-d', $data['formatted_dob'] ?? date('Y-m-d')), 'Y-m-d')) {
+//                        $validator->addError('bvn', "The date of birth on that BVN do not match your date of birth on this platform.");
+//                    }
+//
+//                    if ($validator->hasError()) throw $this->baseException(
+//                        "Sorry, we couldn't resolve that BVN at this time, please try again later.",
+//                        "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
+//
+//                    if (!$this->user()->update($validator->getValidated())) throw $this->baseException(
+//                        "Failed to update BVN at this time, please try again later.",
+//                        "Update Failed", HTTP::EXPECTATION_FAILED);
+//
+//                    return $this->http()->output()->json([
+//                        'status' => true,
+//                        'code' => HTTP::OK,
+//                        'title' => 'Update Successful',
+//                        'message' => "BVN updated successfully.",
+//                        'response' => [
+//                            'user' => $this->user()
+//                        ]
+//                    ]);
 
                 case 'password':
 
