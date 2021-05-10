@@ -23,6 +23,7 @@ class BankAccount extends Model
 
     public function addCasts(): ?array
     {
+        if (empty($this->acct_no)) return null;
         $limit = strlen($this->getValue('account_number')) - 4;
         return ['acct_no' => "func::hide_number,:subject,0,$limit"];
     }

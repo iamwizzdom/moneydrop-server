@@ -60,7 +60,7 @@ class ForgotPassword extends Manager implements Api
 
             $response = $this->db()->insert('password_resets', [
                 'user_id' => $user->getValue('id'),
-                'code' => Hash::sha(($code = mt_rand(1111, 9999))),
+                'code' => Hash::sha(($code = mt_rand(11111, 99999))),
                 'expiration' => date("Y-m-d H:i:s", (APP_TIME + TIMEOUT_TEN_MIN)),
                 'is_active' => true
             ]);
@@ -103,7 +103,8 @@ class ForgotPassword extends Manager implements Api
                 'status' => true,
                 'code' => HTTP::OK,
                 'title' => 'Forgot password successful',
-                'message' => "An OTP has been sent successfully to your email, use it to reset your password."
+                'message' => "An OTP has been sent successfully to your email, use it to reset your password.",
+                'errors' => (object)[]
             ]);
 
         } catch (BaseException $e) {

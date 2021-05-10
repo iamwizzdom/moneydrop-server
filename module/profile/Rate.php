@@ -71,7 +71,9 @@ class Rate extends Manager implements Api
                 'code' => HTTP::OK,
                 'title' => 'Rating ' . ($status ? 'Successful' : 'Failed'),
                 'message' => $status ? "Thank you for giving {$user->getValue('firstname')} {$input['rate']} star." : "Failed to give {$input['rate']} star",
-                'response' => []
+                'response' => [
+                    'rating' => $input['rate']
+                ]
             ]);
 
         } catch (BaseException $e) {

@@ -219,7 +219,7 @@ class Update extends Manager implements Api
 
                 case 'address':
 
-                    $validator->validate('address')->isNotEmpty("Please enter a address")
+                    $validator->validate('address')->isNotEmpty("Please enter an address")
                         ->hasMinWord(5, "Your address should have a minimum of %s words");
 
                     if ($validator->hasError()) throw $this->baseException(
@@ -400,10 +400,10 @@ class Update extends Manager implements Api
 
                 case 'password':
 
-                    $validator->validate('current_password')->isNotEmpty("Please enter a valid password")
+                    $validator->validate('current_password')->isNotEmpty("Please enter a valid current password")
                         ->hash('SHA512')->isEqual($this->user('password'), "Password do not match");
 
-                    $validator->validate('password')->isNotEmpty("Please enter a valid password")->hasMinLength(
+                    $validator->validate('password')->isNotEmpty("Please enter a valid new password")->hasMinLength(
                         8, "Your password must be at least %s characters long")->isAlphaNumeric(
                         "Your password is not strong enough (make it alpha-numeric)")
                         ->isConfirmed("Password do not match")->hash('SHA512');

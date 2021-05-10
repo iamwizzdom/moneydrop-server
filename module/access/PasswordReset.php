@@ -29,8 +29,8 @@ class PasswordReset extends Manager implements Api
                 ->isFoundInDB('users', 'email', 'That email address is invalid');
 
             $validator->validate('otp')->isNumber('The OTP must be numeric')
-                ->hasMinLength(4, "The OTP must be %s digits")
-                ->hasMaxLength(4, "The OTP must not be greater than %s digits");
+                ->hasMinLength(5, "The OTP must be %s digits")
+                ->hasMaxLength(5, "The OTP must not be greater than %s digits");
 
             $validator->validate('password')->isNotEmpty("Please enter a valid password")->hasMinLength(
                 8, "Your password must be at least %s characters long")->isAlphaNumeric(
@@ -49,8 +49,7 @@ class PasswordReset extends Manager implements Api
             );
 
             if (!$reset->isSuccessful()) {
-                $validator->addConditionError('otp', 'Seems a password reset process has not been initiated for that account.');
-                throw $this->baseException("The inputted data is invalid", "Password Reset Failed", HTTP::EXPECTATION_FAILED);
+                throw $this->baseException("Seems a password reset process has not been initiated for that account.", "Password Reset Failed", HTTP::EXPECTATION_FAILED);
             }
 
             $reset = $reset->getFirstWithModel();

@@ -124,7 +124,7 @@ trait Wallet
     {
         $balance = (float) Item::factor($this->getBalance())->getCents();
         $availableBalance = (float) Item::factor($this->getAvailableBalance())->getCents();
-        if ($amount > $availableBalance) throw new Exception("Insufficient fund");
+        if ($amount > $availableBalance) throw new Exception("Insufficient fund in wallet");
         if ($this->updateBothBalance(($balance - $amount), $bal = ($availableBalance - $amount))) return $bal;
         return false;
     }
@@ -138,7 +138,7 @@ trait Wallet
     public function lockFund(float $amount, bool $forceLock = true): float|bool
     {
         $availableBalance = Item::factor($this->getAvailableBalance())->getCents();
-        if ($amount > $availableBalance) throw new Exception("Insufficient fund");
+        if ($amount > $availableBalance) throw new Exception("Insufficient fund in wallet");
         $availableBalance = ($availableBalance - $amount);
         if ($this->updateAvailableBalance($availableBalance, $forceLock)) return $availableBalance;
         return false;
@@ -153,8 +153,8 @@ trait Wallet
     {
         $availableBalance = (float) Item::factor($this->getAvailableBalance())->getCents();
         $balance = (float) Item::factor($this->getBalance())->getCents();
-        if ($amount > $balance) throw new Exception("Insufficient fund");
-        if ($availableBalance > ($balance - $amount)) throw new Exception("Unable to unlock more funds than were locked");
+        if ($amount > $balance) throw new Exception("Insufficient fund in wallet");
+        if ($availableBalance > ($balance - $amount)) throw new Exception("Unable to unlock more wallet funds than were locked");
         $availableBalance = ($availableBalance + $amount);
         if ($this->updateAvailableBalance($availableBalance,true)) return $balance;
         return false;
@@ -169,7 +169,7 @@ trait Wallet
     {
         $balance = (float) Item::factor($this->getBalance())->getCents();
         $lockedFund = ($balance - (float) Item::factor($this->getAvailableBalance())->getCents());
-        if ($amount > $lockedFund) throw new Exception("Insufficient fund");
+        if ($amount > $lockedFund) throw new Exception("Insufficient fund in wallet");
         if ($this->updateBalance($balance = ($balance - $amount))) return $balance;
         return false;
     }

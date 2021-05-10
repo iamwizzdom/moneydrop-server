@@ -43,6 +43,11 @@ class UserObserver extends Observer
 
 //        db()->insert('bank_statements', ['user_id' => $model->getInt('id')]);
 
+        db()->insert('wallets', [
+            'uuid' => Str::uuidv4(),
+            'user_id' => $model->getInt('id')
+        ])->isSuccessful();
+
         try {
 
             $mailer = Mailer::getInstance();

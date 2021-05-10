@@ -97,7 +97,7 @@ class Bank extends Manager implements Api
                         else throw new MonoException($charge->getQueryError());
                     } catch (MonoException $e) {
                         $account->update(['is_active' => false]);
-                        if ($charge) \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
+                        if ($charge && $charge->isSuccessful()) \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
                         throw $this->baseException($e->getMessage(), "Bank Failed", HTTP::EXPECTATION_FAILED);
                     }
 
@@ -158,7 +158,7 @@ class Bank extends Manager implements Api
                         else throw new MonoException($charge->getQueryError());
                     } catch (MonoException $e) {
                         $account->update(['is_active' => false]);
-                        if ($charge) \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
+                        if ($charge && $charge->isSuccessful()) \utility\Wallet::reverseTransaction($charge->getFirstWithModel());
                         throw $this->baseException($e->getMessage(), "Bank Failed", HTTP::EXPECTATION_FAILED);
                     }
 
