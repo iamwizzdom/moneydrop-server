@@ -120,9 +120,11 @@ class Card extends Manager implements Api
 
                             $response = $verify->getResponseArray();
 
+                            log_err(['flutter' => $response]);
+
                             $data = $response['data'] ?? [];
 
-                            if (!in_array(($data['status'] ?? 'failed'), ['success', 'successful']) ||
+                            if (!in_array(strtotime(($data['status'] ?? 'failed')), ['success', 'successful']) ||
                                 (GATEWAY == FLUTTERWAVE && $data['chargecode'] !== '00') ||
                                 empty($authorization = ($data[GATEWAY == PAYSTACK ? 'authorization' : 'card'] ?? []))) {
 
