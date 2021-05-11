@@ -125,7 +125,7 @@ class Card extends Manager implements Api
                             $data = $response['data'] ?? [];
 
 
-                            $status = strtotime(($data['status'] ?? 'failed'));
+                            $status = strtolower(($data['status'] ?? 'failed'));
                             log_err([
                                 'con-1' => to_string(($status != 'success' && $status != 'successful')),
                                 'con-2' => to_string((GATEWAY == FLUTTERWAVE && ($data['chargecode'] ?? '') !== '00')),
