@@ -347,16 +347,7 @@ class Bank extends Manager implements Api
                                 $builder->orderBy('desc', 'id');
                             });
 
-                        $accountList = [];
-
                         $account->setModelKey('bankAccountModel');
-
-                        if ($account->isSuccessful()) $accountList = $account->getAllArray();
-
-                        Arr::callback($accountList, function ($account) {
-                            $account['account_number'] = hide_number($account['account_number'], 0, strlen($account['account_number']) - 4);
-                            return $account;
-                        });
 
                         return $this->http()->output()->json([
                             'status' => true,
@@ -364,7 +355,7 @@ class Bank extends Manager implements Api
                             'title' => 'Bank Successful',
                             'message' => !empty($accountList) ? "Bank accounts retrieved successfully." : "No Bank account found.",
                             'response' => [
-                                'accounts' => $accountList,
+                                'accounts' => $account->getAllWithModel() ?: [],
                                 'banks' => BanksEnum::getBanks()
                             ]
                         ]);
