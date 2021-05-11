@@ -120,7 +120,7 @@ class Card extends Manager implements Api
 
                             $response = $verify->getResponseArray();
 
-                            log_err(['flutter' => $response]);
+                            log_err(['flutter' => $response, 'ref' => $validator->getValue('reference')]);
 
                             $data = $response['data'] ?? [];
 
