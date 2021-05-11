@@ -120,20 +120,20 @@ class Card extends Manager implements Api
 
                             $response = $verify->getResponseArray();
 
-                            log_err(['flutter' => $response, 'ref' => $validator->getValue('reference')]);
+//                            log_err(['flutter' => $response, 'ref' => $validator->getValue('reference')]);
 
                             $data = $response['data'] ?? [];
 
 
                             $status = strtolower(($data['status'] ?? 'failed'));
-                            log_err([
-                                'con-1' => to_string(($status != 'success' && $status != 'successful')),
-                                'con-2' => to_string((GATEWAY == FLUTTERWAVE && ($data['chargecode'] ?? '') !== '00')),
-                                'con-3' => to_string(empty($authorization = ($data[GATEWAY == PAYSTACK ? 'authorization' : 'card'] ?? []))),
-                                $status,
-                                ($data['chargecode'] ?? ''),
-                                ($data[GATEWAY == PAYSTACK ? 'authorization' : 'card'] ?? [])
-                            ]);
+//                            log_err([
+//                                'con-1' => to_string(($status != 'success' && $status != 'successful')),
+//                                'con-2' => to_string((GATEWAY == FLUTTERWAVE && ($data['chargecode'] ?? '') !== '00')),
+//                                'con-3' => to_string(empty($authorization = ($data[GATEWAY == PAYSTACK ? 'authorization' : 'card'] ?? []))),
+//                                $status,
+//                                ($data['chargecode'] ?? ''),
+//                                ($data[GATEWAY == PAYSTACK ? 'authorization' : 'card'] ?? [])
+//                            ]);
 
                             if (($status != 'success' && $status != 'successful') ||
                                 (GATEWAY == FLUTTERWAVE && ($data['chargecode'] ?? '') != '00') ||
