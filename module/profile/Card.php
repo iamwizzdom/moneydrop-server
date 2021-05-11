@@ -124,8 +124,16 @@ class Card extends Manager implements Api
 
                             $data = $response['data'] ?? [];
 
+                            log_err([
+                                'con-1' => to_string((!in_array(strtotime(($data['status'] ?? 'failed')), ['success', 'successful']))),
+                                'con-2' => to_string((GATEWAY == FLUTTERWAVE && ($data['chargecode'] ?? '') !== '00')),
+                                'con-3' => to_string(empty($authorization = ($data[GATEWAY == PAYSTACK ? 'authorization' : 'card'] ?? []))),
+                                ($data['status'] ?? 'failed'),
+                                ($data[GATEWAY == PAYSTACK ? 'authorization' : 'card'] ?? [])
+                            ]);
+
                             if (!in_array(strtotime(($data['status'] ?? 'failed')), ['success', 'successful']) ||
-                                (GATEWAY == FLUTTERWAVE && $data['chargecode'] !== '00') ||
+                                (GATEWAY == FLUTTERWAVE && ($data['chargecode'] ?? '') !== '00') ||
                                 empty($authorization = ($data[GATEWAY == PAYSTACK ? 'authorization' : 'card'] ?? []))) {
 
                                 throw $this->baseException(
