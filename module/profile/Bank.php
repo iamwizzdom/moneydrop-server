@@ -353,7 +353,7 @@ class Bank extends Manager implements Api
                             'status' => true,
                             'code' => HTTP::OK,
                             'title' => 'Bank Successful',
-                            'message' => !empty($accountList) ? "Bank accounts retrieved successfully." : "No Bank account found.",
+                            'message' => $account->getResponseSize() > 0 ? "Bank accounts retrieved successfully." : "No Bank account found.",
                             'response' => [
                                 'accounts' => $account->getAllWithModel() ?: [],
                                 'banks' => BanksEnum::getBanks()
