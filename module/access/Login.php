@@ -60,6 +60,10 @@ class Login extends Manager implements Api
             $user->setModelKey('userModel');
             $user = $user->getFirstWithModel();
 
+            if (!$user->is_active) {
+                throw $this->baseException("Sorry, you can't login to an inactive account.", 'Login Failed', HTTP::UNAUTHORIZED, false);
+            }
+
             if ($validator->has('pn_token')) {
 
                 $previousPnTokenUser = $this->db()->find('users', $validator->getValue('pn_token'), 'pn_token',

@@ -46,7 +46,7 @@ class UserMiddleware extends Middleware
         $code = HTTP::EXPIRED_AUTHENTICATION;
         try {
             $user = JWT::toUser((headers('Auth-Token') ?: ''), config('auth.default.provider', 'user'));
-
+            if ($user && !$user->is_active) throw new Exception("Sorry, your account has been deactivated");
         } catch (QueRuntimeException $e) {
             throw $e;
         } catch (Exception $e) {
