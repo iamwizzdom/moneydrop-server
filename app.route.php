@@ -509,7 +509,7 @@ Route::register()->groupApi('api/v1/admin', function ($prefix) {
                 $entry->forbidCSRF(false);
                 $entry->setMiddleware('admin.auth');
                 $entry->setUri('/{id:uuid}/approve');
-                $entry->setAllowedIPs(['127.0.0.1']);
+                $entry->setAllowedIPs(['127.0.0.1', '172.31.18.17']);
                 $entry->setModule(LoanApprove::class);
             },
             function (RouteEntry $entry) {
@@ -517,7 +517,7 @@ Route::register()->groupApi('api/v1/admin', function ($prefix) {
                 $entry->forbidCSRF(false);
                 $entry->setMiddleware('admin.auth');
                 $entry->setUri('/{id:uuid}/decline');
-                $entry->setAllowedIPs(['127.0.0.1']);
+                $entry->setAllowedIPs(['127.0.0.1', '172.31.18.17']);
                 $entry->setModule(LoanDecline::class);
             }
         ];
