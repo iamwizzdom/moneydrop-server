@@ -38,7 +38,7 @@ class LoanApplication extends Manager implements Api
 
         try {
 
-            switch ($type = Request::getUriParam('type')) {
+            switch (Request::getUriParam('type')) {
                 case "apply":
 
                     $input['loan_id'] = Request::getUriParam('id');
@@ -62,6 +62,10 @@ class LoanApplication extends Manager implements Api
                         "The inputted data is invalid", "Loan Failed", HTTP::UNPROCESSABLE_ENTITY);
 
                     $loan = $this->db()->find('loans', $input['loan_id'], 'uuid')->getFirstWithModel();
+
+                    if ($loan->getInt('user_id') == $this->user('id')) {
+                        throw $this->baseException("Sorry, you can't apply to your own loan.", "Loan Failed", HTTP::NOT_ACCEPTABLE);
+                    }
 
 //                    if ($loan->getBool('is_active')) {
 //                        $loanValidator->isNotFoundInDB('loan_applications', 'loan_id', 'This loan is already granted to an applicant',

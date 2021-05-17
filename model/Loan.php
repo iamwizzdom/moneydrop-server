@@ -16,7 +16,7 @@ use que\utility\money\Item;
 class Loan extends Model
 {
     protected string $modelKey = 'loanModel';
-    protected array $fillable = ['uuid', 'amount', 'tenure', 'interest', 'purpose', 'interest_type', 'note', 'loan_type', 'is_fund_raiser', 'user_id', 'status', 'is_active'];
+    protected array $viewable = ['uuid', 'amount', 'tenure', 'interest', 'purpose', 'interest_type', 'note', 'loan_type', 'is_fund_raiser', 'user_id', 'status', 'is_active'];
     protected array $appends = ['absolute_tenure', 'status_readable', 'type', 'loan_type_readable', 'interest_type_readable', 'tenure_readable', 'purpose_readable', 'transaction', 'user', 'is_mine', 'is_granted', 'has_applied'];
     protected array $casts = [
         'note' => 'string', 'id,tenure,interest_type,user_id,status,loan_type' => 'int',

@@ -7,7 +7,7 @@ ini_set('display_errors', LIVE ? 'off' : 'on');
 error_reporting(LIVE ? 0 : E_ALL);
 
 define('APP_SCHEME', ($_SERVER['HTTPS'] ?? 'off') == 'on' ? "https" : 'http');
-define('APP_ROOT_PATH', dirname(__DIR__, 1)); // Your app root path
+define('APP_ROOT_PATH', dirname(__DIR__)); // Your app root path
 define('APP_ROOT_FOLDER', basename(APP_ROOT_PATH)); // Your app root folder name
 define('APP_PACKAGE_NAME', APP_ROOT_FOLDER);
 define('APP_PATH', APP_ROOT_PATH);

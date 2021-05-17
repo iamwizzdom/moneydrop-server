@@ -15,7 +15,7 @@ use que\utility\money\Item;
 class Wallet extends Model
 {
     protected string $modelKey = 'walletModel';
-    protected array $fillable = ['uuid', 'balance', 'available_balance', 'user_id', 'is_frozen', 'is_active'];
+    protected array $viewable = ['uuid', 'balance', 'available_balance', 'user_id', 'is_frozen', 'is_active'];
     protected array $casts = ['is_frozen,is_active' => 'bool'];
 
 

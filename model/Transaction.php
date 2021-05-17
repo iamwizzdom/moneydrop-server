@@ -16,9 +16,9 @@ class Transaction extends Model
     const TRANSFER_5K_FEE = 1500;
     const TRANSFER_50K_FEE = 3000;
     const TRANSFER_51K_FEE = 6000;
-    const BVN_RESOLVE_STANDARD_FEE = 1000;
-    const BVN_RESOLVE_PREMIUM_FEE = 1500;
-    const BVN_MATCH_FEE = 1500;
+//    const BVN_RESOLVE_STANDARD_FEE = 1000;
+//    const BVN_RESOLVE_PREMIUM_FEE = 1500;
+//    const BVN_MATCH_FEE = 1500;
     const ACCOUNT_DETAIL_RETRIEVAL_FEE = 1000;
     const ACCOUNT_INCOME_RETRIEVAL_FEE = 5000;
 
@@ -34,7 +34,7 @@ class Transaction extends Model
     const TRANS_STATUS_REVERSED = APPROVAL_REVERSED;
 
     protected string $modelKey = 'transactionModel';
-    protected array $fillable = ['uuid', 'user_id', 'card_id', 'to_wallet_id', 'from_wallet_id', 'recipient_code', 'direction',
+    protected array $viewable = ['uuid', 'user_id', 'card_id', 'to_wallet_id', 'from_wallet_id', 'recipient_code', 'direction',
         'type', 'gateway_reference', 'transfer_code', 'amount', 'fee', 'creditor_fee', 'currency', 'status', 'narration'];
     protected array $appends = ['card', 'status_readable', 'type_readable', 'direction_readable', 'date', 'date_time'];
     protected array $casts = ['narration' => 'string', 'fee' => 'double', 'creditor_fee' => 'double'];

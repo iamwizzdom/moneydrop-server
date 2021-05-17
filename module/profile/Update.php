@@ -84,7 +84,7 @@ class Update extends Manager implements Api
                     if ($validator->hasError()) throw $this->baseException(
                         "The inputted data is invalid", "Update Failed", HTTP::UNPROCESSABLE_ENTITY);
 
-                    if (!$this->user()->update(['picture' => "storage/{$file->getFileInfo('path')}"]))
+                    if (!$this->user()->update(['picture' => $file->getFileInfo('url')]))
                         throw $this->baseException("Failed to update picture at this time, please try again later.",
                             "Update Failed", HTTP::EXPECTATION_FAILED);
 

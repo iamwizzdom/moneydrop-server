@@ -14,7 +14,7 @@ use que\database\model\Model;
 class Card extends Model
 {
     protected string $modelKey = 'cardModel';
-    protected array $fillable = ['uuid', 'auth', 'name', 'brand', 'exp_year', 'exp_month',
+    protected array $viewable = ['uuid', 'auth', 'name', 'brand', 'exp_year', 'exp_month',
                                 'last4digits', 'user_id', 'status', 'is_active'];
     protected array $casts = ['is_active' => 'bool', 'created_at' => 'date:d/m/y'];
     protected array $hidden = ['auth'];

@@ -498,4 +498,32 @@ Route::register()->groupApi('api/v1/w-app', function ($prefix) {
     $entry->allowOptionsRequest();
 });
 
+Route::register()->groupApi('api/v1/admin', function ($prefix) {
+
+    Route::register()->groupApi("{$prefix}/loan", function ($prefix) {
+
+        return [
+            function (RouteEntry $entry) {
+                $entry->allowPutRequest();
+                $entry->allowPostRequest();
+                $entry->forbidCSRF(false);
+                $entry->setMiddleware('admin.auth');
+                $entry->setUri('/{id:uuid}/approve');
+                $entry->setAllowedIPs(['127.0.0.1']);
+                $entry->setModule(LoanApprove::class);
+            },
+            function (RouteEntry $entry) {
+                $entry->allowPutRequest();
+                $entry->forbidCSRF(false);
+                $entry->setMiddleware('admin.auth');
+                $entry->setUri('/{id:uuid}/decline');
+                $entry->setAllowedIPs(['127.0.0.1']);
+                $entry->setModule(LoanDecline::class);
+            }
+        ];
+    });
+
+    return [];
+});
+
 Route::init();

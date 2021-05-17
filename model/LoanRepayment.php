@@ -9,7 +9,7 @@ use que\utility\money\Item;
 
 class LoanRepayment extends Model
 {
-    protected array $fillable = ['uuid', 'application_id', 'amount', 'user_id'];
+    protected array $viewable = ['uuid', 'application_id', 'amount', 'user_id'];
     protected array $copy = ['created_at' => 'date'];
     protected array $casts = ['amount' => 'double', 'date' => "jS M 'y"];
 

@@ -12,6 +12,7 @@ use que\http\output\response\Json;
 use que\http\output\response\Jsonp;
 use que\http\output\response\Plain;
 use que\http\request\Request;
+use que\user\User;
 
 class LoanApprove extends \que\common\manager\Manager implements \que\common\structure\Api
 {
@@ -37,6 +38,9 @@ class LoanApprove extends \que\common\manager\Manager implements \que\common\str
             $loan = $this->db()->find('loans', $input['loan_id'], 'uuid');
             $loan->setModelKey('loanModel');
             $loan = $loan->getFirstWithModel();
+            User::logout_silently();
+            User::login($loan->user);
+            $loan->refresh();
 
             if ($loan?->getInt('status') != \model\Loan::STATUS_PENDING)
                 throw $this->baseException("You can only approve a pending loan.", "Approve Failed", HTTP::NOT_ACCEPTABLE);
