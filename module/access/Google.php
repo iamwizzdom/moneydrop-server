@@ -33,13 +33,15 @@ class Google extends Manager implements Api
         $validator = $this->validator($input);
         try {
 
-            $validator->validate('google_id')->isNotEmpty("Please enter a valid google ID")->if(function () {
+            $validator->validate('google_id')->isNotEmpty("Please enter a valid google ID");
+
+            $validator->validate('token_id')->isNotEmpty("Please enter a valid google token ID")->if(function () {
 
                 $client = new Google_Client(['client_id' => GOOGLE_CLIENT_ID]);  // Specify the CLIENT_ID of the app that accesses the backend
                 $payload = $client->verifyIdToken(\input('token_id'));
                 return $payload && $payload['email'] == \input('email');
 
-            }, "Sorry, that's an invalid google ID");
+            }, "Sorry, that's an invalid google token ID");
 
             $validator->validate('pn_token', true)->isNotEmpty("Please enter a valid token");
 
