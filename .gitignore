@@ -3,4 +3,8 @@
 /config/mail.php
 /.idea/
 /lab/
+/vendor/
 console.php
+/storage/profile/
+/template/email/wiz-email.html
+/config/cors.php
