@@ -278,6 +278,12 @@ Route::register()->groupApi('api/v1/w-app', function ($prefix) {
             function (RouteEntry $entry) {
                 $entry->allowPostRequest();
                 $entry->forbidCSRF(false);
+                $entry->setUri('/login-with-google');
+                $entry->setModule(Google::class);
+            },
+            function (RouteEntry $entry) {
+                $entry->allowPostRequest();
+                $entry->forbidCSRF(false);
                 $entry->setUri('/register');
                 $entry->where('id', "alpha");
                 $entry->setModule(Register::class);

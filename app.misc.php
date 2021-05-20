@@ -59,4 +59,4 @@ const MONO_ACCOUNT_DETAILS_URL = 'https://api.withmono.com/accounts';
 const FIREBASE_API_KEY = 'AAAAkp1mBRM:APA91bHbiFw512qrXqjnQ-tKzX_snEL9aK2sGycg6NWQEbJrNza73_lGkfVFnqmou6Uy-I6jV_TKnwtZ2wm8xIdmunl8aLxKNdIVOMydS6ZhLGjLwzdTSPI1UfWZM3eoJh5EuXfqsQia';
 const PAGINATION_PER_PAGE = 30;
 
-const GOOGLE_CLIENT_ID = "629705934099-0imerg29pskj9cahu6agk9pnpepdlma2.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "629705934099-185d1ijs1uum9qra9k7klsvglfjsv2sg.apps.googleusercontent.com";
