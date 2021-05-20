@@ -15,7 +15,7 @@ use que\utility\money\Item;
 class User extends Model
 {
     protected string $modelKey = 'userModel';
-    protected array $hidden = ['password', 'pn_token', 'max_loan_amount'];
+    protected array $hidden = ['password', 'pn_token', 'max_loan_amount', 'google_id'];
     protected array $viewable = ['uuid', 'firstname', 'middlename', 'lastname', 'phone', 'email', 'password', 'bvn',
         'picture', 'dob', 'gender', 'address', 'country_id', 'state_id', 'status', 'is_active'];
     protected array $appends = ['country', 'state', 'rating', 'max_loan_amount'];

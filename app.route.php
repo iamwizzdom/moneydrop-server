@@ -1,5 +1,6 @@
 <?php
 
+use access\Google;
 use history\History;
 use loan\LoanApplication;
 use access\ForgotPassword;
@@ -38,6 +39,12 @@ Route::register()->groupApi('api/v1/m-app', function ($prefix) {
                 $entry->forbidCSRF(false);
                 $entry->setUri('/login');
                 $entry->setModule(Login::class);
+            },
+            function (RouteEntry $entry) {
+                $entry->allowPostRequest();
+                $entry->forbidCSRF(false);
+                $entry->setUri('/login-with-google');
+                $entry->setModule(Google::class);
             },
             function (RouteEntry $entry) {
                 $entry->allowPostRequest();
