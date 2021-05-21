@@ -52,7 +52,7 @@ const FLUTTERWAVE_TRANSFER_URL = LIVE ?
 /**
  * Mono endpoints
  */
-const MONO_API_KEY = 'live_sk_VEC06iUg48u91fXALulV';
+const MONO_API_KEY = 'live_sk_UAh3fvKKsNDJDphdpP3p';
 const MONO_ACCOUNT_AUTH_URL = 'https://api.withmono.com/account/auth';
 const MONO_ACCOUNT_DETAILS_URL = 'https://api.withmono.com/accounts';
 

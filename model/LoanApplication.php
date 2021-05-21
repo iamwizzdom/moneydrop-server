@@ -46,7 +46,8 @@ class LoanApplication extends Model
     public function getHasGranted() {
         $loan_id = $this->getValue('loan_id');
         if (!isset(self::$granted[$loan_id])) {
-            $application = db()->find('loan_applications', $loan_id, 'loan_id', function (Builder $builder) {
+            $application = db()->exists('loan_applications', function (Builder $builder) use ($loan_id) {
+                $builder->where('loan_id', $loan_id);
                 $builder->where('status', [self::STATUS_GRANTED, self::STATUS_REPAID]);
                 $builder->where('is_active', true);
             });
