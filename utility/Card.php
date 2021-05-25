@@ -32,11 +32,12 @@ trait Card
     }
 
     /**
+     * @param null $userID
      * @return ModelCollection|null
      */
-    public function getAllMyCards(): ?ModelCollection
+    public function getAllMyCards($userID = null): ?ModelCollection
     {
-        $card = db()->findAll('cards', user('id'), 'user_id', function (Builder $builder) {
+        $card = db()->findAll('cards', $userID ?: user('id'), 'user_id', function (Builder $builder) {
             $builder->where('gateway', GATEWAY);
             $builder->where('is_active', true);
             $builder->orderBy("desc", "id");

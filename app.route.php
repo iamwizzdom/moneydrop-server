@@ -348,6 +348,7 @@ Route::register()->groupApi('api/v1/w-app', function ($prefix) {
                 $entry->forbidCSRF(false);
                 $entry->setMiddleware('user.auth');
                 $entry->setUri('/wallet/{type:/^[a-zA-Z0-9-]+$/}/{id:uuid|/^[a-zA-Z0-9_]+$/}');
+                $entry->setName('web-top-top');
                 $entry->setModule(Wallet::class);
             },
             function (RouteEntry $entry) {

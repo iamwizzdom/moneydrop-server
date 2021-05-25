@@ -123,6 +123,7 @@ class LoanApplication extends Manager implements Api
                         $application->getQueryError() ?: "Sorry we could not record your application at this time, let's try that again later.",
                         "Loan Failed", HTTP::EXPECTATION_FAILED);
 
+                    $application->setModelKey('loanApplicationModel');
                     $application = $application->getFirstWithModel();
                     $application->load('loan');
 

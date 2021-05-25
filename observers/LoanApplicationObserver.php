@@ -9,6 +9,7 @@ use model\Loan;
 use model\Notification;
 use model\Transaction;
 use que\common\exception\QueException;
+use que\database\interfaces\Builder;
 use que\database\interfaces\model\Model;
 use que\database\model\ModelCollection;
 use que\database\observer\Observer;
@@ -150,10 +151,30 @@ class LoanApplicationObserver extends Observer
                     $update = $newModel->loan->update(['status' => Loan::STATUS_GRANTED]);
                     if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to grant loan at this time");
                     else {
-                        $newModel->loan->load('user');
-                        Notification::create("Granted Loan",
-                            "Your application for {$newModel->loan->user->firstname}'s loan request has been granted",
-                            "loanApplicationDetails", $newModel->applicant->id, $newModel);
+
+                        $application = db()->findAll('loan_applications', $newModel->getValue('loan_id'), 'loan_id',
+                            function (Builder $builder) use ($newModel) {
+                                $builder->where('id', $newModel->getValue('id'), '!=');
+                                $builder->where('status', LoanApplication::STATUS_AWAITING);
+                                $builder->where('is_active', true);
+                            });
+
+                        if ($application->isSuccessful()) {
+
+                            $applications = $application->getAllWithModel();
+
+                            $update = $applications->update(['status' => LoanApplication::STATUS_REJECTED]);
+
+                            if (!$update) $this->getSignal()->undoOperation("Unable to transact at this time");
+                            else {
+
+                                $newModel->loan->load('user');
+                                Notification::create("Granted Loan",
+                                    "Your application for {$newModel->loan->user->firstname}'s loan request has been granted",
+                                    "loanApplicationDetails", $newModel->applicant->id, $newModel);
+                            }
+
+                        }
                     }
                 } elseif ($newModel->getBool('is_active') == false || $newModel->getInt('status') == LoanApplication::STATUS_REJECTED) {
 
@@ -167,16 +188,38 @@ class LoanApplicationObserver extends Observer
                 }
 
             } elseif ($newModel->loan->getInt('loan_type') == Loan::LOAN_TYPE_OFFER) {
+
                 if ($newModel->getInt('status') == LoanApplication::STATUS_GRANTED) {
+
                     $update = $newModel->loan->update(['status' => Loan::STATUS_GRANTED]);
                     if (!$update?->isSuccessful()) $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to grant loan at this time");
                     else {
 
-                        $newModel->loan->load('user');
-                        Notification::create("Granted Loan",
-                            "Your application for {$newModel->loan->user->firstname}'s loan offer has been granted",
-                            "loanApplicationDetails", $newModel->applicant->id, $newModel);
+                        $application = db()->findAll('loan_applications', $newModel->getValue('loan_id'), 'loan_id',
+                            function (Builder $builder) use ($newModel) {
+                                $builder->where('id', $newModel->getValue('id'), '!=');
+                                $builder->where('status', LoanApplication::STATUS_AWAITING);
+                                $builder->where('is_active', true);
+                            });
+
+                        if ($application->isSuccessful()) {
+
+                            $applications = $application->getAllWithModel();
+
+                            $update = $applications->update(['status' => LoanApplication::STATUS_REJECTED]);
+
+                            if (!$update) $this->getSignal()->undoOperation("Unable to transact at this time");
+                            else {
+
+                                $newModel->loan->load('user');
+                                Notification::create("Granted Loan",
+                                    "Your application for {$newModel->loan->user->firstname}'s loan offer has been granted",
+                                    "loanApplicationDetails", $newModel->applicant->id, $newModel);
+                            }
+
+                        }
                     }
+
                 }
             }
         });

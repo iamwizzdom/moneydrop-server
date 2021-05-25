@@ -33,7 +33,7 @@ const PAYSTACK_TRANSFER_URL = 'https://api.paystack.co/transfer';
 /**
  * Flutterwave Keys
  */
-const FLUTTERWAVE_SECRET_KEY = "FLWSECK-a97c898dfc763a1616af6c75699877a2-X";
+const FLUTTERWAVE_SECRET_KEY = "FLWSECK_TEST-2e259f3ffdd346e188e9554b7dd574d4-X";
 const FLUTTERWAVE_ENCRYPTION_KEY = "FLWSECK_TEST76766747e348";
 
 /**
@@ -52,7 +52,7 @@ const FLUTTERWAVE_TRANSFER_URL = LIVE ?
 /**
  * Mono endpoints
  */
-const MONO_API_KEY = 'live_sk_UAh3fvKKsNDJDphdpP3p';
+const MONO_API_KEY = 'test_sk_6e4S17jvqGIzJhoSKr7q';
 const MONO_ACCOUNT_AUTH_URL = 'https://api.withmono.com/account/auth';
 const MONO_ACCOUNT_DETAILS_URL = 'https://api.withmono.com/accounts';
 

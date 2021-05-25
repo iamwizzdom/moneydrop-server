@@ -184,7 +184,7 @@ class Bank extends Manager implements Api
 
                     $update = $account->update([
                         'income' => (float) Item::cents($response['amount'])->percentage(($response['confidence'] * 100))->getCents(),
-                        'income_type' => $response['type'] == 'INCOME' ? BankAccount::INCOME_TYPE_REGULAR : BankAccount::INCOME_TYPE_IRREGULAR
+                        'income_type' => strtoupper($response['type']) == 'INCOME' ? BankAccount::INCOME_TYPE_REGULAR : BankAccount::INCOME_TYPE_IRREGULAR
                     ]);
 
                     if (!$update?->isSuccessful()) {

@@ -64,18 +64,20 @@ class Wallet extends Manager implements Api
                     if ($validator->hasError()) throw $this->baseException(
                         "The inputted data is invalid", "Top-up Failed", HTTP::UNPROCESSABLE_ENTITY);
 
-                    try {
-                        if ($this->isFrozenWallet()) throw $this->baseException(
-                            "Sorry, your wallet is frozen.", "Top-up Failed", HTTP::EXPECTATION_FAILED);
-                    } catch (\Exception $e) {
-                        throw $this->baseException($e->getMessage(), "Top-up Failed", HTTP::EXPECTATION_FAILED);
-                    }
+                    if (!$validator->has('force-top-up') || $input->validate('force-top-up')->is(false)) {
+                        try {
+                            if ($this->isFrozenWallet()) throw $this->baseException(
+                                "Sorry, your wallet is frozen.", "Top-up Failed", HTTP::EXPECTATION_FAILED);
+                        } catch (\Exception $e) {
+                            throw $this->baseException($e->getMessage(), "Top-up Failed", HTTP::EXPECTATION_FAILED);
+                        }
 
-                    try {
-                        if (!$this->isActiveWallet()) throw $this->baseException(
-                            "Sorry, your wallet is deactivated.", "Top-up Failed", HTTP::EXPECTATION_FAILED);
-                    } catch (\Exception $e) {
-                        throw $this->baseException($e->getMessage(), "Top-up Failed", HTTP::EXPECTATION_FAILED);
+                        try {
+                            if (!$this->isActiveWallet()) throw $this->baseException(
+                                "Sorry, your wallet is deactivated.", "Top-up Failed", HTTP::EXPECTATION_FAILED);
+                        } catch (\Exception $e) {
+                            throw $this->baseException($e->getMessage(), "Top-up Failed", HTTP::EXPECTATION_FAILED);
+                        }
                     }
 
                     try {

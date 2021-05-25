@@ -188,22 +188,21 @@ class LoanObserver extends Observer
                     }
 
 
-                } elseif ($newModel->getInt('loan_type') == Loan::LOAN_TYPE_REQUEST) {
+                }
 
-                    $application = db()->find('loan_applications', $newModel->getValue('uuid'), 'loan_id',
-                        function (Builder $builder) {
+                $application = db()->findAll('loan_applications', $newModel->getValue('uuid'), 'loan_id',
+                    function (Builder $builder) {
+                        $builder->where('status', LoanApplication::STATUS_AWAITING);
                         $builder->where('is_active', true);
                     });
 
-                    if ($application->isSuccessful()) {
+                if ($application->isSuccessful()) {
 
-                        $applications = $application->getAllWithModel();
+                    $applications = $application->getAllWithModel();
 
-                        $update = $applications->update(['status' => LoanApplication::STATUS_REJECTED]);
+                    $update = $applications->update(['status' => LoanApplication::STATUS_REJECTED]);
 
-                        if (!$update) $this->getSignal()->undoOperation("Unable to transact at this time");
-
-                    }
+                    if (!$update) $this->getSignal()->undoOperation("Unable to transact at this time");
 
                 }
 

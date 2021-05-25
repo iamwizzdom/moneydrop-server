@@ -13,6 +13,9 @@ class LoanRepayment extends Model
     protected array $copy = ['created_at' => 'date'];
     protected array $casts = ['amount' => 'double', 'date' => "jS M 'y"];
 
+    const PAYMENT_CHANNEL_WALLET = 1;
+    const PAYMENT_CHANNEL_BANK = 2;
+
     public function getArray(bool $onlyFillable = false): array
     {
         $data = parent::getArray($onlyFillable);

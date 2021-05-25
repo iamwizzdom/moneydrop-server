@@ -54,6 +54,12 @@ class LoanRepaymentObserver extends Observer
         $percentage = (($model->getFloat('amount') / $model->application->amount_payable) * $profit);
         $percentage = (float) Item::cents($percentage)->percentage($interest)->getCents();
 
+        $channel = $model->payment_channel;
+
+        if ($channel == LoanRepayment::PAYMENT_CHANNEL_BANK) {
+
+        }
+
         if ($model->application->loan->loan_type == Loan::LOAN_TYPE_OFFER) {
 
             $model->application->loan->user->load('wallet');

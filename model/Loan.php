@@ -27,8 +27,6 @@ class Loan extends Model
     ];
     protected array $hidden = ['updated_at'];
     protected array $copy = ['created_at' => 'date', 'date' => 'date_time'];
-    public static array $applied = [];
-    public static array $granted = [];
 
     /**
      * Minimum loan amount
@@ -38,7 +36,7 @@ class Loan extends Model
     /**
      * Maximum loan amount
      */
-    const MAX_AMOUNT = 5000000;
+    const MAX_AMOUNT = 5000000000;
 
     /**
      * Minimum loan interest
@@ -158,27 +156,21 @@ class Loan extends Model
     }
 
     public function getHasApplied() {
-        $loan_id = $this->getValue('uuid');
-        if (!isset(Loan::$applied[$loan_id])) {
-            $application = db()->find('loan_applications', $loan_id, 'loan_id', function (Builder $builder) {
-                $builder->where('user_id', user('id'));
-                $builder->where('is_active', true);
-            });
-            Loan::$applied[$loan_id] = $application->isSuccessful();
-        }
-        return Loan::$applied[$loan_id];
+        $application = db()->exists('loan_applications', function (Builder $builder) {
+            $builder->where('loan_id', $this->getValue('uuid'));
+            $builder->where('user_id', user('id'));
+            $builder->where('is_active', true);
+        });
+        return $application->isSuccessful();
     }
 
     public function isGranted() {
-        $loan_id = $this->getValue('uuid');
-        if (!isset(Loan::$granted[$loan_id])) {
-            $application = db()->find('loan_applications', $loan_id, 'loan_id', function (Builder $builder) {
-                $builder->where('status', [LoanApplication::STATUS_GRANTED, LoanApplication::STATUS_REPAID]);
-                $builder->where('is_active', true);
-            });
-            Loan::$granted[$loan_id] = $application->isSuccessful();
-        }
-        return Loan::$granted[$loan_id];
+        $application = db()->exists('loan_applications', function (Builder $builder) {
+            $builder->where('loan_id', $this->getValue('uuid'));
+            $builder->where('status', [LoanApplication::STATUS_GRANTED, LoanApplication::STATUS_REPAID]);
+            $builder->where('is_active', true);
+        });
+        return $application->isSuccessful();
     }
 
     public function getApprovedApplicant() {
