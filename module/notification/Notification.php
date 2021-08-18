@@ -26,17 +26,19 @@ class Notification extends \que\common\manager\Manager implements \que\common\st
 
         $notifications->setModelKey('notificationModel');
 
-        $pagination = Pagination::getInstance();
+        return $notifications->getAllWithModel() ?: [];
 
-        return [
-            'pagination' => [
-                'page' => $pagination->getPaginator("default")->getPage(),
-                'totalRecords' => $pagination->getTotalRecords("default"),
-                'totalPages' => $pagination->getTotalPages("default"),
-                'nextPage' => $pagination->getNextPage("default", true),
-                'previousPage' => $pagination->getPreviousPage("default", true)
-            ],
-            'notifications' => $notifications->getAllWithModel() ?: []
-        ];
+//        $pagination = Pagination::getInstance();
+
+//        return [
+//            'pagination' => [
+//                'page' => $pagination->getPaginator("default")->getPage(),
+//                'totalRecords' => $pagination->getTotalRecords("default"),
+//                'totalPages' => $pagination->getTotalPages("default"),
+//                'nextPage' => $pagination->getNextPage("default", true),
+//                'previousPage' => $pagination->getPreviousPage("default", true)
+//            ],
+//            'notifications' => $notifications->getAllWithModel() ?: []
+//        ];
     }
 }

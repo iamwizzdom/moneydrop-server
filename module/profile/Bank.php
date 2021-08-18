@@ -429,7 +429,7 @@ class Bank extends Manager implements Api
                         'title' => $remove ? 'Remove Successful' : 'Remove Failed',
                         'message' => $remove ? "Bank account removed successfully." : "Bank account removal failed",
                         'response' => []
-                    ], HTTP::OK);
+                    ]);
 
                 default:
                     throw $this->baseException(

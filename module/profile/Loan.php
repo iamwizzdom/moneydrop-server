@@ -50,19 +50,21 @@ class Loan extends Manager implements Api
 
                     $loans->setModelKey("loanModel");
 
-                    $pagination = Pagination::getInstance();
+                    return $loans->getAllWithModel() ?: [];
 
-                    return [
-                        'pagination' => [
-                            'page' => $pagination->getPaginator("default")->getPage(),
-                            'perPage' => $pagination->getPerPage('default'),
-                            'totalRecords' => $pagination->getTotalRecords("default"),
-                            'totalPages' => $pagination->getTotalPages("default"),
-                            'nextPage' => $pagination->getNextPage("default", true),
-                            'previousPage' => $pagination->getPreviousPage("default", true)
-                        ],
-                        'loans' => $loans->getAllWithModel() ?: []
-                    ];
+//                    $pagination = Pagination::getInstance();
+//
+//                    return [
+//                        'pagination' => [
+//                            'page' => $pagination->getPaginator("default")->getPage(),
+//                            'perPage' => $pagination->getPerPage('default'),
+//                            'totalRecords' => $pagination->getTotalRecords("default"),
+//                            'totalPages' => $pagination->getTotalPages("default"),
+//                            'nextPage' => $pagination->getNextPage("default", true),
+//                            'previousPage' => $pagination->getPreviousPage("default", true)
+//                        ],
+//                        'loans' => $loans->getAllWithModel() ?: []
+//                    ];
                 default:
                     throw $this->baseException(
                         "Sorry, we're not sure what you're trying to do there.", "Loan Failed", HTTP::BAD_REQUEST);

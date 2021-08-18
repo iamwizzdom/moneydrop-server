@@ -34,17 +34,18 @@ class Transaction extends Manager implements Api
 
         $trans->setModelKey("transactionModel");
 
-        $pagination = Pagination::getInstance();
+//        $pagination = Pagination::getInstance();
 
-        return [
-            'pagination' => [
-                'page' => $pagination->getPaginator("default")->getPage(),
-                'totalRecords' => $pagination->getTotalRecords("default"),
-                'totalPages' => $pagination->getTotalPages("default"),
-                'nextPage' => $pagination->getNextPage("default", true),
-                'previousPage' => $pagination->getPreviousPage("default", true)
-            ],
-            'transactions' => $trans->getAllWithModel() ?: []
-        ];
+//        return [
+//            'pagination' => [
+//                'page' => $pagination->getPaginator("default")->getPage(),
+//                'totalRecords' => $pagination->getTotalRecords("default"),
+//                'totalPages' => $pagination->getTotalPages("default"),
+//                'nextPage' => $pagination->getNextPage("default", true),
+//                'previousPage' => $pagination->getPreviousPage("default", true)
+//            ],
+//            'transactions' => $trans->getAllWithModel() ?: []
+//        ];
+        return $trans->getAllWithModel();
     }
 }

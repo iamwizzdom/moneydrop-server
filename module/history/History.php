@@ -54,18 +54,20 @@ class History extends Manager implements Api
 
         $applications->setModelKey('loanApplicationModel');
 
-        $pagination = Pagination::getInstance();
+        return $applications->getAllWithModel()?->load('loan') ?: [];
 
-        return [
-//            $applications->getQueryString(),
-            'pagination' => [
-                'page' => $pagination->getPaginator("default")->getPage(),
-                'totalRecords' => $pagination->getTotalRecords("default"),
-                'totalPages' => $pagination->getTotalPages("default"),
-                'nextPage' => $pagination->getNextPage("default", true),
-                'previousPage' => $pagination->getPreviousPage("default", true)
-            ],
-            'applications' => $applications->getAllWithModel()?->load('loan') ?: []
-        ];
+//        $pagination = Pagination::getInstance();
+//
+//        return [
+////            $applications->getQueryString(),
+//            'pagination' => [
+//                'page' => $pagination->getPaginator("default")->getPage(),
+//                'totalRecords' => $pagination->getTotalRecords("default"),
+//                'totalPages' => $pagination->getTotalPages("default"),
+//                'nextPage' => $pagination->getNextPage("default", true),
+//                'previousPage' => $pagination->getPreviousPage("default", true)
+//            ],
+//            'applications' => $applications->getAllWithModel()?->load('loan') ?: []
+//        ];
     }
 }

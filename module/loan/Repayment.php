@@ -226,7 +226,7 @@ class Repayment extends Manager implements Api
 
     /**
      * @param Input $input
-     * @return Json
+     * @return array|\que\database\model\ModelCollection|Json
      */
     public function history(Input $input)
     {
@@ -258,23 +258,26 @@ class Repayment extends Manager implements Api
             $repayments = $repayments->getAllWithModel();
             $repayments?->load('payer');
             $repayments?->load('transaction');
-            $pagination = Pagination::getInstance();
 
-            try {
-               return $this->http()->output()->json([
-                    'status' => true,
-                    'pagination' => [
-                        'page' => $pagination->getPaginator("default")->getPage(),
-                        'totalRecords' => $pagination->getTotalRecords("default"),
-                        'totalPages' => $pagination->getTotalPages("default"),
-                        'nextPage' => $pagination->getNextPage("default", true),
-                        'previousPage' => $pagination->getPreviousPage("default", true)
-                    ],
-                    'repayments' => $repayments ?: []
-                ]);
-            } catch (\Exception $e) {
-                throw $this->baseException($e->getMessage(), "Repayment History Failed", HTTP::INTERNAL_SERVER_ERROR);
-            }
+            return $repayments ?: [];
+
+//            $pagination = Pagination::getInstance();
+//
+//            try {
+//               return $this->http()->output()->json([
+//                    'status' => true,
+//                    'pagination' => [
+//                        'page' => $pagination->getPaginator("default")->getPage(),
+//                        'totalRecords' => $pagination->getTotalRecords("default"),
+//                        'totalPages' => $pagination->getTotalPages("default"),
+//                        'nextPage' => $pagination->getNextPage("default", true),
+//                        'previousPage' => $pagination->getPreviousPage("default", true)
+//                    ],
+//                    'repayments' => $repayments ?: []
+//                ]);
+//            } catch (\Exception $e) {
+//                throw $this->baseException($e->getMessage(), "Repayment History Failed", HTTP::INTERNAL_SERVER_ERROR);
+//            }
 
         } catch (BaseException $e) {
 

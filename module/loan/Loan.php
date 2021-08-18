@@ -169,19 +169,21 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
 
                     $loans->setModelKey("loanModel");
 
-                    $pagination = Pagination::getInstance();
+                    return $loans->getAllWithModel() ?: [];
 
-                    return [
-                        'pagination' => [
-                            'page' => $pagination->getPaginator("default")->getPage(),
-                            'totalRecords' => $pagination->getTotalRecords("default"),
-                            'totalPages' => $pagination->getTotalPages("default"),
-                            'perPage' => $pagination->getPerPage('default'),
-                            'nextPage' => $pagination->getNextPage("default", true),
-                            'previousPage' => $pagination->getPreviousPage("default", true)
-                        ],
-                        'loans' => $loans->getAllWithModel() ?: []
-                    ];
+//                    $pagination = Pagination::getInstance();
+//
+//                    return [
+//                        'pagination' => [
+//                            'page' => $pagination->getPaginator("default")->getPage(),
+//                            'totalRecords' => $pagination->getTotalRecords("default"),
+//                            'totalPages' => $pagination->getTotalPages("default"),
+//                            'perPage' => $pagination->getPerPage('default'),
+//                            'nextPage' => $pagination->getNextPage("default", true),
+//                            'previousPage' => $pagination->getPreviousPage("default", true)
+//                        ],
+//                        'loans' => $loans->getAllWithModel() ?: []
+//                    ];
 
                 case "constants":
 

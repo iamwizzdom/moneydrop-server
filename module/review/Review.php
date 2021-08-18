@@ -123,26 +123,27 @@ class Review extends Manager implements Api
             ->paginate(headers('X-PerPage', PAGINATION_PER_PAGE));
 
         $reviews->setModelKey('reviewModel');
-        $status = $reviews->isSuccessful();
         $reviews = $reviews->getAllWithModel();
         $reviews?->load('loan')->load('user')->load('reviewer');
 
-        $pagination = Pagination::getInstance();
+        return $reviews ?: [];
 
-        return $this->http()->output()->json([
-            'status' => $status,
-            'code' => $status ? HTTP::OK : HTTP::NO_CONTENT,
-            'title' => $status ? 'Review(s) Found' : "No Reviews Found",
-            'message' => $status ? "Retrieved reviews successfully." : "No review were found",
-            'pagination' => [
-                'page' => $pagination->getPaginator("default")->getPage(),
-                'totalRecords' => $pagination->getTotalRecords("default"),
-                'totalPages' => $pagination->getTotalPages("default"),
-                'nextPage' => $pagination->getNextPage("default", true),
-                'previousPage' => $pagination->getPreviousPage("default", true)
-            ],
-            'reviews' => $reviews ?: []
-        ]);
+//        $pagination = Pagination::getInstance();
+//
+//        return $this->http()->output()->json([
+//            'status' => $status,
+//            'code' => $status ? HTTP::OK : HTTP::NO_CONTENT,
+//            'title' => $status ? 'Review(s) Found' : "No Reviews Found",
+//            'message' => $status ? "Retrieved reviews successfully." : "No review were found",
+//            'pagination' => [
+//                'page' => $pagination->getPaginator("default")->getPage(),
+//                'totalRecords' => $pagination->getTotalRecords("default"),
+//                'totalPages' => $pagination->getTotalPages("default"),
+//                'nextPage' => $pagination->getNextPage("default", true),
+//                'previousPage' => $pagination->getPreviousPage("default", true)
+//            ],
+//            'reviews' => $reviews ?: []
+//        ]);
     }
 
     public function editReview(Input $input) {
