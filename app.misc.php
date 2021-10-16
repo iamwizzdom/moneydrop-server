@@ -9,7 +9,7 @@
 const PAYSTACK = 1;
 const FLUTTERWAVE = 2;
 
-const GATEWAY = FLUTTERWAVE;
+const GATEWAY = PAYSTACK;
 
 /**
  * Paystack key

@@ -135,7 +135,7 @@ class Review extends Manager implements Api
             'title' => $status ? 'Review(s) Found' : "No Reviews Found",
             'message' => $status ? "Retrieved reviews successfully." : "No review were found",
             'pagination' => [
-                'page' => $pagination->getPaginator("default")->getPage(),
+                'page' => $pagination->getPaginator("default")->getCurrentPage(),
                 'totalRecords' => $pagination->getTotalRecords("default"),
                 'totalPages' => $pagination->getTotalPages("default"),
                 'nextPage' => $pagination->getNextPage("default", true),

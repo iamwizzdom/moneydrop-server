@@ -1,13 +1,13 @@
 <?php
 
-use access\Google;
+use auth\Google;
 use history\History;
 use loan\LoanApplication;
-use access\ForgotPassword;
-use access\Login;
-use access\PasswordReset;
-use access\Register;
-use access\Verification;
+use auth\ForgotPassword;
+use auth\Login;
+use auth\PasswordReset;
+use auth\Register;
+use auth\Verification;
 use loan\LoanApprove;
 use loan\LoanDecline;
 use loan\Repayment;

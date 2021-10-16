@@ -208,12 +208,17 @@ class LoanObserver extends Observer
 
             } elseif ($newModel->getInt('status') == Loan::STATUS_AWAITING) {
                 Notification::create("Loan Approved",
-                    "Your loan {$newModel->loan_type_readable} has been approved",
+                    "Your loan $newModel->loan_type_readable has been approved",
                     "loanDetails", $newModel->user_id, $newModel);
             } elseif ($newModel->getInt('status') == Loan::STATUS_REJECTED) {
-                Notification::create("Loan Rejected",
-                    "Your loan {$newModel->loan_type_readable} has been rejected",
-                    "loanDetails", $newModel->user_id, $newModel);
+                $update = $newModel->transaction->update(['status' => Transaction::TRANS_STATUS_REVERSED]);
+                if ($update?->isSuccessful()) {
+                    Notification::create("Loan Rejected",
+                        "Your loan $newModel->loan_type_readable has been rejected",
+                        "loanDetails", $newModel->user_id, $newModel);
+                } else {
+                    $this->getSignal()->undoOperation($update?->getQueryError() ?: "Unable to transact at this time");
+                }
             }
         });
 

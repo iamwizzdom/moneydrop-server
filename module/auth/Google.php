@@ -1,7 +1,7 @@
 <?php
 
 
-namespace access;
+namespace auth;
 
 
 use Google_Client;

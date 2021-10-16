@@ -1,7 +1,7 @@
 <?php
 
 
-namespace access;
+namespace auth;
 
 
 use DateTime;

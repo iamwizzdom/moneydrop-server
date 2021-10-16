@@ -8,8 +8,11 @@
 
 namespace model;
 
+use JetBrains\PhpStorm\ArrayShape;
 use que\database\interfaces\Builder;
 use que\database\model\Model;
+use que\support\Config;
+use que\user\XUser;
 use que\utility\money\Item;
 
 class User extends Model
@@ -22,21 +25,40 @@ class User extends Model
     protected array $casts = ['id,gender,country_id,state_id,status' => 'int',
         'address,bvn,pn_token,picture' => 'string', 'is_active' => 'bool'];
 
-    public function getCountry() {
+    public function addHidden(): ?array
+    {
+        Config::set('auth.providers.user', 'que');
+        if (is_logged_in() && $this->getValue('id') != user('id')) {
+            return [
+                'bvn',
+                'phone',
+                'email',
+                'address'
+            ];
+        }
+        Config::set('auth.providers.user', 'userModel');
+        return null;
+    }
+
+    public function getCountry(): ?\que\database\interfaces\model\Model
+    {
         return $this->belongTo('countries', 'country_id');
     }
 
-    public function getState() {
+    public function getState(): ?\que\database\interfaces\model\Model
+    {
         return $this->belongTo('states', 'state_id');
     }
 
-    public function getBankStatement() {
+    public function getBankStatement(): \que\database\model\base\BaseModel|BankStatement|null
+    {
         $statement = $this->hasOne('bank_statements', 'user_id');
         if (!$statement) $statement = db()->insert('bank_statements', ['user_id' => $this->getInt('id')])->getFirstWithModel();
         return $statement ? BankStatement::cast($statement) : null;
     }
 
-    public function getVerified() {
+    #[ArrayShape(['email' => "bool", 'phone' => "bool"])] public function getVerified(): array
+    {
 
         $emailVerification = db()->find('verifications', $this->getValue('email'),
             'data', function (Builder $builder) {
@@ -58,11 +80,13 @@ class User extends Model
         ];
     }
 
-    public function getWallet() {
+    public function getWallet(): ?\que\database\interfaces\model\Model
+    {
         return $this->hasOne('wallets', 'user_id');
     }
 
-    public function getRating() {
+    public function getRating(): float|int
+    {
 
         $sum = db()->sum('ratings', 'rating')
             ->where('user_id', $this->getInt('id'))
@@ -92,7 +116,8 @@ class User extends Model
         return round(($sum / $count));
     }
 
-    public function getMaxLoanAmount() {
+    public function getMaxLoanAmount(): float|int
+    {
 
         $maxAmount = Loan::MIN_AMOUNT;
 

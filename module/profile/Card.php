@@ -23,17 +23,14 @@ use que\http\output\response\Plain;
 use que\http\request\Request;
 use que\support\Arr;
 use que\support\Str;
-use que\utility\hash\Hash;
 use que\utility\money\Item;
-use utility\flutterwave\Flutterwave;
-use utility\paystack\exception\PaystackException;
 use utility\paystack\Paystack;
 
 class Card extends Manager implements Api
 {
     const MAX_CARD = 5;
 
-    use Flutterwave;
+    use Paystack;
 
     /**
      * @inheritDoc
@@ -120,20 +117,9 @@ class Card extends Manager implements Api
 
                             $response = $verify->getResponseArray();
 
-//                            log_err(['flutter' => $response, 'ref' => $validator->getValue('reference')]);
-
                             $data = $response['data'] ?? [];
 
-
                             $status = strtolower(($data['status'] ?? 'failed'));
-//                            log_err([
-//                                'con-1' => to_string(($status != 'success' && $status != 'successful')),
-//                                'con-2' => to_string((GATEWAY == FLUTTERWAVE && ($data['chargecode'] ?? '') !== '00')),
-//                                'con-3' => to_string(empty($authorization = ($data[GATEWAY == PAYSTACK ? 'authorization' : 'card'] ?? []))),
-//                                $status,
-//                                ($data['chargecode'] ?? ''),
-//                                ($data[GATEWAY == PAYSTACK ? 'authorization' : 'card'] ?? [])
-//                            ]);
 
                             if (($status != 'success' && $status != 'successful') ||
                                 (GATEWAY == FLUTTERWAVE && ($data['chargecode'] ?? '') != '00') ||
@@ -151,7 +137,7 @@ class Card extends Manager implements Api
                                 'type' => \model\Transaction::TRANS_TYPE_TOP_UP,
                                 'direction' => "b2w",
                                 'gateway_reference' => $data[GATEWAY == PAYSTACK ? 'reference' : 'txref'],
-                                'amount' => Item::factor($data['amount'])->getCents(),
+                                'amount' => Item::cents($data['amount'])->getCents(),
                                 'currency' => $data['currency'],
                                 'status' => \model\Transaction::TRANS_STATUS_SUCCESSFUL,
                                 'narration' => "Card add top-up transaction"
@@ -164,12 +150,12 @@ class Card extends Manager implements Api
                                     "Verification Failed", HTTP::EXPECTATION_FAILED);
                             }
 
-                            $amount = Item::factor($data['amount'])->getFactor(true);
+                            $amount = Item::cents($data['amount'])->getFactor(true);
 
                             if (GATEWAY == PAYSTACK && !$authorization['reusable']) {
 
                                 throw $this->baseException("Sorry, this card is not reusable, you may want to try another card instead. " .
-                                    "However, we have topped up your wallet with {$amount} {$data['currency']} which was debited from the card being added.",
+                                    "However, we have topped up your wallet with $amount {$data['currency']} which was debited from the card being added.",
                                     "Verification Failed", HTTP::EXPECTATION_FAILED);
 
                             }
@@ -182,7 +168,7 @@ class Card extends Manager implements Api
                             if ($cards->getQueryResponse() >= self::MAX_CARD) {
                                 throw $this->baseException(
                                     "Sorry, you can't have more than ". self::MAX_CARD ." cards. However, your wallet has been " .
-                                    "topped up with {$amount} {$data['currency']} which was debited from the card being added.",
+                                    "topped up with $amount {$data['currency']} which was debited from the card being added.",
                                     "Verification Failed", HTTP::EXPECTATION_FAILED
                                 );
                             }

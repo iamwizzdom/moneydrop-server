@@ -23,12 +23,12 @@ use que\http\output\response\Plain;
 use que\http\request\Request;
 use que\support\Str;
 use que\utility\money\Item;
-use utility\flutterwave\Flutterwave;
-use utility\flutterwave\exception\FlutterwaveException;
+use utility\paystack\exception\PaystackException;
+use utility\paystack\Paystack;
 
 class Wallet extends Manager implements Api
 {
-    use \utility\Wallet, Flutterwave;
+    use \utility\Wallet, Paystack;
 
     const MIN_TOP_UP_AMOUNT = 1000;
     const MIN_CASH_OUT_AMOUNT = 1000;
@@ -82,7 +82,7 @@ class Wallet extends Manager implements Api
 
                     try {
                         $charge = $this->charge_card($input['card'], $input['amount']);
-                    } catch (FlutterwaveException $e) {
+                    } catch (PaystackException $e) {
                         throw $this->baseException($e->getMessage(), "Top-up Failed", HTTP::EXPECTATION_FAILED);
                     }
 
@@ -182,7 +182,7 @@ class Wallet extends Manager implements Api
 
                     try {
                         $transfer = $this->init_transfer($input['amount'], $input['recipient'], $bankCode, $accountNumber, $reference ?: Str::uuidv4());
-                    } catch (FlutterwaveException $e) {
+                    } catch (PaystackException $e) {
                         throw $this->baseException($e->getMessage(), "Cash-out Failed", HTTP::EXPECTATION_FAILED);
                     }
 

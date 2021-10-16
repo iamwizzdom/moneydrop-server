@@ -30,7 +30,7 @@ class Notification extends \que\common\manager\Manager implements \que\common\st
 
         return [
             'pagination' => [
-                'page' => $pagination->getPaginator("default")->getPage(),
+                'page' => $pagination->getPaginator("default")->getCurrentPage(),
                 'totalRecords' => $pagination->getTotalRecords("default"),
                 'totalPages' => $pagination->getTotalPages("default"),
                 'nextPage' => $pagination->getNextPage("default", true),

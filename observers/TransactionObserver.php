@@ -76,7 +76,7 @@ class TransactionObserver extends Observer
                         $amount = Item::cents($amount)->getFactor(true);
 
                         Notification::create("Top-up Transaction",
-                            "Your wallet has been credited {$amount} NGN",
+                            "Your wallet has been credited $amount NGN",
                             "transactionReceipt", $model->user_id, $model);
 
                     } catch (Exception $e) {
@@ -93,7 +93,7 @@ class TransactionObserver extends Observer
                         $amount = Item::cents($amount)->getFactor(true);
 
                         Notification::create("Charge Transaction",
-                            "Your wallet has been charged {$amount} NGN",
+                            "Your wallet has been charged $amount NGN",
                             "transactionReceipt", $model->user_id, $model);
 
                     } catch (Exception $e) {
@@ -122,7 +122,7 @@ class TransactionObserver extends Observer
                         $amount = Item::cents($amount)->getFactor(true);
 
                         Notification::create("Transfer Transaction",
-                            "Your wallet was debited {$amount} NGN",
+                            "Your wallet was debited $amount NGN",
                             "transactionReceipt", $model->user_id, $model);
 
                         if (!$model instanceof Transaction) $model = Transaction::cast($model);
@@ -171,7 +171,7 @@ class TransactionObserver extends Observer
                     $amount = Item::cents($amount)->getFactor(true);
 
                     Notification::create("Charge Transaction",
-                        "Your wallet has been charged {$amount} NGN",
+                        "Your wallet has been charged $amount NGN",
                         "transactionReceipt", $model->user_id, $model);
 
                 } catch (Exception $e) {
@@ -262,7 +262,7 @@ class TransactionObserver extends Observer
                         $amount = Item::cents($amount)->getFactor(true);
 
                         Notification::create("Transaction Reversal",
-                            "The charge of {$amount} NGN on your wallet has been reversed",
+                            "The charge of $amount NGN on your wallet has been reversed",
                             "transactionReceipt", $newModel->user_id, $newModel);
 
                     } catch (Exception $e) {
@@ -278,7 +278,7 @@ class TransactionObserver extends Observer
                         $amount = Item::cents($amount)->getFactor(true);
 
                         Notification::create("Top-up Reversal",
-                            "The credit of {$amount} NGN on your wallet has been reversed",
+                            "The credit of $amount NGN on your wallet has been reversed",
                             "transactionReceipt", $newModel->user_id, $newModel);
 
                     } catch (Exception $e) {
@@ -313,7 +313,7 @@ class TransactionObserver extends Observer
                                 $amount = Item::cents($amount)->getFactor(true);
 
                                 Notification::create("Charge Transaction",
-                                    "Your wallet was charged {$amount} NGN",
+                                    "Your wallet was charged $amount NGN",
                                     "transactionReceipt", $newModel->user_id, $newModel);
 
                             } catch (Exception $e) {
@@ -332,7 +332,7 @@ class TransactionObserver extends Observer
                                     $amount = Item::cents($amount)->getFactor(true);
 
                                     Notification::create("Charge Transaction",
-                                        "Your wallet was debited {$amount} NGN",
+                                        "Your wallet was debited $amount NGN",
                                         "transactionReceipt", $newModel->user_id, $newModel);
 
                                 } catch (Exception $e) {
@@ -357,7 +357,7 @@ class TransactionObserver extends Observer
                         $amount = Item::cents($amount)->getFactor(true);
 
                         Notification::create("Top-up Transaction",
-                            "Your wallet was credited {$amount} NGN",
+                            "Your wallet was credited $amount NGN",
                             "transactionReceipt", $newModel->user_id, $newModel);
 
                     } catch (Exception $e) {
@@ -389,7 +389,7 @@ class TransactionObserver extends Observer
                         $amount = Item::cents($amount)->getFactor(true);
 
                         Notification::create("Transfer Transaction",
-                            "Your wallet was debited {$amount} NGN",
+                            "Your wallet was debited $amount NGN",
                             "transactionReceipt", $newModel->user_id, $newModel);
 
                         if ($newModel->getInt('type') == Transaction::TRANS_TYPE_TRANSFER) {
@@ -431,7 +431,7 @@ class TransactionObserver extends Observer
                         $amount = Item::cents($amount)->getFactor(true);
 
                         Notification::create("Top-up Transaction",
-                            "Your wallet was credited {$amount} NGN",
+                            "Your wallet was credited $amount NGN",
                             "transactionReceipt", $newModel->user_id, $newModel);
 
                     } catch (Exception $e) {
@@ -461,7 +461,7 @@ class TransactionObserver extends Observer
                         $amount = Item::cents($amount)->getFactor(true);
 
                         Notification::create("Charge Transaction",
-                            "Your wallet was charged {$amount} NGN",
+                            "Your wallet was charged $amount NGN",
                             "transactionReceipt", $newModel->user_id, $newModel);
 
                     } catch (Exception $e) {

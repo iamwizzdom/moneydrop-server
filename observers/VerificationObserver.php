@@ -4,7 +4,7 @@
 namespace observers;
 
 
-use access\Verification;
+use auth\Verification;
 use que\common\exception\QueException;
 use que\common\exception\RouteException;
 use que\database\interfaces\model\Model;

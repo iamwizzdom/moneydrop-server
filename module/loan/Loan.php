@@ -173,7 +173,7 @@ class Loan extends \que\common\manager\Manager implements \que\common\structure\
 
                     return [
                         'pagination' => [
-                            'page' => $pagination->getPaginator("default")->getPage(),
+                            'page' => $pagination->getPaginator("default")->getCurrentPage(),
                             'totalRecords' => $pagination->getTotalRecords("default"),
                             'totalPages' => $pagination->getTotalPages("default"),
                             'perPage' => $pagination->getPerPage('default'),

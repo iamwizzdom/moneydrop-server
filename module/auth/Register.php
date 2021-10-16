@@ -1,6 +1,6 @@
 <?php
 
-namespace access;
+namespace auth;
 
 use que\common\exception\BaseException;
 use que\common\exception\QueException;

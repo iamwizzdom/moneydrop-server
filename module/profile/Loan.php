@@ -54,7 +54,7 @@ class Loan extends Manager implements Api
 
                     return [
                         'pagination' => [
-                            'page' => $pagination->getPaginator("default")->getPage(),
+                            'page' => $pagination->getPaginator("default")->getCurrentPage(),
                             'perPage' => $pagination->getPerPage('default'),
                             'totalRecords' => $pagination->getTotalRecords("default"),
                             'totalPages' => $pagination->getTotalPages("default"),

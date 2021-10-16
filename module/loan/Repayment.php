@@ -264,7 +264,7 @@ class Repayment extends Manager implements Api
                return $this->http()->output()->json([
                     'status' => true,
                     'pagination' => [
-                        'page' => $pagination->getPaginator("default")->getPage(),
+                        'page' => $pagination->getPaginator("default")->getCurrentPage(),
                         'totalRecords' => $pagination->getTotalRecords("default"),
                         'totalPages' => $pagination->getTotalPages("default"),
                         'nextPage' => $pagination->getNextPage("default", true),

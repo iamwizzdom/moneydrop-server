@@ -35,7 +35,7 @@ class NotificationObserver extends \que\database\observer\Observer
             $push->setMessage($model->message);
             $push->setImage($model->image);
             $push->setPayload(['activity' => $model->activity, 'data' => (object) $model->payload]);
-            $n = $this->send($token, $push);
+            $this->send($token, $push);
         }
     }
 
