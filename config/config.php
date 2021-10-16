@@ -33,6 +33,7 @@ const AUTOLOAD_EXCLUDE = [
     'app/template',
     'que/assets',
     'app/vendor',
+    'app/error',
     'que/vendor',
     'lab'
 ];
