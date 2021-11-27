@@ -1,5 +1,6 @@
 /cert/
 /error/
+/config/config.php
 /.idea/
 /lab/
 /vendor/
