@@ -8,3 +8,4 @@ console.php
 /storage/profile/
 /template/email/wiz-email.html
 /config/cors.php
+.env
