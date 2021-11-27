@@ -8,3 +8,5 @@ console.php
 /storage/profile/
 /template/email/wiz-email.html
 .env
+.htaccess
+.htpasswd
