@@ -37,7 +37,7 @@ trait Paystack
 
         $curl->setUrl(PAYSTACK_INIT_TRANS_URL);
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_API_KEY,
+            'Authorization: Bearer ' . env('PAYSTACK_API_KEY'),
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -96,7 +96,7 @@ trait Paystack
 
         $curl->setUrl(PAYSTACK_VERIFY_INIT_TRANS_URL . "/{$reference}");
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_API_KEY,
+            'Authorization: Bearer ' . env('PAYSTACK_API_KEY'),
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -125,7 +125,7 @@ trait Paystack
 
         $curl->setUrl(PAYSTACK_CHARGE_CARD_URL);
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_API_KEY,
+            'Authorization: Bearer ' . env('PAYSTACK_API_KEY'),
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -202,7 +202,7 @@ trait Paystack
 
         $curl->setUrl(PAYSTACK_RESOLVE_BVN_URL . "/{$bvn}");
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_API_KEY,
+            'Authorization: Bearer ' . env('PAYSTACK_API_KEY'),
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -245,7 +245,7 @@ trait Paystack
         $curl->setUrl(PAYSTACK_MATCH_BVN_URL);
         $curl->setPosts($post);
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_API_KEY,
+            'Authorization: Bearer ' . env('PAYSTACK_API_KEY'),
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -274,7 +274,7 @@ trait Paystack
         $curl->setUrl(PAYSTACK_RESOLVE_ACCOUNT_URL . "?{$query}");
 
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_API_KEY,
+            'Authorization: Bearer ' . env('PAYSTACK_API_KEY'),
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -296,7 +296,7 @@ trait Paystack
 
         $curl->setUrl(PAYSTACK_RESOLVE_CARD_URL . "/{$cardBin}");
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_API_KEY,
+            'Authorization: Bearer ' . env('PAYSTACK_API_KEY'),
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -330,7 +330,7 @@ trait Paystack
             'currency' => $currency
         ]);
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_API_KEY,
+            'Authorization: Bearer ' . env('PAYSTACK_API_KEY'),
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);
@@ -371,7 +371,7 @@ trait Paystack
         if ($reason) $post['reason'] = $reason;
         $curl->setPosts($post);
         $curl->setHeaders([
-            'Authorization: Bearer ' . PAYSTACK_API_KEY,
+            'Authorization: Bearer ' . env('PAYSTACK_API_KEY'),
             'Content-Type: application/json',
             'Cache-Control: no-cache'
         ]);

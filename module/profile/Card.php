@@ -119,6 +119,8 @@ class Card extends Manager implements Api
 
                             $data = $response['data'] ?? [];
 
+                            log_err($data);
+
                             $status = strtolower(($data['status'] ?? 'failed'));
 
                             if (($status != 'success' && $status != 'successful') ||

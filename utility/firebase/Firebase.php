@@ -42,7 +42,7 @@ trait Firebase
         $curl = http()->curl_request();
         $curl->setUrl('https://fcm.googleapis.com/fcm/send');
         $curl->setHeaders([
-            'Authorization: key=' . FIREBASE_API_KEY,
+            'Authorization: key=' . env('FIREBASE_API_KEY'),
             'Content-Type: application/json'
         ]);
         $curl->setPosts($fields);

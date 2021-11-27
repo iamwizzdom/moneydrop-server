@@ -37,7 +37,7 @@ class Google extends Manager implements Api
 
             $validator->validate('token_id')->isNotEmpty("Please enter a valid google token ID")->if(function () {
 
-                $client = new Google_Client(['client_id' => GOOGLE_CLIENT_ID]);  // Specify the CLIENT_ID of the app that accesses the backend
+                $client = new Google_Client(['client_id' => env('GOOGLE_CLIENT_ID')]);  // Specify the CLIENT_ID of the app that accesses the backend
                 $payload = $client->verifyIdToken(\input('token_id'));
                 return $payload && $payload['email'] == \input('email');
 

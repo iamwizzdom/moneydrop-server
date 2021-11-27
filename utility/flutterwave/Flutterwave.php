@@ -35,7 +35,7 @@ trait Flutterwave
 
         $curl->setUrl(FLUTTERWAVE_TRANS_VERIFY_URL);
         $curl->setHeader('Content-Type', 'application/json');
-        $curl->setPosts(['txref' => $reference, 'SECKEY' => FLUTTERWAVE_SECRET_KEY]);
+        $curl->setPosts(['txref' => $reference, 'SECKEY' => env('FLUTTERWAVE_SECRET_KEY')]);
 
         return $curl->send();
     }
@@ -70,7 +70,7 @@ trait Flutterwave
         $card->load('user');
 
         $curl->setPosts([
-            'SECKEY' => FLUTTERWAVE_SECRET_KEY,
+            'SECKEY' => env('FLUTTERWAVE_SECRET_KEY'),
             'amount' => $amount,
             'currency' => $currency,
             'token' => $card->auth,
@@ -151,7 +151,7 @@ trait Flutterwave
         $curl->setUrl(FLUTTERWAVE_TRANSFER_URL);
         $curl->setHeader('Content-Type', 'application/json');
         $curl->setPosts([
-            'seckey' => FLUTTERWAVE_SECRET_KEY,
+            'seckey' => env('FLUTTERWAVE_SECRET_KEY'),
             'narration' => $reason ?: 'Moneydrop wallet cash-out',
             'amount' => $amount,
             'account_bank' => $bankCode,

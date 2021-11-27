@@ -28,7 +28,7 @@ trait Mono
 
         $curl->setUrl(MONO_ACCOUNT_AUTH_URL);
         $curl->setHeaders([
-            'mono-sec-key: ' . MONO_API_KEY,
+            'mono-sec-key: ' . env('MONO_API_KEY'),
             'Content-Type: application/json',
         ]);
         $curl->setPost("code", $code);
@@ -49,7 +49,7 @@ trait Mono
         $curl = CurlRequest::getInstance();
 
         $curl->setUrl(MONO_ACCOUNT_DETAILS_URL . "/{$accountID}");
-        $curl->setHeader('mono-sec-key', MONO_API_KEY);
+        $curl->setHeader('mono-sec-key', env('MONO_API_KEY'));
         $curl->setMethod("GET");
 
         return $curl->send();
@@ -68,7 +68,7 @@ trait Mono
         $curl = CurlRequest::getInstance();
 
         $curl->setUrl("https://api.withmono.com/accounts/{$accountID}/income");
-        $curl->setHeader('mono-sec-key', MONO_API_KEY);
+        $curl->setHeader('mono-sec-key', env('MONO_API_KEY'));
         $curl->setHeader('Content-Type', 'application/json');
         $curl->setMethod("GET");
 
