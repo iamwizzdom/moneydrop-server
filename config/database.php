@@ -50,7 +50,7 @@ return [
         | to use as your default driver for all database work.
         |
         */
-        'driver' => 'mysql',
+        'driver' => env('DB_DRIVER'),
 
         /*
         |--------------------------------------------------------------------------
@@ -147,27 +147,27 @@ return [
             /*
              | database name
              */
-            'dbname' => 'moneydrop',
+            'dbname' => env('DB_DATABASE'),
 
             /*
              | db username
              */
-            'username' => 'root',
+            'username' => env('DB_USERNAME'),
 
             /*
              | db password
              */
-            'password' => '',
+            'password' => env('DB_PASSWORD'),
 
             /*
              | host / ip address
              */
-            'host' => 'localhost',
+            'host' => env('DB_HOST'),
 
             /*
              | MySQL port
              */
-            'port' => null,
+            'port' => env('DB_PORT'),
 
             /*
              | The MySQL Unix socket (shouldn't be used with host or port).
@@ -263,7 +263,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here are each of the database table setup for your application.
-    | These table are used natively by Que, so sure make to create them in your database
+    | These tables are used natively by Que, so sure make to create them in your database
     |
     */
     'tables' => [

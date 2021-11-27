@@ -19,9 +19,9 @@ return [
 
     'app' => [
         'header' => [
-            'title' => '',
-            'name' => 'Moneydrop',
-            'desc' => '',
+            'title' => env('APP_TITLE'),
+            'name' => env('APP_NAME'),
+            'desc' => env('APP_DESC'),
             'fav_icon' => '',
             'icon' => 'storage/system/logo.png',
             'logo' => [
