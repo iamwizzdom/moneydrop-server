@@ -53,6 +53,8 @@ class Review extends Manager implements Api
 
             $application = $application->getFirstWithModel();
 
+            $application->load('loan');
+
             $loan = $application->loan;
 
             if ($application->status == LoanApplication::STATUS_REJECTED) throw $this->baseException(
@@ -64,8 +66,6 @@ class Review extends Manager implements Api
             if (!$application->is_repaid) throw $this->baseException(
                 "Sorry, you can only review this loan recipient after the loan has been repaid completely",
                 "Review Failed", HTTP::UNAUTHORIZED);
-
-            $application->load('loan');
 
             if (($loan->loan_type == Loan::LOAN_TYPE_REQUEST && $loan->is_mine) ||
                 ($loan->loan_type == Loan::LOAN_TYPE_OFFER && $application->applicant->id == $this->user('id')))  {
