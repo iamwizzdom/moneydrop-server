@@ -171,17 +171,27 @@ trait Paystack
 
                 $trans = db()->insert('transactions', $trans);
 
-                $verify = $this->verify_transaction($data['reference']);
+                if (($data['status'] ?? 'failed') != 'success') {
+                    $trans->getFirstWithModel()?->update([
+                        'status' => Transaction::TRANS_STATUS_FAILED,
+                        'narration' => $data['message'] ?? $data['gateway_response']
+                    ]);
+                    throw new PaystackException($data['message'] ?: $data['gateway_response']);
+                }
 
-                if ($trans->isSuccessful() && $verify->isSuccessful()) {
+                if ($trans->isSuccessful()) {
 
-                    $veri = $verify->getResponseArray();
-                    $data = $veri['data'] ?? [];
-                    $success = (($data['status'] ?? 'failed') == 'success');
-                    $fields = ['status' => $success ? Transaction::TRANS_STATUS_SUCCESSFUL : Transaction::TRANS_STATUS_FAILED];
-                    if (!$success) $fields['narration'] = $veri['message'];
-                    $trans->getFirstWithModel()?->update($fields);
-                    if (!$success) throw new PaystackException($veri['message']);
+                    $verify = $this->verify_transaction($data['reference']);
+
+                    if ($verify->isSuccessful()) {
+                        $vRes = $verify->getResponseArray();
+                        $data = $vRes['data'] ?? [];
+                        $success = (($data['status'] ?? 'failed') == 'success');
+                        $fields = ['status' => $success ? Transaction::TRANS_STATUS_SUCCESSFUL : Transaction::TRANS_STATUS_FAILED];
+                        if (!$success) $fields['narration'] = $data['gateway_response'] ?: $vRes['message'];
+                        $trans->getFirstWithModel()?->update($fields);
+                        if (!$success) throw new PaystackException($data['gateway_response'] ?: $vRes['message']);
+                    }
                 }
             }
         }
