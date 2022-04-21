@@ -156,7 +156,7 @@ class User extends Model
                 ->exec();
 
             $maxLoanAmount = $max->getFirstWithModel()?->getFloat('max_amount');
-            $maxAmount = ($maxLoanAmount && $maxLoanAmount < Loan::MAX_AMOUNT) ? ($maxLoanAmount * 2) : Loan::MAX_AMOUNT;
+            $maxAmount = ($maxLoanAmount && $maxLoanAmount < Loan::MAX_AMOUNT) ? ($maxLoanAmount * 2) : $maxAmount;
         }
 
         return $maxAmount > Loan::MAX_AMOUNT ? Loan::MAX_AMOUNT : $maxAmount;
