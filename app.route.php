@@ -85,7 +85,7 @@ Route::register()->groupApi('api/v1/m-app', function ($prefix) {
                 $entry->setModule(Profile::class);
             },
             function (RouteEntry $entry) {
-                $entry->allowPutRequest();
+                $entry->allowPutRequest()->allowDeleteRequest();
                 $entry->forbidCSRF(false);
                 $entry->setMiddleware('user.auth');
                 $entry->setUri('/profile/update/{type:alpha|/^[a-zA-Z0-9\-_]+$/}');
